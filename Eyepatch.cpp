@@ -19,7 +19,7 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
                 m_videoMarkup.OpenVideoFile();
                 break;
             case ID_FILE_RECORDVIDEO:
-                m_videoMarkup.RecordVideoFile();
+//                m_videoMarkup.RecordVideoFile();
                 break;
             case ID_FILE_EXIT:
                 PostMessage(WM_CLOSE, 0, 0);
