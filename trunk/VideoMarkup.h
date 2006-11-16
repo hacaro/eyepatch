@@ -12,19 +12,19 @@ public:
 
     CVideoMarkup();
     ~CVideoMarkup();
-	LRESULT OnPaint( UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnButtonDown( UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnTrack( UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnMouseMove( UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnButtonUp( UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnCreate(UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnCommand(UINT, WPARAM, LPARAM, BOOL& );
-	LRESULT OnBeginDrag(int, LPNMHDR, BOOL&);
-	LRESULT OnCustomDraw(int, LPNMHDR, BOOL&);
+    LRESULT OnPaint( UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnButtonDown( UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnTrack( UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnMouseMove( UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnButtonUp( UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnCreate(UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnCommand(UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnBeginDrag(int, LPNMHDR, BOOL&);
+    LRESULT OnCustomDraw(int, LPNMHDR, BOOL&);
 
     void OpenVideoFile();
-    void RecordVideoFile();
+    void OpenVideoFile(char *filename);
     void ShowFrame(long);
     void EnableControls(BOOL);
 
@@ -42,15 +42,15 @@ public:
     }
 
     BEGIN_MSG_MAP(CVideoMarkup)
-		MESSAGE_HANDLER(WM_CREATE, OnCreate)
-		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnButtonDown)
-		MESSAGE_HANDLER(WM_RBUTTONDOWN, OnButtonDown)
-		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
-		MESSAGE_HANDLER(WM_HSCROLL, OnTrack)
-		MESSAGE_HANDLER(WM_LBUTTONUP, OnButtonUp)
-		MESSAGE_HANDLER(WM_RBUTTONUP, OnButtonUp)
-		MESSAGE_HANDLER(WM_PAINT, OnPaint)
-		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+        MESSAGE_HANDLER(WM_CREATE, OnCreate)
+        MESSAGE_HANDLER(WM_LBUTTONDOWN, OnButtonDown)
+        MESSAGE_HANDLER(WM_RBUTTONDOWN, OnButtonDown)
+        MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
+        MESSAGE_HANDLER(WM_HSCROLL, OnTrack)
+        MESSAGE_HANDLER(WM_LBUTTONUP, OnButtonUp)
+        MESSAGE_HANDLER(WM_RBUTTONUP, OnButtonUp)
+        MESSAGE_HANDLER(WM_PAINT, OnPaint)
+        MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
         NOTIFY_CODE_HANDLER(LVN_BEGINDRAG, OnBeginDrag)
         NOTIFY_CODE_HANDLER(NM_CUSTOMDRAW, OnCustomDraw)
@@ -75,7 +75,7 @@ private:
     int currentGroupId;
     CRect m_videoRect;
 
-	int WindowX, WindowY;
+    int WindowX, WindowY;
     long nFrames;
     int videoX, videoY;
 
