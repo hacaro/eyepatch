@@ -35,7 +35,7 @@ public:
             { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, 
             StartWindowProc,
             0, 0, NULL, NULL, NULL, (HBRUSH)(WHITE_BRUSH), NULL, 
-            FILTER_CREATE_CLASS, LoadIcon(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(ID_VIDMARKUP)) },
+            FILTER_CREATE_CLASS, LoadIcon(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDI_EYEPATCH)) },
             NULL, NULL, IDC_CROSS, TRUE, 0, FILTER_CREATE_CLASS
         };
         return wc;
@@ -67,7 +67,6 @@ private:
     HCURSOR hTrashCursor, hDropCursor;
 
 	Graphics *graphics;
-    GraphicsPath *penPath;
     PointF selectStart, selectCurrent;
     Pen *posPen, *negPen, *posSelectPen, *negSelectPen;
     SolidBrush *posBrush, *negBrush, *hoverBrush;
