@@ -23,7 +23,7 @@ public:
 			{ sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, 
 			StartWindowProc,
 			0, 0, NULL, NULL, NULL, (HBRUSH)(WHITE_BRUSH), NULL, 
-            APP_CLASS, LoadIcon(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(ID_VIDMARKUP)) },
+            APP_CLASS, LoadIcon(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDI_EYEPATCH)) },
 			NULL, NULL, IDC_ARROW, TRUE, 0, _T("")
 		};
 		return wc;
