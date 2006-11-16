@@ -28,18 +28,18 @@ public:
     void ShowFrame(long);
     void EnableControls(BOOL);
 
-	static CWndClassInfo& GetWndClassInfo()
-	{
-		static CWndClassInfo wc =
-		{
-			{ sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, 
-			StartWindowProc,
-			0, 0, NULL, NULL, NULL, (HBRUSH)(WHITE_BRUSH), NULL, 
+    static CWndClassInfo& GetWndClassInfo()
+    {
+        static CWndClassInfo wc =
+        {
+            { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, 
+            StartWindowProc,
+            0, 0, NULL, NULL, NULL, (HBRUSH)(WHITE_BRUSH), NULL, 
             FILTER_CREATE_CLASS, LoadIcon(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(ID_VIDMARKUP)) },
-			NULL, NULL, IDC_CROSS, TRUE, 0, FILTER_CREATE_CLASS
-		};
-		return wc;
-	}
+            NULL, NULL, IDC_CROSS, TRUE, 0, FILTER_CREATE_CLASS
+        };
+        return wc;
+    }
 
     BEGIN_MSG_MAP(CVideoMarkup)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
