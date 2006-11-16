@@ -92,45 +92,6 @@ void CVideoMarkup::OpenVideoFile() {
     }
 }
 
-
-void CVideoMarkup::RecordVideoFile() {
-    if (videoLoaded) { // already loaded a video so this will be a new one
-        cvReleaseCapture(&videoCapture);
-        cvReleaseImage(&copyFrame);
-        delete bmpVideo;
-        videoLoaded = false;
-        // TODO: clear out example gallery... ask if user wants to save classifier?
-    }
-
-    // TODO: set video props, select a camera, handle case where there is no camera
-    videoCapture = cvCreateCameraCapture(0);
-    
-    // TODO: write frames to file and make a stop button
-    if (videoCapture != NULL) {
-        videoLoaded = TRUE;
-        videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
-        videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
-        nFrames = cvGetCaptureProperty(videoCapture,  CV_CAP_PROP_FRAME_COUNT);
-
-        // create an image to store a copy of the current frame
-        copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
-
-        // Create a bitmap to display video
-        bmpVideo = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
-
-        // TODO: disable menu until recording completes, show video while recording, stretch to display
-    }
-    // then if recording completes successfully (put this in separate function
-    //{
-    //    EnableControls(TRUE);
-    //    SendMessage(m_slider, TBM_SETRANGEMIN, FALSE, 0);
-    //    SendMessage(m_slider, TBM_SETRANGEMAX, FALSE, nFrames-1);
-    //    SendMessage(m_slider, TBM_SETPOS, FALSE, 0);
-    //    ShowFrame(0);
-    //    InvalidateRect(m_videoRect,FALSE);
-    //}
-}
-
 void CVideoMarkup::EnableControls(BOOL enabled) {
     m_trainButton.EnableWindow(enabled);
     m_showButton.EnableWindow(enabled);
@@ -147,7 +108,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     graphics->SetClip(videoBounds);
     
     if (videoLoaded) {
-        if (bmpVideo != NULL) graphics->DrawImage(bmpVideo,0,0);
+        if (bmpVideo != NULL) graphics->DrawImage(bmpVideo,videoBounds);
 
         if (showGuesses) { // highlight computer's guesses
             for (list<Rect>::iterator i = objGuesses.begin(); i != objGuesses.end(); i++) {
@@ -155,9 +116,6 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
             }
         }
 
-        // to draw path:
-//      graphics->DrawPath(posPen,penPath);
-//      graphics->FillPath(posBrush,penPath);
         Rect selectRect;
         selectRect.X = min(selectStart.X, selectCurrent.X);
         selectRect.Y = min(selectStart.Y, selectCurrent.Y);
@@ -191,7 +149,6 @@ LRESULT CVideoMarkup::OnButtonDown( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
     if (!videoLoaded) return 0;
     if (!m_videoRect.PtInRect(p)) return 0;
 
-    penPath->Reset();
     pathComplete = false;
 
     // If the right button is down, we consider this a negative sample
@@ -256,7 +213,6 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
          } else { // we are drawing highlights
             if (!m_videoRect.PtInRect(p)) return 0;
 
-            penPath->AddLine(selectCurrent, PointF(p.x, p.y));
             selectCurrent.X = (REAL) p.x;
             selectCurrent.Y = (REAL) p.y;
            
@@ -322,20 +278,31 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
     } else { // we just finished drawing a path
         ClipCursor(NULL);   // restore full cursor movement
         if (!m_videoRect.PtInRect(p)) {
-            penPath->Reset();
             InvalidateRect(m_videoRect,FALSE);
             return 0;
         }
         pathComplete = true;
 
-        Rect bounds;
+        Rect selectRect;
+        selectRect.X = min(selectStart.X, selectCurrent.X);
+        selectRect.Y = min(selectStart.Y, selectCurrent.Y);
+        selectRect.Width = abs(selectStart.X - selectCurrent.X);
+        selectRect.Height = abs(selectStart.Y - selectCurrent.Y);
+
         Rect videoBounds(0,0,VIDEO_X,VIDEO_Y);
-        penPath->GetBounds(&bounds);
-        bounds.Intersect(videoBounds);
+        selectRect.Intersect(videoBounds);
+        double scaleX = ((double)videoX) / ((double)VIDEO_X);
+        double scaleY = ((double)videoY) / ((double)VIDEO_Y);
+        selectRect.X = (scaleX * selectRect.X);
+        selectRect.Y = (scaleY * selectRect.Y);
+        selectRect.Width = (scaleX * selectRect.Width);
+        selectRect.Height = (scaleY * selectRect.Height);
 
-        TrainingSample *sample = new TrainingSample(copyFrame, m_sampleListView, m_hImageList, bounds, currentGroupId);
-        sampleSet->AddSample(sample);
-
+        // discard tiny samples since they won't help
+        if ((selectRect.Width > 10) && (selectRect.Height > 10)) {
+            TrainingSample *sample = new TrainingSample(copyFrame, m_sampleListView, m_hImageList, selectRect, currentGroupId);
+            sampleSet->AddSample(sample);
+        }
         InvalidateRect(&m_videoRect, FALSE);
     }
 	return 0;
@@ -344,7 +311,6 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 LRESULT CVideoMarkup::OnTrack( UINT, WPARAM, LPARAM, BOOL& )
 {
     int dwPosition  = SendMessage(m_slider, TBM_GETPOS, 0, 0);
-    penPath->Reset();
     pathComplete = false;
     selectStart.X = 0;
     selectStart.Y = 0;
@@ -365,7 +331,6 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 	graphics = new Graphics(hdcmem);
 	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
     graphics->Clear(Color(255,255,255));
-    penPath = new GraphicsPath();
     posPen = new Pen(Color(100,100,255,100),4);
     posPen->SetLineJoin(LineJoinRound);
     posSelectPen = new Pen(Color(100,100,255,100),2);
@@ -426,7 +391,6 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
     ImageList_RemoveAll(m_hImageList);
     ImageList_Destroy(m_hImageList);
 	delete graphics;
-    delete penPath;
     delete posPen;
     delete posSelectPen;
     delete posBrush;
@@ -540,7 +504,7 @@ void CVideoMarkup::ShowFrame(long framenum) {
         m_showButton.EnableWindow(TRUE);
     }
 
-    Rect videoBounds(0, 0, VIDEO_X, VIDEO_Y);
+    Rect videoBounds(0, 0, videoX, videoY);
     BitmapData bmData;
     bmData.Width = videoX;
     bmData.Height = videoY;
