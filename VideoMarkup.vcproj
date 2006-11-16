@@ -295,15 +295,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Resources\Eyepatch.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\Eyepatch.rc"
+				>
+			</File>
+			<File
 				RelativePath=".\Resources\Trash.cur"
 				>
 			</File>
 			<File
-				RelativePath=".\VideoMarkup.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\VideoMarkup.rc"
+				RelativePath=".\Resources\VideoMarkup.ico"
 				>
 			</File>
 		</Filter>
