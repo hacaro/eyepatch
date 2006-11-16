@@ -2,7 +2,9 @@
 
 #include "precomp.h"
 
-class CVideoMarkup: public CWindowImpl<CVideoMarkup, CContainedWindow>
+typedef CWinTraits<WS_CHILD|WS_VISIBLE,0> CVideoMarkupTraits;
+
+class CVideoMarkup: public CWindowImpl<CVideoMarkup, CWindow, CVideoMarkupTraits>
 {
 public:
     CContainedWindow m_slider, m_trainButton, m_showButton, m_sampleListView;
@@ -26,9 +28,20 @@ public:
     void ShowFrame(long);
     void EnableControls(BOOL);
 
-    DECLARE_WND_CLASS(FILTER_CREATE_CLASS);
+	static CWndClassInfo& GetWndClassInfo()
+	{
+		static CWndClassInfo wc =
+		{
+			{ sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, 
+			StartWindowProc,
+			0, 0, NULL, NULL, NULL, (HBRUSH)(WHITE_BRUSH), NULL, 
+            FILTER_CREATE_CLASS, LoadIcon(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(ID_VIDMARKUP)) },
+			NULL, NULL, IDC_CROSS, TRUE, 0, FILTER_CREATE_CLASS
+		};
+		return wc;
+	}
 
-	BEGIN_MSG_MAP(CVideoMarkup)
+    BEGIN_MSG_MAP(CVideoMarkup)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnButtonDown)
 		MESSAGE_HANDLER(WM_RBUTTONDOWN, OnButtonDown)
