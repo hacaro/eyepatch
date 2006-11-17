@@ -8,9 +8,9 @@
 #define SAMPLE_X 24
 #define SAMPLE_Y 24
 #define MAX_SAMPLES 100
-#define WINDOW_X 1200
+#define WINDOW_X 1024
 #define WINDOW_Y 565
-#define VIDEO_X 720
+#define VIDEO_X 640
 #define VIDEO_Y 480
 #define SLIDER_Y 35
 
