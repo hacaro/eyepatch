@@ -273,6 +273,14 @@
 				Name="CVHaar"
 				>
 				<File
+					RelativePath=".\CVHaar\_cvcommon.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CVHaar\_cvhaartraining.h"
+					>
+				</File>
+				<File
 					RelativePath=".\CVHaar\cvclassifier.h"
 					>
 				</File>
