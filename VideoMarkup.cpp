@@ -70,6 +70,7 @@ void CVideoMarkup::OpenVideoFile() {
         // Load the video file and get dimensions
         videoCapture = cvCreateFileCapture(W2A(szFileName));
 
+		// TODO: add error message if video file can't be loaded (usually a missing codec)
         if (videoCapture != NULL) {
             videoLoaded = TRUE;
             videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
