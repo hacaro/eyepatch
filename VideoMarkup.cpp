@@ -73,6 +73,7 @@ void CVideoMarkup::OpenVideoFile() {
 		// TODO: add error message if video file can't be loaded (usually a missing codec)
         if (videoCapture != NULL) {
             videoLoaded = TRUE;
+            cvQueryFrame(videoCapture);
             videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
             videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
             nFrames = cvGetCaptureProperty(videoCapture,  CV_CAP_PROP_FRAME_COUNT);
@@ -498,7 +499,11 @@ void CVideoMarkup::ShowFrame(long framenum) {
     if (!videoLoaded) return;
     cvSetCaptureProperty(videoCapture, CV_CAP_PROP_POS_FRAMES, framenum);
     currentFrame = cvQueryFrame(videoCapture);
-    cvFlip(currentFrame,copyFrame);
+    if (currentFrame->origin  == IPL_ORIGIN_TL) {
+        cvCopy(currentFrame,copyFrame);
+    } else {
+        cvFlip(currentFrame,copyFrame);
+    }
 
     showGuesses = false;
     if (classifier->isTrained) {
