@@ -20,6 +20,7 @@ CVideoMarkup::CVideoMarkup() :
     m_sampleListView(WC_LISTVIEW, this, 2),
     m_trainButton(WC_BUTTON, this, 3),
     m_showButton(WC_BUTTON, this, 4),
+	m_progressBar(PROGRESS_CLASS, this, 5),
     m_videoRect(0,0,VIDEO_X,VIDEO_Y) {
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
@@ -77,8 +78,10 @@ void CVideoMarkup::OpenVideoFile() {
             videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
             videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
             nFrames = cvGetCaptureProperty(videoCapture,  CV_CAP_PROP_FRAME_COUNT);
+			// TODO: nFrames=0 when using ffmpeg -- it only seems to support 
+			// sequential access.  Fix this in the highgui build if possible.
 
-            // create an image to store a copy of the current frame
+			// create an image to store a copy of the current frame
             copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
 
             // Create a bitmap to display video
@@ -96,8 +99,12 @@ void CVideoMarkup::OpenVideoFile() {
 
 void CVideoMarkup::EnableControls(BOOL enabled) {
     m_trainButton.EnableWindow(enabled);
-    m_showButton.EnableWindow(enabled);
-    m_slider.EnableWindow(enabled);
+	if (classifier->isTrained) {
+		m_showButton.EnableWindow(enabled);
+	} else {
+		m_showButton.EnableWindow(false);
+	}
+	m_slider.EnableWindow(enabled);
     m_sampleListView.EnableWindow(enabled);
 }
 
@@ -376,13 +383,16 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     AddListViewGroup(m_sampleListView, L"Trash", 2);
 
     // Create the "train" button
-    m_trainButton.Create(m_hWnd, CRect(VIDEO_X+25,VIDEO_Y+5,VIDEO_X+225,VIDEO_Y+SLIDER_Y), _T("Learn from Examples"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON);
+    m_trainButton.Create(m_hWnd, CRect(VIDEO_X+25,VIDEO_Y+5,VIDEO_X+175,VIDEO_Y+SLIDER_Y), _T("Learn from Examples"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON);
 
     // Create the "show" button
-    m_showButton.Create(m_hWnd, CRect(VIDEO_X+250,VIDEO_Y+5,VIDEO_X+450,VIDEO_Y+SLIDER_Y), _T("Show Some Guesses!"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON);
+    m_showButton.Create(m_hWnd, CRect(VIDEO_X+200,VIDEO_Y+5,VIDEO_X+350,VIDEO_Y+SLIDER_Y), _T("Show Some Guesses!"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON);
 
     // Create the video slider
     m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS | TBS_BOTH );
+	
+	// Create the progress bar
+	m_progressBar.Create(m_hWnd, CRect(VIDEO_X+25,VIDEO_Y+5,VIDEO_X+175,VIDEO_Y+SLIDER_Y), _T("Training..."), WS_CHILD);
 
     return 0;
 }
@@ -410,6 +420,7 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
     m_slider.DestroyWindow();
     m_showButton.DestroyWindow();
     m_trainButton.DestroyWindow();
+	m_progressBar.DestroyWindow();
     sampleSet->DeleteAllSamples();
     delete sampleSet;
     
@@ -423,14 +434,17 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     HWND hwndControl = (HWND) lParam;
     if (hwndControl == m_trainButton) {
 
-        // TODO: training should make a progress bar
+        // TODO: launch training in a separate thread to allow cancelling in middle
         EnableControls(FALSE);
         SetCursor(LoadCursor(NULL, IDC_WAIT));
+		m_progressBar.ShowWindow(TRUE);
+        SendMessage(m_progressBar, PBM_SETPOS, 0, 0);
         if (!classifier->isTrained) {
-            classifier->Train(sampleSet);
+            classifier->Train(sampleSet, m_progressBar);
         } else {
-            classifier->AddStage(sampleSet);
+            classifier->AddStage(sampleSet, m_progressBar);
         }
+		m_progressBar.ShowWindow(FALSE);
         EnableControls(TRUE);
         SetCursor(LoadCursor(NULL, IDC_ARROW));
 
@@ -499,6 +513,8 @@ void CVideoMarkup::ShowFrame(long framenum) {
     if (!videoLoaded) return;
     cvSetCaptureProperty(videoCapture, CV_CAP_PROP_POS_FRAMES, framenum);
     currentFrame = cvQueryFrame(videoCapture);
+	if (!currentFrame) return;
+
     if (currentFrame->origin  == IPL_ORIGIN_TL) {
         cvCopy(currentFrame,copyFrame);
     } else {
