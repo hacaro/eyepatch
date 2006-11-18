@@ -17,7 +17,7 @@ HaarClassifier::~HaarClassifier() {
     if (isTrained) cvReleaseHaarClassifierCascade(&cascade);
 }
 
-void HaarClassifier::Train(TrainingSet *sampleSet) {
+void HaarClassifier::Train(TrainingSet *sampleSet, HWND hwndProgress) {
     char tempPathname[MAX_PATH];
     char vecFilename[MAX_PATH];
     char negFilename[MAX_PATH];
@@ -26,11 +26,11 @@ void HaarClassifier::Train(TrainingSet *sampleSet) {
     char classifierName[MAX_PATH];
 
     GetTempPathA(MAX_PATH, tempPathname);
-    sprintf(vecFilename, "%spossamples.vec", tempPathname);
-    sprintf(negFilename, "%snegsamples.dat", tempPathname);
-    int classifiernum = time(0);
-    sprintf(classifierPathname, "%sclassifier%d/", tempPathname, classifiernum);
-    sprintf(classifierName, "%sclassifier%d", tempPathname, classifiernum);
+    sprintf_s(vecFilename, "%spossamples.vec", tempPathname);
+    sprintf_s(negFilename, "%snegsamples.dat", tempPathname);
+    int classifiernum = (int)time(0);
+    sprintf_s(classifierPathname, "%sclassifier%d/", tempPathname, classifiernum);
+    sprintf_s(classifierName, "%sclassifier%d", tempPathname, classifiernum);
 
     icvMkDir(vecFilename);
     icvMkDir(negFilename);
@@ -46,7 +46,7 @@ void HaarClassifier::Train(TrainingSet *sampleSet) {
         if (sample->iGroupId == 0) { // positive sample
             icvWriteVecSample(vec, sample->sampleImage);
         } else if (sample->iGroupId == 1) { // negative sample
-            sprintf(imageFilename, "%sneg%d.jpg", tempPathname, imgNum);
+            sprintf_s(imageFilename, "%sneg%d.jpg", tempPathname, imgNum);
             cvSaveImage(imageFilename, sample->fullImageCopy);
             fprintf(neglist, "neg%d.jpg\n", imgNum);
             imgNum++;
@@ -56,17 +56,17 @@ void HaarClassifier::Train(TrainingSet *sampleSet) {
     fclose(neglist);
 
     cvCreateCascadeClassifier(classifierPathname,  vecFilename, negFilename, 
-        sampleSet->posSampleCount, sampleSet->negSampleCount, nStages, 0, 2, .99, .5, .95, 0, 1, 1, SAMPLE_X, SAMPLE_Y, 3, 0);
+        sampleSet->posSampleCount, sampleSet->negSampleCount, nStages, 0, 2, .99, .5, .95, 0, 1, 1, SAMPLE_X, SAMPLE_Y, 3, 0, hwndProgress);
 
     cascade = cvLoadHaarClassifierCascade(classifierName, cvSize(SAMPLE_X, SAMPLE_Y));
     isTrained = true;
 
 }
 
-int HaarClassifier::AddStage(TrainingSet *sampleSet) {
+int HaarClassifier::AddStage(TrainingSet *sampleSet, HWND hwndProgress) {
     if (!isTrained) return 0;
     nStages++;
-    Train(sampleSet);
+    Train(sampleSet, hwndProgress);
     return nStages;
 }
 

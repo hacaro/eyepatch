@@ -5,8 +5,8 @@ class HaarClassifier
 public:
     HaarClassifier();
     ~HaarClassifier(void);
-    void Train(TrainingSet*);
-    int AddStage(TrainingSet*);
+    void Train(TrainingSet*, HWND);
+    int AddStage(TrainingSet*, HWND);
     void ClassifyFrame(IplImage*, list<Rect>*);
     bool isTrained;
 

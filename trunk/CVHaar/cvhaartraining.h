@@ -48,6 +48,8 @@
 #ifndef _CVHAARTRAINING_H_
 #define _CVHAARTRAINING_H_
 
+#include <windows.h>
+
 /*
  * cvCreateTrainingSamples
  *
@@ -172,7 +174,7 @@ void cvCreateCascadeClassifier( const char* dirname,
                                 int mode = 0, int symmetric = 1,
                                 int equalweights = 1,
                                 int winwidth = 24, int winheight = 24,
-                                int boosttype = 3, int stumperror = 0 );
+                                int boosttype = 3, int stumperror = 0, HWND hwndProgress = NULL);
 
 void cvCreateTreeCascadeClassifier( const char* dirname,
                                     const char* vecfilename,

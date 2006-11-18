@@ -45,6 +45,8 @@
  * training of cascade of boosted classifiers based on haar features
  */
 
+#include <windows.h>
+#include <commctrl.h>
 #include <cvhaartraining.h>
 #include <_cvhaartraining.h>
 
@@ -826,7 +828,7 @@ CvIntHaarClassifier* icvCreateCARTStageClassifier( CvHaarTrainingData* data,
                                                    int numsplits,
                                                    CvBoostType boosttype,
                                                    CvStumpError stumperror,
-                                                   int maxsplits )
+                                                   int maxsplits , HWND hwndProgress = NULL)
 {
 
 #ifdef CV_COL_ARRANGEMENT
@@ -1156,8 +1158,7 @@ CvIntHaarClassifier* icvCreateCARTStageClassifier( CvHaarTrainingData* data,
             printf( "+----+----+-+---------+---------+---------+---------+\n" );
             fflush( stdout );
         }
-#endif /* CV_VERBOSE */
-        
+#endif /* CV_VERBOSE */        
     } while( falsealarm > maxfalsealarm && (!maxsplits || (num_splits < maxsplits) ) );
     cvBoostEndTraining( &trainer );
 
@@ -1870,7 +1871,7 @@ void cvCreateCascadeClassifier( const char* dirname,
                                 int mode, int symmetric,
                                 int equalweights,
                                 int winwidth, int winheight,
-                                int boosttype, int stumperror )
+                                int boosttype, int stumperror , HWND hwndProgress)
 {
     CvCascadeHaarClassifier* cascade = NULL;
     CvHaarTrainingData* data = NULL;
@@ -1911,9 +1912,16 @@ void cvCreateCascadeClassifier( const char* dirname,
         printf("Number of features used : %d\n", haar_features->count);
 #endif /* CV_VERBOSE */
 
-        for( i = 0; i < nstages; i++, cascade->count++ )
+		// initialize progress bar
+        SendMessage(hwndProgress, PBM_SETRANGE32, 0, nstages);
+        SendMessage(hwndProgress, PBM_SETPOS, 0, 0);
+
+		for( i = 0; i < nstages; i++, cascade->count++ )
         {
-            sprintf( stagename, "%s%d/%s", dirname, i, CV_STAGE_CART_FILE_NAME );
+			// update progress bar
+	        SendMessage(hwndProgress, PBM_SETPOS, i, 0);
+
+			sprintf( stagename, "%s%d/%s", dirname, i, CV_STAGE_CART_FILE_NAME );
             cascade->classifier[i] = 
                 icvLoadCARTStageHaarClassifier( stagename, winsize.width + 1 );
 
@@ -1923,7 +1931,6 @@ void cvCreateCascadeClassifier( const char* dirname,
 #ifdef CV_VERBOSE
                 printf( "UNABLE TO CREATE DIRECTORY: %s\n", stagename );
 #endif /* CV_VERBOSE */
-
                 break;
             }
             if( cascade->classifier[i] != NULL )
@@ -2013,7 +2020,7 @@ void cvCreateCascadeClassifier( const char* dirname,
 
             cascade->classifier[i] = icvCreateCARTStageClassifier(  data, NULL,
                 haar_features, minhitrate, maxfalsealarm, symmetric, weightfraction,
-                numsplits, (CvBoostType) boosttype, (CvStumpError) stumperror, 0 );
+                numsplits, (CvBoostType) boosttype, (CvStumpError) stumperror, 0 , hwndProgress);
 
 #ifdef CV_VERBOSE
             printf( "STAGE TRAINING TIME: %.2f\n", (proctime + TIME( 0 )) );
@@ -2036,6 +2043,10 @@ void cvCreateCascadeClassifier( const char* dirname,
             }
 
         }
+
+		// complete progress bar
+        SendMessage(hwndProgress, PBM_SETPOS, nstages, 0);
+
         icvReleaseIntHaarFeatures( &haar_features );
         icvReleaseHaarTrainingData( &data );
 
