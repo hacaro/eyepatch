@@ -2,6 +2,7 @@
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "HaarClassifier.h"
+#include "ProgressDialog.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -74,12 +75,35 @@ void CVideoMarkup::OpenVideoFile() {
 		// TODO: add error message if video file can't be loaded (usually a missing codec)
         if (videoCapture != NULL) {
             videoLoaded = TRUE;
-            cvQueryFrame(videoCapture);
+            currentFrame = cvQueryFrame(videoCapture);
             videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
             videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
             nFrames = cvGetCaptureProperty(videoCapture,  CV_CAP_PROP_FRAME_COUNT);
 			// TODO: nFrames=0 when using ffmpeg -- it only seems to support 
 			// sequential access.  Fix this in the highgui build if possible.
+			if (nFrames == 0) {
+				// this is not a seekable format, so we will convert it and save to a file
+				wcscat(szFileName,L".seekable.avi");
+				if (GetSaveFileName(&ofn)) {
+					// TODO: move all of this into ProgressDialog (and rename the class)
+//					double fps = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FPS);
+
+					CvVideoWriter* videoWriter = cvCreateVideoWriter(W2A(szFileName), CV_FOURCC('D','I','V','X'), 30, cvSize(videoX, videoY), 1);
+					CProgressDialog progressWnd(currentFrame, videoCapture, videoWriter);
+
+					progressWnd.DoModal();
+
+					cvReleaseVideoWriter(&videoWriter);
+					cvReleaseCapture(&videoCapture);
+					videoCapture = cvCreateFileCapture(W2A(szFileName));
+					nFrames = progressWnd.frameNum;
+					if (!videoCapture) return;
+				} else {
+					cvReleaseCapture(&videoCapture);
+					videoCapture = NULL;
+					return;
+				}
+			}
 
 			// create an image to store a copy of the current frame
             copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
