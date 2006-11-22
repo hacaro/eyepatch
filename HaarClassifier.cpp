@@ -4,8 +4,48 @@
 #include "TrainingSet.h"
 #include "HaarClassifier.h"
 
+HaarClassifierDialog::HaarClassifierDialog(HaarClassifier *p) {
+	parent = p;
+	m_hThread = NULL;
+}
 
-HaarClassifier::HaarClassifier() {
+HaarClassifierDialog::~HaarClassifierDialog() {
+}
+
+LRESULT HaarClassifierDialog::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    CenterWindow();
+	m_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadCallback, (LPVOID)this, 0, &threadID);
+	return TRUE;    // let the system set the focus
+}
+
+LRESULT HaarClassifierDialog::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	TerminateThread(m_hThread, 0);
+	parent->isTrained = false;
+	if (parent->nStagesCompleted >= MIN_HAAR_STAGES) {
+		parent->cascade = cvLoadHaarClassifierCascade(parent->classifierName, cvSize(SAMPLE_X, SAMPLE_Y));
+		if (parent->cascade != NULL) {
+			parent->isTrained = true;
+		}
+	}
+	return 0;
+}
+
+DWORD WINAPI HaarClassifierDialog::ThreadCallback(HaarClassifierDialog* instance) {
+	instance->Train();
+	return 1L;
+}
+
+void HaarClassifierDialog::Train() {
+    cvCreateCascadeClassifier(parent->classifierPathname,  parent->vecFilename, parent->negFilename, 
+        parent->nPosSamples, parent->nNegSamples, parent->nStages,
+		0, 2, .99, .5, .95, 0, 1, 1, SAMPLE_X, SAMPLE_Y, 3, 0,
+		GetDlgItem(IDC_HAAR_PROGRESS), &(parent->nStagesCompleted));
+	::EndDialog(m_hWnd, IDOK);
+}
+
+
+HaarClassifier::HaarClassifier() :
+	m_progressDlg(this) {
     isTrained = false;
 	readyForTraining = false;
     cascade = NULL;
@@ -13,7 +53,7 @@ HaarClassifier::HaarClassifier() {
     storage = cvCreateMemStorage(0);
 	nPosSamples = 0;
 	nNegSamples = 0;
-	m_hThread = NULL;
+	nStagesCompleted = 0;
 }
 
 HaarClassifier::~HaarClassifier() {
@@ -62,38 +102,7 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
 
 void HaarClassifier::StartTraining() {
 	if (!readyForTraining) return;
-	m_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadCallback, (LPVOID)this, 0, &threadID);
-	// TODO: thread should probably be launched from the progress dialog
-	// rather than using a CSimpleDialog.
 	m_progressDlg.DoModal();
-	if (m_hThread) { // HACK: thread is still running so we must have hit cancel
-		CancelTraining();
-	}
-    cascade = cvLoadHaarClassifierCascade(classifierName, cvSize(SAMPLE_X, SAMPLE_Y));
-	if (cascade != NULL) {
-	    isTrained = true;
-	}
-}
-
-void HaarClassifier::CancelTraining() {
-	if (m_hThread) TerminateThread(m_hThread, 0);
-	m_hThread = NULL;
-}
-
-DWORD WINAPI HaarClassifier::ThreadCallback(HaarClassifier* instance) {
-	instance->Train();
-	return 1L;
-}
-
-void HaarClassifier::Train() {
-	if (!readyForTraining) return;
-	while (!m_progressDlg.IsWindow()) {
-		// HACK: wait until progress dialog has been initialized
-	}
-    cvCreateCascadeClassifier(classifierPathname,  vecFilename, negFilename, 
-        nPosSamples, nNegSamples, nStages, 0, 2, .99, .5, .95, 0, 1, 1, SAMPLE_X, SAMPLE_Y, 3, 0, m_progressDlg.GetDlgItem(IDC_HAAR_PROGRESS));
-	m_hThread = NULL;
-	SendMessage(m_progressDlg, WM_CLOSE, 0, 0);
 }
 
 void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
