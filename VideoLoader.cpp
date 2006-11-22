@@ -96,65 +96,58 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner) {
     ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
     ofn.hwndOwner = hwndOwner;
 	ofn.lpstrFilter = L"Video Files\0*.avi;*.mpg;*.mp4;*.wmv;*.flv;*.mpeg;*.m2v;*.mpv;*.mov;*.qt;*.vob;*.rm\0";
-//    ofn.lpstrFilter = L"AVI Files (*.avi)\0*.avi\0All Files (*.*)\0*.*\0";
     ofn.lpstrFile = szFileName;
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
     ofn.lpstrDefExt = L"avi";
 
-    if(GetOpenFileName(&ofn))
-    {
-		if (videoLoaded) { // already loaded a video so this will be a new one
-			cvReleaseCapture(&videoCapture);
-			cvReleaseImage(&copyFrame);
-			delete bmpVideo;
-			videoLoaded = false;
-		}
+    if(!GetOpenFileName(&ofn)) {
+		return FALSE;
+	}
 
-		// Load the video file and get dimensions
-        videoCapture = cvCreateFileCapture(W2A(szFileName));
+	// Attempt to load the video file and get dimensions
+    CvCapture *vc = cvCreateFileCapture(W2A(szFileName));
 
-		// TODO: add error message if video file can't be loaded (usually a missing codec)
-        if (videoCapture != NULL) {
-            currentFrame = cvQueryFrame(videoCapture);
-            videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
-            videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
-            nFrames = cvGetCaptureProperty(videoCapture,  CV_CAP_PROP_FRAME_COUNT);
+    if (vc == NULL) {
+		MessageBox(GetActiveWindow(), L"Error Loading Video",
+			L"Sorry, I'm unable to load this video file.  It may be in a format I can't recognize.", MB_OK);
+		return FALSE;
+	}
 
-			// create an image to store a copy of the current frame
-            copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
+	if (videoLoaded) { // We already loaded a video, so this will be a new one
+		cvReleaseCapture(&videoCapture);
+		cvReleaseImage(&copyFrame);
+		delete bmpVideo;
+		videoLoaded = false;
+	}
+	videoCapture = vc;
 
-            // Create a bitmap to display video
-            bmpVideo = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
+    currentFrame = cvQueryFrame(videoCapture);
+    videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
+    videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
+    nFrames = cvGetCaptureProperty(videoCapture,  CV_CAP_PROP_FRAME_COUNT);
 
-			if (nFrames == 0) {
-				// this is not a seekable format, so we will convert it and save to a file
-				wcscat(szFileName,L".seekable.avi");
-				if (GetSaveFileName(&ofn)) {
-//					double fps = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FPS);
+	// create an image to store a copy of the current frame
+    copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
 
-					videoWriter = cvCreateVideoWriter(W2A(szFileName), CV_FOURCC('D','I','V','X'), 30, cvSize(videoX, videoY), 1);
+    // Create a bitmap to display video
+    bmpVideo = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
 
-					m_hVideoLoaderDialog.DoModal();
+	if (nFrames == 0) {
+		// this is not a seekable format, so we will convert it and save to a file
+		wcscat(szFileName,L".seekable.avi");
+		videoWriter = cvCreateVideoWriter(W2A(szFileName), CV_FOURCC('D','I','V','X'), 30, cvSize(videoX, videoY), 1);
+		m_hVideoLoaderDialog.DoModal();
+		cvReleaseVideoWriter(&videoWriter);
+		cvReleaseCapture(&videoCapture);
+		videoCapture = cvCreateFileCapture(W2A(szFileName));
+		if (!videoCapture) return FALSE;
+	}
 
-					cvReleaseVideoWriter(&videoWriter);
-					cvReleaseCapture(&videoCapture);
-					videoCapture = cvCreateFileCapture(W2A(szFileName));
-					if (!videoCapture) return FALSE;
-				} else {
-					cvReleaseCapture(&videoCapture);
-					videoCapture = NULL;
-					return  FALSE;
-				}
-			}
+    LoadFrame(0);
+	videoLoaded = TRUE;
 
-            LoadFrame(0);
-			videoLoaded = TRUE;
-
-			return TRUE;
-        }
-    }
-	return FALSE;
+	return TRUE;
 }
 
 void CVideoLoader::LoadFrame(long framenum) {
