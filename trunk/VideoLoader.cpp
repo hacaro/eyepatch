@@ -141,7 +141,6 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner) {
 		cvReleaseVideoWriter(&videoWriter);
 		cvReleaseCapture(&videoCapture);
 		videoCapture = cvCreateFileCapture(W2A(szFileName));
-		if (!videoCapture) return FALSE;
 	}
 
     LoadFrame(0);
