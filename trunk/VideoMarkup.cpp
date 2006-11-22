@@ -21,7 +21,15 @@ CVideoMarkup::CVideoMarkup() :
     m_sampleListView(WC_LISTVIEW, this, 2),
     m_trainButton(WC_BUTTON, this, 3),
     m_showButton(WC_BUTTON, this, 4),
-    m_videoRect(0,0,VIDEO_X,VIDEO_Y) {
+    m_videoRect(0,0,VIDEO_X,VIDEO_Y),
+    posSelectPen(Color(100,100,255,100),2),
+    negSelectPen(Color(100,255,100,100),2),
+    guessPen(Color(100,255,100),4),
+    posBrush(Color(50,100,255,100)),
+    negBrush(Color(50,255,100,100)),
+    hoverBrush(Color(25, 50, 150, 255)),
+    grayBrush(Color(100, 0, 0, 0)) {
+	guessPen.SetLineJoin(LineJoinRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
     showGuesses = false;
@@ -51,16 +59,30 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
 	PAINTSTRUCT ps;
 
     HDC hdc = BeginPaint(&ps);
-    Rect videoBounds(0,0,VIDEO_X,VIDEO_Y);
-    graphics->SetClip(videoBounds);
+    Rect drawBounds(0,0,VIDEO_X,VIDEO_Y);
+    Rect videoBounds(0,0,m_videoLoader.videoX,m_videoLoader.videoY);
+    graphics->SetClip(drawBounds);
     
     if (m_videoLoader.videoLoaded) {
-        if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,videoBounds);
+        if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,drawBounds);
 
         if (showGuesses) { // highlight computer's guesses
+			double scaleX = ((double)VIDEO_X) / ((double)m_videoLoader.videoX);
+			double scaleY = ((double)VIDEO_Y) / ((double)m_videoLoader.videoY);
+			graphics->ScaleTransform(scaleX, scaleY);
+			Region guessRegion;
+			GraphicsPath guessPath;
+			guessRegion.MakeEmpty();
             for (list<Rect>::iterator i = objGuesses.begin(); i != objGuesses.end(); i++) {
-                graphics->DrawRectangle(posPen,*i);
+				guessPath.AddRectangle(*i);
+				guessRegion.Union(*i);
             }
+			guessRegion.Complement(videoBounds);
+			graphics->FillRegion(&grayBrush, &guessRegion);
+			graphics->SetClip(&guessRegion, CombineModeReplace);
+			graphics->DrawPath(&guessPen, &guessPath);
+			graphics->ResetTransform();
+			graphics->SetClip(drawBounds, CombineModeReplace);
         }
 
         Rect selectRect;
@@ -71,11 +93,11 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
 
         if (!pathComplete) {
             if (currentGroupId == 0) {
-                graphics->FillRectangle(posBrush, selectRect);
-                graphics->DrawRectangle(posSelectPen, selectRect);
+                graphics->FillRectangle(&posBrush, selectRect);
+                graphics->DrawRectangle(&posSelectPen, selectRect);
             } else {
-                graphics->FillRectangle(negBrush, selectRect);
-                graphics->DrawRectangle(negSelectPen, selectRect);
+                graphics->FillRectangle(&negBrush, selectRect);
+                graphics->DrawRectangle(&negSelectPen, selectRect);
             }
         }
         graphics->ResetClip();
@@ -236,8 +258,8 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         selectRect.Width = abs(selectStart.X - selectCurrent.X);
         selectRect.Height = abs(selectStart.Y - selectCurrent.Y);
 
-        Rect videoBounds(0,0,VIDEO_X,VIDEO_Y);
-        selectRect.Intersect(videoBounds);
+        Rect drawBounds(0,0,VIDEO_X,VIDEO_Y);
+        selectRect.Intersect(drawBounds);
         double scaleX = ((double)m_videoLoader.videoX) / ((double)VIDEO_X);
         double scaleY = ((double)m_videoLoader.videoY) / ((double)VIDEO_Y);
         selectRect.X = (scaleX * selectRect.X);
@@ -285,18 +307,6 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 	graphics = new Graphics(hdcmem);
 	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
     graphics->Clear(Color(255,255,255));
-    posPen = new Pen(Color(100,100,255,100),4);
-    posPen->SetLineJoin(LineJoinRound);
-    posSelectPen = new Pen(Color(100,100,255,100),2);
-    negPen = new Pen(Color(100,255,100,100),4);
-    negPen->SetLineJoin(LineJoinRound);
-    negSelectPen = new Pen(Color(100,255,100,100),2);
-    Matrix penMatrix(1.77, -.71, .71, .71, 0, 0);  // scale and rotate for diagonal wide-tip effect
-    posPen->SetTransform(&penMatrix);
-    negPen->SetTransform(&penMatrix);
-    posBrush = new SolidBrush(Color(50,100,255,100));
-    negBrush = new SolidBrush(Color(50,255,100,100));
-    hoverBrush = new SolidBrush(Color(25, 50, 150, 255));
     pathComplete = false;
     draggingIcon = false;
     hTrashCursor = LoadCursor(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDC_TRASHCURSOR));
@@ -345,13 +355,6 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
     ImageList_RemoveAll(m_hImageList);
     ImageList_Destroy(m_hImageList);
 	delete graphics;
-    delete posPen;
-    delete posSelectPen;
-    delete posBrush;
-    delete negPen;
-    delete negSelectPen;
-    delete negBrush;
-    delete hoverBrush;
 	DeleteDC(hdcmem);
 	DeleteObject(hbm);
     DeleteObject(hTrashCursor);
@@ -406,7 +409,7 @@ LRESULT CVideoMarkup::OnCustomDraw(int idCtrl, LPNMHDR pnmh, BOOL&) {
             HDC hdc = lplvcd->nmcd.hdc;
             Graphics gListView(hdc);
             if (dragHover) {
-                gListView.FillRectangle(hoverBrush, hoverRect);
+                gListView.FillRectangle(&hoverBrush, hoverRect);
             }
         }
     }

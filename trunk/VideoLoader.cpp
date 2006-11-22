@@ -36,7 +36,7 @@ LRESULT CVideoLoaderDialog::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     HDC hdc = BeginPaint(&ps);
 	Graphics graphics(hdc);
 	if (parent->bmpVideo != NULL) {
-		graphics.DrawImage(parent->bmpVideo, drawRect, 0, 0, parent->videoX, parent->videoY, UnitPixel, 0, 0, 0);
+		graphics.DrawImage(parent->bmpVideo, drawRect);
 	}
     EndPaint(&ps);
     return 0;
@@ -95,7 +95,8 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner) {
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
     ofn.hwndOwner = hwndOwner;
-    ofn.lpstrFilter = L"AVI Files (*.avi)\0*.avi\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFilter = L"Video Files\0*.avi;*.mpg;*.mp4;*.wmv;*.flv;*.mpeg;*.m2v;*.mpv;*.mov;*.qt;*.vob;*.rm\0";
+//    ofn.lpstrFilter = L"AVI Files (*.avi)\0*.avi\0All Files (*.*)\0*.*\0";
     ofn.lpstrFile = szFileName;
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
