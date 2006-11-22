@@ -1871,7 +1871,7 @@ void cvCreateCascadeClassifier( const char* dirname,
                                 int mode, int symmetric,
                                 int equalweights,
                                 int winwidth, int winheight,
-                                int boosttype, int stumperror , HWND hwndProgress)
+                                int boosttype, int stumperror , HWND hwndProgress, int* nStagesCompleted)
 {
     CvCascadeHaarClassifier* cascade = NULL;
     CvHaarTrainingData* data = NULL;
@@ -1920,6 +1920,7 @@ void cvCreateCascadeClassifier( const char* dirname,
         {
 			// update progress bar
 	        SendMessage(hwndProgress, PBM_SETPOS, i, 0);
+			if (nStagesCompleted) *nStagesCompleted = i;
 
 			sprintf( stagename, "%s%d/%s", dirname, i, CV_STAGE_CART_FILE_NAME );
             cascade->classifier[i] = 
@@ -2046,6 +2047,7 @@ void cvCreateCascadeClassifier( const char* dirname,
 
 		// complete progress bar
         SendMessage(hwndProgress, PBM_SETPOS, nstages, 0);
+		if (nStagesCompleted) *nStagesCompleted = nstages;
 
         icvReleaseIntHaarFeatures( &haar_features );
         icvReleaseHaarTrainingData( &data );

@@ -174,7 +174,8 @@ void cvCreateCascadeClassifier( const char* dirname,
                                 int mode = 0, int symmetric = 1,
                                 int equalweights = 1,
                                 int winwidth = 24, int winheight = 24,
-                                int boosttype = 3, int stumperror = 0, HWND hwndProgress = NULL);
+                                int boosttype = 3, int stumperror = 0,
+								HWND hwndProgress = NULL, int *nStagesCompleted = NULL);
 
 void cvCreateTreeCascadeClassifier( const char* dirname,
                                     const char* vecfilename,
