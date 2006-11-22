@@ -1,14 +1,14 @@
 #pragma once
 
 #include "precomp.h"
+#include "VideoLoader.h"
 
 typedef CWinTraits<WS_CHILD|WS_VISIBLE,0> CVideoMarkupTraits;
 
 class CVideoMarkup: public CWindowImpl<CVideoMarkup, CWindow, CVideoMarkupTraits>
 {
 public:
-    CContainedWindow m_slider, m_trainButton, m_showButton, m_sampleListView, m_progressBar;
-    HIMAGELIST m_hImageList;
+    CContainedWindow m_slider, m_trainButton, m_showButton, m_sampleListView;
 
     CVideoMarkup();
     ~CVideoMarkup();
@@ -23,10 +23,8 @@ public:
     LRESULT OnBeginDrag(int, LPNMHDR, BOOL&);
     LRESULT OnCustomDraw(int, LPNMHDR, BOOL&);
 
-    void OpenVideoFile();
-    void OpenVideoFile(char *filename);
-    void ShowFrame(long);
     void EnableControls(BOOL);
+	void OpenVideoFile();
 
     static CWndClassInfo& GetWndClassInfo()
     {
@@ -59,7 +57,6 @@ public:
     ALT_MSG_MAP(2)  // sample list
     ALT_MSG_MAP(3)  // train button
     ALT_MSG_MAP(4)  // show button
-    ALT_MSG_MAP(5)  // progress bar
     END_MSG_MAP()
 
 private:
@@ -75,15 +72,7 @@ private:
     int currentGroupId;
     CRect m_videoRect;
 
-    int WindowX, WindowY;
-    long nFrames;
-    int videoX, videoY;
-
-    CvCapture* videoCapture;
-    IplImage *currentFrame, *copyFrame;
-    bool videoLoaded;
-    Bitmap *bmpVideo;
-
+	CVideoLoader m_videoLoader;
     TrainingSet *sampleSet;
     HaarClassifier *classifier;
 
@@ -93,6 +82,7 @@ private:
     bool dragHover;
     Rect hoverRect;
     bool draggingIcon;
+    HIMAGELIST m_hImageList;
 
     // list of detected objects
     list <Rect> objGuesses;

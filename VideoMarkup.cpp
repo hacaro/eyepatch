@@ -2,7 +2,7 @@
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "HaarClassifier.h"
-#include "ProgressDialog.h"
+#include "VideoLoader.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -21,15 +21,10 @@ CVideoMarkup::CVideoMarkup() :
     m_sampleListView(WC_LISTVIEW, this, 2),
     m_trainButton(WC_BUTTON, this, 3),
     m_showButton(WC_BUTTON, this, 4),
-	m_progressBar(PROGRESS_CLASS, this, 5),
     m_videoRect(0,0,VIDEO_X,VIDEO_Y) {
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
-    videoLoaded = false;
     showGuesses = false;
-    videoCapture = NULL;
-    copyFrame = NULL;
-    bmpVideo = NULL;
 
     sampleSet = new TrainingSet();
     classifier = new HaarClassifier();
@@ -38,87 +33,6 @@ CVideoMarkup::CVideoMarkup() :
 
 CVideoMarkup::~CVideoMarkup() {
     delete classifier;
-    if (videoLoaded) {
-        cvReleaseCapture(&videoCapture);
-        cvReleaseImage(&copyFrame);
-    }
-}
-
-
-void CVideoMarkup::OpenVideoFile() {
-
-    if (videoLoaded) { // already loaded a video so this will be a new one
-        cvReleaseCapture(&videoCapture);
-        cvReleaseImage(&copyFrame);
-        delete bmpVideo;
-        videoLoaded = false;
-        // TODO: clear out example gallery... ask if user wants to save classifier?
-    }
-
-    USES_CONVERSION;
-    OPENFILENAMEW ofn;
-    WCHAR szFileName[MAX_PATH] = L"";
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
-    ofn.hwndOwner = m_hWnd;
-    ofn.lpstrFilter = L"AVI Files (*.avi)\0*.avi\0All Files (*.*)\0*.*\0";
-    ofn.lpstrFile = szFileName;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-    ofn.lpstrDefExt = L"avi";
-
-    if(GetOpenFileName(&ofn))
-    {
-        // Load the video file and get dimensions
-        videoCapture = cvCreateFileCapture(W2A(szFileName));
-
-		// TODO: add error message if video file can't be loaded (usually a missing codec)
-        if (videoCapture != NULL) {
-            videoLoaded = TRUE;
-            currentFrame = cvQueryFrame(videoCapture);
-            videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
-            videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
-            nFrames = cvGetCaptureProperty(videoCapture,  CV_CAP_PROP_FRAME_COUNT);
-			// TODO: nFrames=0 when using ffmpeg -- it only seems to support 
-			// sequential access.  Fix this in the highgui build if possible.
-			if (nFrames == 0) {
-				// this is not a seekable format, so we will convert it and save to a file
-				wcscat(szFileName,L".seekable.avi");
-				if (GetSaveFileName(&ofn)) {
-					// TODO: move all of this into ProgressDialog (and rename the class)
-//					double fps = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FPS);
-
-					CvVideoWriter* videoWriter = cvCreateVideoWriter(W2A(szFileName), CV_FOURCC('D','I','V','X'), 30, cvSize(videoX, videoY), 1);
-					CProgressDialog progressWnd(currentFrame, videoCapture, videoWriter);
-
-					progressWnd.DoModal();
-
-					cvReleaseVideoWriter(&videoWriter);
-					cvReleaseCapture(&videoCapture);
-					videoCapture = cvCreateFileCapture(W2A(szFileName));
-					nFrames = progressWnd.frameNum;
-					if (!videoCapture) return;
-				} else {
-					cvReleaseCapture(&videoCapture);
-					videoCapture = NULL;
-					return;
-				}
-			}
-
-			// create an image to store a copy of the current frame
-            copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
-
-            // Create a bitmap to display video
-            bmpVideo = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
-
-            EnableControls(TRUE);
-            SendMessage(m_slider, TBM_SETRANGEMIN, FALSE, 0);
-            SendMessage(m_slider, TBM_SETRANGEMAX, FALSE, nFrames-1);
-            SendMessage(m_slider, TBM_SETPOS, FALSE, 0);
-            ShowFrame(0);
-            InvalidateRect(m_videoRect,FALSE);
-        }
-    }
 }
 
 void CVideoMarkup::EnableControls(BOOL enabled) {
@@ -140,8 +54,8 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     Rect videoBounds(0,0,VIDEO_X,VIDEO_Y);
     graphics->SetClip(videoBounds);
     
-    if (videoLoaded) {
-        if (bmpVideo != NULL) graphics->DrawImage(bmpVideo,videoBounds);
+    if (m_videoLoader.videoLoaded) {
+        if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,videoBounds);
 
         if (showGuesses) { // highlight computer's guesses
             for (list<Rect>::iterator i = objGuesses.begin(); i != objGuesses.end(); i++) {
@@ -179,7 +93,7 @@ LRESULT CVideoMarkup::OnButtonDown( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
     p.x = LOWORD(lParam);
     p.y = HIWORD(lParam);
 
-    if (!videoLoaded) return 0;
+    if (!m_videoLoader.videoLoaded) return 0;
     if (!m_videoRect.PtInRect(p)) return 0;
 
     pathComplete = false;
@@ -207,7 +121,7 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
     p.x = LOWORD(lParam);
     p.y = HIWORD(lParam);
 
-    if (!videoLoaded) return 0;
+    if (!m_videoLoader.videoLoaded) return 0;
 
     if ((wParam & MK_LBUTTON) || (wParam & MK_RBUTTON)) { // mouse is down
         if (draggingIcon) { // we are dragging in listview
@@ -261,7 +175,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
     p.x = LOWORD(lParam);
     p.y = HIWORD(lParam);
 
-    if (!videoLoaded) return 0;
+    if (!m_videoLoader.videoLoaded) return 0;
 
     if (draggingIcon) { // we just completed an icon drag
         // End the drag-and-drop process
@@ -324,8 +238,8 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 
         Rect videoBounds(0,0,VIDEO_X,VIDEO_Y);
         selectRect.Intersect(videoBounds);
-        double scaleX = ((double)videoX) / ((double)VIDEO_X);
-        double scaleY = ((double)videoY) / ((double)VIDEO_Y);
+        double scaleX = ((double)m_videoLoader.videoX) / ((double)VIDEO_X);
+        double scaleY = ((double)m_videoLoader.videoY) / ((double)VIDEO_Y);
         selectRect.X = (scaleX * selectRect.X);
         selectRect.Y = (scaleY * selectRect.Y);
         selectRect.Width = (scaleX * selectRect.Width);
@@ -333,7 +247,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 
         // discard tiny samples since they won't help
         if ((selectRect.Width > 10) && (selectRect.Height > 10)) {
-            TrainingSample *sample = new TrainingSample(copyFrame, m_sampleListView, m_hImageList, selectRect, currentGroupId);
+            TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, m_sampleListView, m_hImageList, selectRect, currentGroupId);
             sampleSet->AddSample(sample);
         }
         InvalidateRect(&m_videoRect, FALSE);
@@ -348,7 +262,14 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM, LPARAM, BOOL& )
     selectStart.X = 0;
     selectStart.Y = 0;
     selectCurrent = selectStart;
-    ShowFrame(dwPosition);
+
+	// TODO: change showguesses to radio button, and only do this on mouseup to increase speed
+	showGuesses = false;
+	if (classifier->isTrained) {
+		m_showButton.EnableWindow(TRUE);
+	}
+
+	m_videoLoader.LoadFrame(dwPosition);
     InvalidateRect(&m_videoRect, FALSE);
     return 0;
 }
@@ -415,9 +336,6 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Create the video slider
     m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS | TBS_BOTH );
 	
-	// Create the progress bar
-	m_progressBar.Create(m_hWnd, CRect(VIDEO_X+25,VIDEO_Y+5,VIDEO_X+175,VIDEO_Y+SLIDER_Y), _T("Training..."), WS_CHILD);
-
     return 0;
 }
 
@@ -434,8 +352,6 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
     delete negSelectPen;
     delete negBrush;
     delete hoverBrush;
-    // TODO: figure out how to delete bmpVideo when data buffer has already been cleared (unlock bits?)
-    //    delete bmpVideo;
 	DeleteDC(hdcmem);
 	DeleteObject(hbm);
     DeleteObject(hTrashCursor);
@@ -444,7 +360,6 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
     m_slider.DestroyWindow();
     m_showButton.DestroyWindow();
     m_trainButton.DestroyWindow();
-	m_progressBar.DestroyWindow();
     sampleSet->DeleteAllSamples();
     delete sampleSet;
     
@@ -458,26 +373,23 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     HWND hwndControl = (HWND) lParam;
     if (hwndControl == m_trainButton) {
 
-        // TODO: launch training in a separate thread to allow cancelling in middle
         EnableControls(FALSE);
-        SetCursor(LoadCursor(NULL, IDC_WAIT));
-		m_progressBar.ShowWindow(TRUE);
-        SendMessage(m_progressBar, PBM_SETPOS, 0, 0);
         if (!classifier->isTrained) {
-            classifier->Train(sampleSet, m_progressBar);
+			classifier->PrepareData(sampleSet);
+			classifier->StartTraining();
         } else {
-            classifier->AddStage(sampleSet, m_progressBar);
+            classifier->nStages++;
+			classifier->PrepareData(sampleSet);
+			classifier->StartTraining();
         }
-		m_progressBar.ShowWindow(FALSE);
         EnableControls(TRUE);
-        SetCursor(LoadCursor(NULL, IDC_ARROW));
 
         m_trainButton.SetWindowTextW(L"Think Harder!");
     } else if (hwndControl == m_showButton) {
         showGuesses = true;
         EnableControls(FALSE);
         SetCursor(LoadCursor(NULL, IDC_WAIT));
-        classifier->ClassifyFrame(copyFrame, &objGuesses);
+        classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
         SetCursor(LoadCursor(NULL, IDC_ARROW));
         InvalidateRect(NULL,FALSE);
         EnableControls(TRUE);
@@ -533,30 +445,14 @@ LRESULT CVideoMarkup::OnBeginDrag(int idCtrl, LPNMHDR pnmh, BOOL&) {
     return 0;
 }
 
-void CVideoMarkup::ShowFrame(long framenum) {
-    if (!videoLoaded) return;
-    cvSetCaptureProperty(videoCapture, CV_CAP_PROP_POS_FRAMES, framenum);
-    currentFrame = cvQueryFrame(videoCapture);
-	if (!currentFrame) return;
-
-    if (currentFrame->origin  == IPL_ORIGIN_TL) {
-        cvCopy(currentFrame,copyFrame);
-    } else {
-        cvFlip(currentFrame,copyFrame);
-    }
-
-    showGuesses = false;
-    if (classifier->isTrained) {
-        m_showButton.EnableWindow(TRUE);
-    }
-
-    Rect videoBounds(0, 0, videoX, videoY);
-    BitmapData bmData;
-    bmData.Width = videoX;
-    bmData.Height = videoY;
-    bmData.PixelFormat = PixelFormat24bppRGB;
-    bmData.Stride = copyFrame->widthStep;
-    bmData.Scan0 = copyFrame->imageData;
-    bmpVideo->LockBits(&videoBounds, ImageLockModeWrite | ImageLockModeUserInputBuf, PixelFormat24bppRGB, &bmData);
-    bmpVideo->UnlockBits(&bmData);
+void CVideoMarkup::OpenVideoFile() {
+	m_videoLoader.OpenVideoFile(m_hWnd);
+	if (m_videoLoader.videoLoaded) {
+		EnableControls(TRUE);
+		SendMessage(m_slider, TBM_SETRANGEMIN, FALSE, 0);
+		SendMessage(m_slider, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
+		SendMessage(m_slider, TBM_SETPOS, TRUE, 0);
+		m_videoLoader.LoadFrame(0);
+		InvalidateRect(m_videoRect,FALSE);
+	}
 }

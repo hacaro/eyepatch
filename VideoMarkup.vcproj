@@ -209,6 +209,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\VideoLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\VideoMarkup.cpp"
 				>
 			</File>
@@ -263,6 +267,10 @@
 			</File>
 			<File
 				RelativePath=".\TrainingSet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoLoader.h"
 				>
 			</File>
 			<File
@@ -321,5 +329,9 @@
 		</Filter>
 	</Files>
 	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="Eyepatch.rc"
+		/>
 	</Globals>
 </VisualStudioProject>

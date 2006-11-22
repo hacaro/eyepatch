@@ -8,6 +8,7 @@
 #define SAMPLE_X 24
 #define SAMPLE_Y 24
 #define MAX_SAMPLES 100
+#define MIN_HAAR_STAGES 4
 #define WINDOW_X 1024
 #define WINDOW_Y 565
 #define VIDEO_X 640

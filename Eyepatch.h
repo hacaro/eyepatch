@@ -7,8 +7,6 @@ typedef CWinTraits<WS_VISIBLE|WS_SYSMENU|WS_CAPTION,0> EyepatchTraits;
 class CEyepatch: public CWindowImpl<CEyepatch,CWindow,EyepatchTraits>
 {
 public:
-    CVideoMarkup m_videoMarkup;
-
     CEyepatch();
     ~CEyepatch();
 
@@ -37,6 +35,6 @@ public:
     END_MSG_MAP()
 
 private:
+    CVideoMarkup m_videoMarkup;
     HMENU hMenu;
-
 };
