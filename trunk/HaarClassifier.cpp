@@ -7,9 +7,13 @@
 
 HaarClassifier::HaarClassifier() {
     isTrained = false;
+	readyForTraining = false;
     cascade = NULL;
-    nStages = 4;
+    nStages = MIN_HAAR_STAGES;
     storage = cvCreateMemStorage(0);
+	nPosSamples = 0;
+	nNegSamples = 0;
+	m_hThread = NULL;
 }
 
 HaarClassifier::~HaarClassifier() {
@@ -17,13 +21,10 @@ HaarClassifier::~HaarClassifier() {
     if (isTrained) cvReleaseHaarClassifierCascade(&cascade);
 }
 
-void HaarClassifier::Train(TrainingSet *sampleSet, HWND hwndProgress) {
+void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
+	readyForTraining = false;
     char tempPathname[MAX_PATH];
-    char vecFilename[MAX_PATH];
-    char negFilename[MAX_PATH];
     char imageFilename[MAX_PATH];
-    char classifierPathname[MAX_PATH];
-    char classifierName[MAX_PATH];
 
     GetTempPathA(MAX_PATH, tempPathname);
     sprintf_s(vecFilename, "%spossamples.vec", tempPathname);
@@ -39,7 +40,7 @@ void HaarClassifier::Train(TrainingSet *sampleSet, HWND hwndProgress) {
     int imgNum=0;
 
     icvWriteVecHeader(vec, sampleSet->posSampleCount, SAMPLE_X, SAMPLE_Y);
-   
+
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
@@ -54,20 +55,45 @@ void HaarClassifier::Train(TrainingSet *sampleSet, HWND hwndProgress) {
     }
     fclose(vec);
     fclose(neglist);
-
-    cvCreateCascadeClassifier(classifierPathname,  vecFilename, negFilename, 
-        sampleSet->posSampleCount, sampleSet->negSampleCount, nStages, 0, 2, .99, .5, .95, 0, 1, 1, SAMPLE_X, SAMPLE_Y, 3, 0, hwndProgress);
-
-    cascade = cvLoadHaarClassifierCascade(classifierName, cvSize(SAMPLE_X, SAMPLE_Y));
-    isTrained = true;
-
+	nPosSamples = sampleSet->posSampleCount;
+	nNegSamples = sampleSet->negSampleCount;
+	readyForTraining = true;
 }
 
-int HaarClassifier::AddStage(TrainingSet *sampleSet, HWND hwndProgress) {
-    if (!isTrained) return 0;
-    nStages++;
-    Train(sampleSet, hwndProgress);
-    return nStages;
+void HaarClassifier::StartTraining() {
+	if (!readyForTraining) return;
+	m_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadCallback, (LPVOID)this, 0, &threadID);
+	// TODO: thread should probably be launched from the progress dialog
+	// rather than using a CSimpleDialog.
+	m_progressDlg.DoModal();
+	if (m_hThread) { // HACK: thread is still running so we must have hit cancel
+		CancelTraining();
+	}
+    cascade = cvLoadHaarClassifierCascade(classifierName, cvSize(SAMPLE_X, SAMPLE_Y));
+	if (cascade != NULL) {
+	    isTrained = true;
+	}
+}
+
+void HaarClassifier::CancelTraining() {
+	if (m_hThread) TerminateThread(m_hThread, 0);
+	m_hThread = NULL;
+}
+
+DWORD WINAPI HaarClassifier::ThreadCallback(HaarClassifier* instance) {
+	instance->Train();
+	return 1L;
+}
+
+void HaarClassifier::Train() {
+	if (!readyForTraining) return;
+	while (!m_progressDlg.IsWindow()) {
+		// HACK: wait until progress dialog has been initialized
+	}
+    cvCreateCascadeClassifier(classifierPathname,  vecFilename, negFilename, 
+        nPosSamples, nNegSamples, nStages, 0, 2, .99, .5, .95, 0, 1, 1, SAMPLE_X, SAMPLE_Y, 3, 0, m_progressDlg.GetDlgItem(IDC_HAAR_PROGRESS));
+	m_hThread = NULL;
+	SendMessage(m_progressDlg, WM_CLOSE, 0, 0);
 }
 
 void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {

@@ -1,0 +1,59 @@
+#pragma once
+
+class CVideoLoader;
+
+class CVideoLoaderDialog : public CDialogImpl<CVideoLoaderDialog> {
+public:
+	CVideoLoaderDialog(CVideoLoader*);
+	~CVideoLoaderDialog();
+
+    enum { IDD = IDD_VIDEOLOADER_DIALOG };
+    BEGIN_MSG_MAP(CVideoLoaderDialog)
+        MESSAGE_HANDLER(WM_PAINT, OnPaint)
+        MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+        MESSAGE_HANDLER(WM_CLOSE, OnClose)
+        MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+        COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
+	END_MSG_MAP()
+
+	LRESULT OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+    LRESULT OnCancel(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	void ConvertFrames();
+
+private:
+	CRect videoRect;
+	Rect drawRect;
+	DWORD threadID;
+	HANDLE m_hMutex;
+	HANDLE m_hThread;
+	static DWORD WINAPI ThreadCallback(CVideoLoaderDialog*);
+	CVideoLoader *parent;
+};
+
+class CVideoLoader
+{
+public: 
+	CVideoLoader();
+	~CVideoLoader();
+	BOOL OpenVideoFile(HWND);
+    void LoadFrame(long);
+	void ConvertFrame();
+
+    long nFrames;
+	int videoX, videoY;
+    BOOL videoLoaded;
+    IplImage *copyFrame;
+    Bitmap *bmpVideo;
+
+private:
+    CvCapture *videoCapture;
+	CvVideoWriter *videoWriter;
+	
+    IplImage *currentFrame;
+
+	friend class CVideoLoaderDialog;
+	CVideoLoaderDialog m_hVideoLoaderDialog;
+};
