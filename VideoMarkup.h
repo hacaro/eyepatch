@@ -66,8 +66,8 @@ private:
 
 	Graphics *graphics;
     PointF selectStart, selectCurrent;
-    Pen *posPen, *negPen, *posSelectPen, *negSelectPen;
-    SolidBrush *posBrush, *negBrush, *hoverBrush;
+    Pen posSelectPen, negSelectPen, guessPen;
+    SolidBrush posBrush, negBrush, hoverBrush, grayBrush;
     bool pathComplete;
     int currentGroupId;
     CRect m_videoRect;
