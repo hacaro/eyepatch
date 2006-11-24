@@ -2,6 +2,7 @@
 
 #include "precomp.h"
 #include "VideoLoader.h"
+#include "CamshiftClassifier.h"
 
 typedef CWinTraits<WS_CHILD|WS_VISIBLE,0> CVideoMarkupTraits;
 
@@ -73,8 +74,8 @@ private:
     CRect m_videoRect;
 
 	CVideoLoader m_videoLoader;
-    TrainingSet *sampleSet;
-    HaarClassifier *classifier;
+    TrainingSet sampleSet;
+    CamshiftClassifier classifier;
 
     // drag and drop stuff
     HIMAGELIST hGroupHeaderImages;

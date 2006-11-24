@@ -11,7 +11,6 @@ public:
     ~TrainingSet(void);
     HIMAGELIST GetImageList();
     void AddSample(TrainingSample *sample);
-    void DeleteAllSamples();
     void SetSampleGroup(UINT sampleId, int groupId);
 
 private:

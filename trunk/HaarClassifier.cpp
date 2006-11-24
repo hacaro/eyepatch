@@ -2,6 +2,7 @@
 #include "_cvhaartraining.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
+#include "Classifier.h"
 #include "HaarClassifier.h"
 
 HaarClassifierDialog::HaarClassifierDialog(HaarClassifier *p) {
@@ -45,14 +46,11 @@ void HaarClassifierDialog::Train() {
 
 
 HaarClassifier::HaarClassifier() :
+	Classifier(),
 	m_progressDlg(this) {
-    isTrained = false;
-	readyForTraining = false;
     cascade = NULL;
-    nStages = MIN_HAAR_STAGES;
+    nStages = START_HAAR_STAGES;
     storage = cvCreateMemStorage(0);
-	nPosSamples = 0;
-	nNegSamples = 0;
 	nStagesCompleted = 0;
 }
 

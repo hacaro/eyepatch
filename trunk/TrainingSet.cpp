@@ -7,27 +7,22 @@ TrainingSet::TrainingSet(void) {
     negSampleCount = 0;
 }
 
-TrainingSet::~TrainingSet(void)
-{
+TrainingSet::~TrainingSet(void) {
+    for (map<UINT, TrainingSample*>::iterator i = sampleMap.begin(); i != sampleMap.end(); i++) {
+        TrainingSample *sample = (*i).second;
+        delete sample;
+    }
 }
 
 HIMAGELIST TrainingSet::GetImageList() {
     // TODO: store and maintain imagelist here instead of in videomarkup?
-    return NULL;    
+    return NULL;
 }
 
 void TrainingSet::AddSample(TrainingSample *sample) {
     if (sample->iGroupId == 0) posSampleCount++;
     else negSampleCount++;
     sampleMap[sample->id] = sample;
-}
-
-void TrainingSet::DeleteAllSamples() {
-    // TODO: we should put this in destructor and allocate samples in AddSample instead of in VideoMarkup
-    for (map<UINT, TrainingSample*>::iterator i = sampleMap.begin(); i != sampleMap.end(); i++) {
-        TrainingSample *sample = (*i).second;
-        delete sample;
-    }
 }
 
 void  TrainingSet::SetSampleGroup(UINT sampleId, int groupId) {
