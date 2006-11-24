@@ -1,6 +1,7 @@
 #include "precomp.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
+#include "CamshiftClassifier.h"
 #include "HaarClassifier.h"
 #include "VideoLoader.h"
 #include "VideoMarkup.h"
@@ -33,19 +34,15 @@ CVideoMarkup::CVideoMarkup() :
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
     showGuesses = false;
-
-    sampleSet = new TrainingSet();
-    classifier = new HaarClassifier();
 }
 
 
 CVideoMarkup::~CVideoMarkup() {
-    delete classifier;
 }
 
 void CVideoMarkup::EnableControls(BOOL enabled) {
     m_trainButton.EnableWindow(enabled);
-	if (classifier->isTrained) {
+	if (classifier.isTrained) {
 		m_showButton.EnableWindow(enabled);
 	} else {
 		m_showButton.EnableWindow(false);
@@ -67,8 +64,8 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
         if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,drawBounds);
 
         if (showGuesses) { // highlight computer's guesses
-			double scaleX = ((double)VIDEO_X) / ((double)m_videoLoader.videoX);
-			double scaleY = ((double)VIDEO_Y) / ((double)m_videoLoader.videoY);
+			REAL scaleX = ((REAL)VIDEO_X) / ((REAL)m_videoLoader.videoX);
+			REAL scaleY = ((REAL)VIDEO_Y) / ((REAL)m_videoLoader.videoY);
 			graphics->ScaleTransform(scaleX, scaleY);
 			Region guessRegion;
 			GraphicsPath guessPath;
@@ -86,10 +83,10 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
         }
 
         Rect selectRect;
-        selectRect.X = min(selectStart.X, selectCurrent.X);
-        selectRect.Y = min(selectStart.Y, selectCurrent.Y);
-        selectRect.Width = abs(selectStart.X - selectCurrent.X);
-        selectRect.Height = abs(selectStart.Y - selectCurrent.Y);
+        selectRect.X = (INT) min(selectStart.X, selectCurrent.X);
+        selectRect.Y = (INT) min(selectStart.Y, selectCurrent.Y);
+        selectRect.Width = (INT) abs(selectStart.X - selectCurrent.X);
+        selectRect.Height = (INT) abs(selectStart.Y - selectCurrent.Y);
 
         if (!pathComplete) {
             if (currentGroupId == 0) {
@@ -241,7 +238,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
             ListView_InsertItem(m_sampleListView, &lvi);
 
             // update sample in training set too
-            sampleSet->SetSampleGroup(iSelection, newGroupId);
+            sampleSet.SetSampleGroup(iSelection, newGroupId);
         }
 
     } else { // we just finished drawing a path
@@ -253,10 +250,10 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         pathComplete = true;
 
         Rect selectRect;
-        selectRect.X = min(selectStart.X, selectCurrent.X);
-        selectRect.Y = min(selectStart.Y, selectCurrent.Y);
-        selectRect.Width = abs(selectStart.X - selectCurrent.X);
-        selectRect.Height = abs(selectStart.Y - selectCurrent.Y);
+        selectRect.X = (INT) min(selectStart.X, selectCurrent.X);
+        selectRect.Y = (INT) min(selectStart.Y, selectCurrent.Y);
+        selectRect.Width = (INT) abs(selectStart.X - selectCurrent.X);
+        selectRect.Height = (INT) abs(selectStart.Y - selectCurrent.Y);
 
         Rect drawBounds(0,0,VIDEO_X,VIDEO_Y);
         selectRect.Intersect(drawBounds);
@@ -270,7 +267,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         // discard tiny samples since they won't help
         if ((selectRect.Width > 10) && (selectRect.Height > 10)) {
             TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, m_sampleListView, m_hImageList, selectRect, currentGroupId);
-            sampleSet->AddSample(sample);
+            sampleSet.AddSample(sample);
         }
         InvalidateRect(&m_videoRect, FALSE);
     }
@@ -287,7 +284,7 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM, LPARAM, BOOL& )
 
 	// TODO: change showguesses to radio button, and only do this on mouseup to increase speed
 	showGuesses = false;
-	if (classifier->isTrained) {
+	if (classifier.isTrained) {
 		m_showButton.EnableWindow(TRUE);
 	}
 
@@ -350,8 +347,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 }
 
 
-LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
-{
+LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
     ImageList_RemoveAll(m_hImageList);
     ImageList_Destroy(m_hImageList);
 	delete graphics;
@@ -363,11 +359,7 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
     m_slider.DestroyWindow();
     m_showButton.DestroyWindow();
     m_trainButton.DestroyWindow();
-    sampleSet->DeleteAllSamples();
-    delete sampleSet;
-    
     // TODO: non window-related variables should be deleted in destructor instead of here
-
     PostQuitMessage( 0 );
 	return 0;
 }
@@ -377,13 +369,13 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     if (hwndControl == m_trainButton) {
 
         EnableControls(FALSE);
-        if (!classifier->isTrained) {
-			classifier->PrepareData(sampleSet);
-			classifier->StartTraining();
+        if (!classifier.isTrained) {
+			classifier.PrepareData(&sampleSet);
+			classifier.StartTraining();
         } else {
-            classifier->nStages++;
-			classifier->PrepareData(sampleSet);
-			classifier->StartTraining();
+//            classifier.nStages++;
+			classifier.PrepareData(&sampleSet);
+			classifier.StartTraining();
         }
         EnableControls(TRUE);
 
@@ -392,7 +384,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
         showGuesses = true;
         EnableControls(FALSE);
         SetCursor(LoadCursor(NULL, IDC_WAIT));
-        classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        classifier.ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
         SetCursor(LoadCursor(NULL, IDC_ARROW));
         InvalidateRect(NULL,FALSE);
         EnableControls(TRUE);

@@ -1,4 +1,5 @@
 #pragma once
+#include "Classifier.h"
 
 class HaarClassifier;
 
@@ -25,17 +26,15 @@ private:
 
 };
 
-class HaarClassifier
-{
+class HaarClassifier : public Classifier {
 public:
     HaarClassifier();
-    ~HaarClassifier(void);
+    ~HaarClassifier();
 
 	void PrepareData(TrainingSet*);
 	void StartTraining();
 	void ClassifyFrame(IplImage*, list<Rect>*);
 
-	bool isTrained, readyForTraining;
 	int nStages, nStagesCompleted;
 
 private:
@@ -47,7 +46,6 @@ private:
     char negFilename[MAX_PATH];
     char classifierPathname[MAX_PATH];
     char classifierName[MAX_PATH];
-	int nPosSamples, nNegSamples;
 
 	friend class HaarClassifierDialog;
 	HaarClassifierDialog m_progressDlg;
