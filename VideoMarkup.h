@@ -54,7 +54,7 @@ public:
         NOTIFY_CODE_HANDLER(LVN_BEGINDRAG, OnBeginDrag)
         NOTIFY_CODE_HANDLER(NM_CUSTOMDRAW, OnCustomDraw)
     ALT_MSG_MAP(1)  // video slider
-        MESSAGE_HANDLER(TB_THUMBTRACK, OnTrack)
+        MESSAGE_HANDLER(TB_THUMBTRACK, OnTrack) //SB_THUMBPOSITION on end scroll
     ALT_MSG_MAP(2)  // sample list
     ALT_MSG_MAP(3)  // train button
     ALT_MSG_MAP(4)  // show button
@@ -69,7 +69,8 @@ private:
     PointF selectStart, selectCurrent;
     Pen posSelectPen, negSelectPen, guessPen;
     SolidBrush posBrush, negBrush, hoverBrush, grayBrush;
-    bool pathComplete;
+    bool selectingRegion;
+	bool scrubbingVideo;
     int currentGroupId;
     CRect m_videoRect;
 

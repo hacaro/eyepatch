@@ -60,7 +60,6 @@ HaarClassifier::~HaarClassifier() {
 }
 
 void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
-	readyForTraining = false;
     char tempPathname[MAX_PATH];
     char imageFilename[MAX_PATH];
 
@@ -95,11 +94,10 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
     fclose(neglist);
 	nPosSamples = sampleSet->posSampleCount;
 	nNegSamples = sampleSet->negSampleCount;
-	readyForTraining = true;
 }
 
-void HaarClassifier::StartTraining() {
-	if (!readyForTraining) return;
+void HaarClassifier::StartTraining(TrainingSet* sampleSet) {
+	PrepareData(sampleSet);
 	m_progressDlg.DoModal();
 }
 
