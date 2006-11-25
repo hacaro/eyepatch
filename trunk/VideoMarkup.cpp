@@ -34,6 +34,10 @@ CVideoMarkup::CVideoMarkup() :
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
     showGuesses = false;
+    selectingRegion = false;
+    draggingIcon = false;
+	scrubbingVideo = false;
+	currentGroupId = 0;
 }
 
 
@@ -63,7 +67,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     if (m_videoLoader.videoLoaded) {
         if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,drawBounds);
 
-        if (showGuesses) { // highlight computer's guesses
+        if (showGuesses && !scrubbingVideo) { // highlight computer's guesses
 			REAL scaleX = ((REAL)VIDEO_X) / ((REAL)m_videoLoader.videoX);
 			REAL scaleY = ((REAL)VIDEO_Y) / ((REAL)m_videoLoader.videoY);
 			graphics->ScaleTransform(scaleX, scaleY);
@@ -88,7 +92,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
         selectRect.Width = (INT) abs(selectStart.X - selectCurrent.X);
         selectRect.Height = (INT) abs(selectStart.Y - selectCurrent.Y);
 
-        if (!pathComplete) {
+        if (selectingRegion) {
             if (currentGroupId == 0) {
                 graphics->FillRectangle(&posBrush, selectRect);
                 graphics->DrawRectangle(&posSelectPen, selectRect);
@@ -115,7 +119,7 @@ LRESULT CVideoMarkup::OnButtonDown( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
     if (!m_videoLoader.videoLoaded) return 0;
     if (!m_videoRect.PtInRect(p)) return 0;
 
-    pathComplete = false;
+    selectingRegion = true;
 
     // If the right button is down, we consider this a negative sample
     // TODO: do this some better way
@@ -207,8 +211,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 
         // Determine the position of the drop point
         LVHITTESTINFO lvhti;
-        lvhti.pt.x = p.x;
-        lvhti.pt.y = p.y;
+        lvhti.pt = p;
         ClientToScreen(&lvhti.pt);
         ::ScreenToClient(m_sampleListView, &lvhti.pt);
         ListView_HitTestEx(m_sampleListView, &lvhti);
@@ -241,13 +244,13 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
             sampleSet.SetSampleGroup(iSelection, newGroupId);
         }
 
-    } else { // we just finished drawing a path
+    } else if (selectingRegion) { // we just finished drawing a path
         ClipCursor(NULL);   // restore full cursor movement
         if (!m_videoRect.PtInRect(p)) {
             InvalidateRect(m_videoRect,FALSE);
             return 0;
         }
-        pathComplete = true;
+        selectingRegion = false;
 
         Rect selectRect;
         selectRect.X = (INT) min(selectStart.X, selectCurrent.X);
@@ -259,10 +262,10 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         selectRect.Intersect(drawBounds);
         double scaleX = ((double)m_videoLoader.videoX) / ((double)VIDEO_X);
         double scaleY = ((double)m_videoLoader.videoY) / ((double)VIDEO_Y);
-        selectRect.X = (scaleX * selectRect.X);
-        selectRect.Y = (scaleY * selectRect.Y);
-        selectRect.Width = (scaleX * selectRect.Width);
-        selectRect.Height = (scaleY * selectRect.Height);
+        selectRect.X = (INT) (scaleX * selectRect.X);
+        selectRect.Y = (INT) (scaleY * selectRect.Y);
+        selectRect.Width = (INT) (scaleX * selectRect.Width);
+        selectRect.Height = (INT) (scaleY * selectRect.Height);
 
         // discard tiny samples since they won't help
         if ((selectRect.Width > 10) && (selectRect.Height > 10)) {
@@ -274,21 +277,14 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 	return 0;
 }
 
-LRESULT CVideoMarkup::OnTrack( UINT, WPARAM, LPARAM, BOOL& )
-{
-    int dwPosition  = SendMessage(m_slider, TBM_GETPOS, 0, 0);
-    pathComplete = false;
+LRESULT CVideoMarkup::OnTrack( UINT, WPARAM, LPARAM, BOOL& ) {
+    long sliderPosition = (long) SendMessage(m_slider, TBM_GETPOS, 0, 0);
+    selectingRegion = false;
     selectStart.X = 0;
     selectStart.Y = 0;
     selectCurrent = selectStart;
 
-	// TODO: change showguesses to radio button, and only do this on mouseup to increase speed
-	showGuesses = false;
-	if (classifier.isTrained) {
-		m_showButton.EnableWindow(TRUE);
-	}
-
-	m_videoLoader.LoadFrame(dwPosition);
+	m_videoLoader.LoadFrame(sliderPosition);
     InvalidateRect(&m_videoRect, FALSE);
     return 0;
 }
@@ -304,8 +300,6 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 	graphics = new Graphics(hdcmem);
 	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
     graphics->Clear(Color(255,255,255));
-    pathComplete = false;
-    draggingIcon = false;
     hTrashCursor = LoadCursor(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDC_TRASHCURSOR));
     hDropCursor = LoadCursor(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDC_DROPCURSOR));
 
@@ -338,7 +332,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     m_trainButton.Create(m_hWnd, CRect(VIDEO_X+25,VIDEO_Y+5,VIDEO_X+175,VIDEO_Y+SLIDER_Y), _T("Learn from Examples"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON);
 
     // Create the "show" button
-    m_showButton.Create(m_hWnd, CRect(VIDEO_X+200,VIDEO_Y+5,VIDEO_X+350,VIDEO_Y+SLIDER_Y), _T("Show Some Guesses!"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON);
+    m_showButton.Create(m_hWnd, CRect(VIDEO_X+200,VIDEO_Y+5,VIDEO_X+350,VIDEO_Y+SLIDER_Y), _T("Show Some Guesses!"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_AUTOCHECKBOX);
 
     // Create the video slider
     m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS | TBS_BOTH );
@@ -367,29 +361,19 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     HWND hwndControl = (HWND) lParam;
     if (hwndControl == m_trainButton) {
-
         EnableControls(FALSE);
-        if (!classifier.isTrained) {
-			classifier.PrepareData(&sampleSet);
-			classifier.StartTraining();
-        } else {
-//            classifier.nStages++;
-			classifier.PrepareData(&sampleSet);
-			classifier.StartTraining();
-        }
+		classifier.StartTraining(&sampleSet);
         EnableControls(TRUE);
-
-        m_trainButton.SetWindowTextW(L"Think Harder!");
     } else if (hwndControl == m_showButton) {
-        showGuesses = true;
-        EnableControls(FALSE);
-        SetCursor(LoadCursor(NULL, IDC_WAIT));
+        showGuesses = !showGuesses;
+//        EnableControls(FALSE);
+//        SetCursor(LoadCursor(NULL, IDC_WAIT));
         classifier.ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
-        SetCursor(LoadCursor(NULL, IDC_ARROW));
+//        SetCursor(LoadCursor(NULL, IDC_ARROW));
         InvalidateRect(NULL,FALSE);
-        EnableControls(TRUE);
-        SetCursor(LoadCursor(NULL, IDC_ARROW));
-        m_showButton.EnableWindow(FALSE);
+//        EnableControls(TRUE);
+//        SetCursor(LoadCursor(NULL, IDC_ARROW));
+//        m_showButton.EnableWindow(FALSE);
     }
     return 0;
 }

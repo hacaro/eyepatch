@@ -10,6 +10,7 @@
 #define MAX_SAMPLES 100
 #define MIN_HAAR_STAGES 5
 #define START_HAAR_STAGES 10
+#define COLOR_MIN_AREA 100
 #define WINDOW_X 1024
 #define WINDOW_Y 565
 #define VIDEO_X 640

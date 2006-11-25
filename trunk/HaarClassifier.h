@@ -31,13 +31,13 @@ public:
     HaarClassifier();
     ~HaarClassifier();
 
-	void PrepareData(TrainingSet*);
-	void StartTraining();
+	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
 
 	int nStages, nStagesCompleted;
 
 private:
+	void PrepareData(TrainingSet*);
 
 	CvHaarClassifierCascade* cascade;
     CvMemStorage* storage;

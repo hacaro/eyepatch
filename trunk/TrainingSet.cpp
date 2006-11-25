@@ -26,5 +26,6 @@ void TrainingSet::AddSample(TrainingSample *sample) {
 }
 
 void  TrainingSet::SetSampleGroup(UINT sampleId, int groupId) {
-    sampleMap[sampleId]->iGroupId = groupId;
+    TrainingSample *sample = sampleMap[sampleId];
+    sample->iGroupId = groupId;
 }
