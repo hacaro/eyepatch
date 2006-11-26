@@ -277,9 +277,14 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 	return 0;
 }
 
-LRESULT CVideoMarkup::OnTrack( UINT, WPARAM, LPARAM, BOOL& ) {
+LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     long sliderPosition = (long) SendMessage(m_slider, TBM_GETPOS, 0, 0);
     selectingRegion = false;
+	if (LOWORD(wParam) == SB_THUMBTRACK) {
+		scrubbingVideo = true;
+	} else {
+		scrubbingVideo = false;
+	}
     selectStart.X = 0;
     selectStart.Y = 0;
     selectCurrent = selectStart;
