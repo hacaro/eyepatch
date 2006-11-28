@@ -29,10 +29,11 @@ CVideoMarkup::CVideoMarkup() :
     posBrush(Color(50,100,255,100)),
     negBrush(Color(50,255,100,100)),
     hoverBrush(Color(25, 50, 150, 255)),
-    grayBrush(Color(100, 0, 0, 0)) {
+    grayBrush(Color(150, 0, 0, 0)) {
 	guessPen.SetLineJoin(LineJoinRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
+    classifier = new HaarClassifier();
     showGuesses = false;
     selectingRegion = false;
     draggingIcon = false;
@@ -42,11 +43,12 @@ CVideoMarkup::CVideoMarkup() :
 
 
 CVideoMarkup::~CVideoMarkup() {
+    delete classifier;
 }
 
 void CVideoMarkup::EnableControls(BOOL enabled) {
     m_filterSelect.EnableWindow(enabled);
-    if (enabled && !classifier.isTrained) {
+    if (enabled && !classifier->isTrained) {
         m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
     }
 	m_slider.EnableWindow(enabled);
@@ -288,7 +290,7 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     selectCurrent = selectStart;
 
     if (showGuesses && ! scrubbingVideo) {
-        classifier.ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
     }
     m_videoLoader.LoadFrame(sliderPosition);
     InvalidateRect(&m_videoRect, FALSE);
@@ -340,6 +342,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
     m_filterSelect.MoveWindow(VIDEO_X, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
+    m_filterSelect.CheckRadioButton(IDC_RADIO_APPEARANCE, IDC_RADIO_SHAPE, IDC_RADIO_APPEARANCE);
     m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);
 
@@ -364,17 +367,41 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 }
 
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
-    if (wParam == IDC_TRAINBUTTON) {
-        EnableControls(FALSE);
-		classifier.StartTraining(&sampleSet);
-        EnableControls(TRUE);
-    } else if (wParam == IDC_SHOWBUTTON) {
-        showGuesses = !showGuesses;
+    switch(wParam) {
+        case IDC_TRAINBUTTON:
+            if (sampleSet.posSampleCount < 1) {
+                // TODO: display informative error message
+                break;
+            }
+            EnableControls(FALSE);
+		    classifier->StartTraining(&sampleSet);
+            EnableControls(TRUE);
+            break;
+        case IDC_SHOWBUTTON:
+            showGuesses = !showGuesses;
+            break;
+        case IDC_RADIO_COLOR:
+            delete classifier;
+            classifier = new CamshiftClassifier();
+            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+            objGuesses.clear();
+            showGuesses = false;
+            break;
+        case IDC_RADIO_APPEARANCE:
+            delete classifier;
+            classifier = new HaarClassifier();
+            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+            objGuesses.clear();
+            showGuesses = false;
+            break;
     }
     if (showGuesses) {
-        classifier.ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
     }
     InvalidateRect(NULL,FALSE);
+
     return 0;
 }
 

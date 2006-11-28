@@ -20,5 +20,8 @@ LRESULT CFilterSelect::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 LRESULT CFilterSelect::OnEnable(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     GetDlgItem(IDC_TRAINBUTTON).EnableWindow(wParam);
     GetDlgItem(IDC_SHOWBUTTON).EnableWindow(wParam);
+    GetDlgItem(IDC_RADIO_APPEARANCE).EnableWindow(wParam);
+    GetDlgItem(IDC_RADIO_COLOR).EnableWindow(wParam);
+    GetDlgItem(IDC_RADIO_SHAPE).EnableWindow(wParam);
     return 1;
 }

@@ -5,9 +5,6 @@ typedef CWinTraits<WS_CHILD|WS_VISIBLE,0> CVideoMarkupTraits;
 class CVideoMarkup: public CWindowImpl<CVideoMarkup, CWindow, CVideoMarkupTraits>
 {
 public:
-    CContainedWindow m_slider, m_sampleListView;
-    CFilterSelect m_filterSelect;
-
     CVideoMarkup();
     ~CVideoMarkup();
     LRESULT OnPaint( UINT, WPARAM, LPARAM, BOOL& );
@@ -70,7 +67,9 @@ private:
 
 	CVideoLoader m_videoLoader;
     TrainingSet sampleSet;
-    CamshiftClassifier classifier;
+    CContainedWindow m_slider, m_sampleListView;
+    CFilterSelect m_filterSelect;
+    Classifier *classifier;
 
     // drag and drop stuff
     HIMAGELIST hGroupHeaderImages;
