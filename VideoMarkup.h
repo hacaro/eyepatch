@@ -5,7 +5,7 @@ typedef CWinTraits<WS_CHILD|WS_VISIBLE,0> CVideoMarkupTraits;
 class CVideoMarkup: public CWindowImpl<CVideoMarkup, CWindow, CVideoMarkupTraits>
 {
 public:
-    CContainedWindow m_slider, m_trainButton, m_showButton, m_sampleListView;
+    CContainedWindow m_slider, m_sampleListView;
     CFilterSelect m_filterSelect;
 
     CVideoMarkup();
@@ -52,8 +52,6 @@ public:
         NOTIFY_CODE_HANDLER(NM_CUSTOMDRAW, OnCustomDraw)
     ALT_MSG_MAP(1)  // video slider
 	ALT_MSG_MAP(2)  // sample list
-    ALT_MSG_MAP(3)  // train button
-    ALT_MSG_MAP(4)  // show button
     END_MSG_MAP()
 
 private:

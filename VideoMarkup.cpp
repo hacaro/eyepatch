@@ -21,9 +21,7 @@ void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
 CVideoMarkup::CVideoMarkup() :
     m_slider(TRACKBAR_CLASS, this, 1),
     m_sampleListView(WC_LISTVIEW, this, 2),
-    m_trainButton(WC_BUTTON, this, 3),
-    m_showButton(WC_BUTTON, this, 4),
-    m_filterSelect(),
+    m_filterSelect(this),
     m_videoRect(0,0,VIDEO_X,VIDEO_Y),
     posSelectPen(Color(100,100,255,100),2),
     negSelectPen(Color(100,255,100,100),2),
@@ -47,12 +45,10 @@ CVideoMarkup::~CVideoMarkup() {
 }
 
 void CVideoMarkup::EnableControls(BOOL enabled) {
-    m_trainButton.EnableWindow(enabled);
-	if (classifier.isTrained) {
-		m_showButton.EnableWindow(enabled);
-	} else {
-		m_showButton.EnableWindow(false);
-	}
+    m_filterSelect.EnableWindow(enabled);
+    if (enabled && !classifier.isTrained) {
+        m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+    }
 	m_slider.EnableWindow(enabled);
     m_sampleListView.EnableWindow(enabled);
 }
@@ -338,19 +334,14 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     AddListViewGroup(m_sampleListView, L"Negative Examples", 1);
     AddListViewGroup(m_sampleListView, L"Trash", 2);
 
-    // Create the "train" button
-    m_trainButton.Create(m_hWnd, CRect(VIDEO_X+25,VIDEO_Y+5,VIDEO_X+175,VIDEO_Y+SLIDER_Y), _T("Learn from Examples"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON);
-
-    // Create the "show" button
-    m_showButton.Create(m_hWnd, CRect(VIDEO_X+200,VIDEO_Y+5,VIDEO_X+350,VIDEO_Y+SLIDER_Y), _T("Show Some Guesses!"), WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_AUTOCHECKBOX);
-
     // Create the video slider
     m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS | TBS_BOTH );
 	
     // Create the filter selector
-    m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE);
+    m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
     m_filterSelect.MoveWindow(VIDEO_X, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
     m_filterSelect.ShowWindow(TRUE);
+    m_filterSelect.EnableWindow(FALSE);
 
     return 0;
 }
@@ -366,30 +357,24 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
     DeleteObject(hDropCursor);
     m_sampleListView.DestroyWindow();
     m_slider.DestroyWindow();
-    m_showButton.DestroyWindow();
-    m_trainButton.DestroyWindow();
+    m_filterSelect.DestroyWindow();
     // TODO: non window-related variables should be deleted in destructor instead of here
     PostQuitMessage( 0 );
 	return 0;
 }
 
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
-    HWND hwndControl = (HWND) lParam;
-    if (hwndControl == m_trainButton) {
+    if (wParam == IDC_TRAINBUTTON) {
         EnableControls(FALSE);
 		classifier.StartTraining(&sampleSet);
         EnableControls(TRUE);
-    } else if (hwndControl == m_showButton) {
+    } else if (wParam == IDC_SHOWBUTTON) {
         showGuesses = !showGuesses;
-//        EnableControls(FALSE);
-//        SetCursor(LoadCursor(NULL, IDC_WAIT));
-        classifier.ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
-//        SetCursor(LoadCursor(NULL, IDC_ARROW));
-        InvalidateRect(NULL,FALSE);
-//        EnableControls(TRUE);
-//        SetCursor(LoadCursor(NULL, IDC_ARROW));
-//        m_showButton.EnableWindow(FALSE);
     }
+    if (showGuesses) {
+        classifier.ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+    }
+    InvalidateRect(NULL,FALSE);
     return 0;
 }
 
