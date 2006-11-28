@@ -197,6 +197,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FilterSelect.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\HaarClassifier.cpp"
 				>
 			</File>
@@ -259,6 +263,10 @@
 			</File>
 			<File
 				RelativePath=".\Eyepatch.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FilterSelect.h"
 				>
 			</File>
 			<File
