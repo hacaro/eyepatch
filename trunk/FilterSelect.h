@@ -6,9 +6,15 @@ public:
 
     BEGIN_MSG_MAP(CFilterSelect)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+        MESSAGE_HANDLER(WM_COMMAND, OnCommand)
+        MESSAGE_HANDLER(WM_ENABLE, OnEnable)
     END_MSG_MAP()
 
-    CFilterSelect();
+    CFilterSelect(CWindow *parent);
     ~CFilterSelect();
     LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
+    LRESULT OnCommand(UINT, WPARAM, LPARAM, BOOL&);
+    LRESULT OnEnable(UINT, WPARAM, LPARAM, BOOL&);
+private:
+    CWindow *parent;
 };
