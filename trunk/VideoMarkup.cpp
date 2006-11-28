@@ -1,9 +1,10 @@
 #include "precomp.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
+#include "FilterSelect.h"
+#include "VideoLoader.h"
 #include "CamshiftClassifier.h"
 #include "HaarClassifier.h"
-#include "VideoLoader.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -22,6 +23,7 @@ CVideoMarkup::CVideoMarkup() :
     m_sampleListView(WC_LISTVIEW, this, 2),
     m_trainButton(WC_BUTTON, this, 3),
     m_showButton(WC_BUTTON, this, 4),
+    m_filterSelect(),
     m_videoRect(0,0,VIDEO_X,VIDEO_Y),
     posSelectPen(Color(100,100,255,100),2),
     negSelectPen(Color(100,255,100,100),2),
@@ -312,7 +314,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     hDropCursor = LoadCursor(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDC_DROPCURSOR));
 
     // Create the list of samples
-    m_sampleListView.Create(m_hWnd, CRect(VIDEO_X,0,WINDOW_X-5,VIDEO_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_BORDER | LVS_ICON | LVS_AUTOARRANGE);
+    m_sampleListView.Create(m_hWnd, CRect(VIDEO_X,0,WINDOW_X-5,VIDEO_Y-50), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_BORDER | LVS_ICON | LVS_AUTOARRANGE);
 
     // create the list of example images
     m_hImageList = ImageList_Create(SAMPLE_X, SAMPLE_Y, ILC_COLOR32 | ILC_MASK, 0, MAX_SAMPLES);
@@ -345,6 +347,11 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Create the video slider
     m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS | TBS_BOTH );
 	
+    // Create the filter selector
+    m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE);
+    m_filterSelect.MoveWindow(VIDEO_X, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
+    m_filterSelect.ShowWindow(TRUE);
+
     return 0;
 }
 
@@ -433,7 +440,7 @@ LRESULT CVideoMarkup::OnBeginDrag(int idCtrl, LPNMHDR pnmh, BOOL&) {
 }
 
 void CVideoMarkup::OpenVideoFile() {
-	m_videoLoader.OpenVideoFile(m_hWnd);
+    m_videoLoader.OpenVideoFile(m_hWnd);
 	if (m_videoLoader.videoLoaded) {
 		EnableControls(TRUE);
 		SendMessage(m_slider, TBM_SETRANGEMIN, FALSE, 0);

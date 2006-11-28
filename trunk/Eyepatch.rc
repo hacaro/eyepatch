@@ -106,6 +106,14 @@ BEGIN
     LTEXT           "Learning from your examples...",IDC_STATIC,7,7,172,18
 END
 
+IDD_FILTERSELECT_DIALOG DIALOGEX 0, 0, 229, 60
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Learn from Examples",IDC_TRAINBUTTON,7,30,109,23
+    CONTROL         "Show Guesses",IDC_SHOWBUTTON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,31,74,22
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -129,6 +137,14 @@ BEGIN
         RIGHTMARGIN, 179
         TOPMARGIN, 7
         BOTTOMMARGIN, 82
+    END
+
+    IDD_FILTERSELECT_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 222
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 53
     END
 END
 #endif    // APSTUDIO_INVOKED

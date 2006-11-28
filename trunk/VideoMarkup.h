@@ -1,15 +1,12 @@
 #pragma once
 
-#include "precomp.h"
-#include "VideoLoader.h"
-#include "CamshiftClassifier.h"
-
 typedef CWinTraits<WS_CHILD|WS_VISIBLE,0> CVideoMarkupTraits;
 
 class CVideoMarkup: public CWindowImpl<CVideoMarkup, CWindow, CVideoMarkupTraits>
 {
 public:
     CContainedWindow m_slider, m_trainButton, m_showButton, m_sampleListView;
+    CFilterSelect m_filterSelect;
 
     CVideoMarkup();
     ~CVideoMarkup();
