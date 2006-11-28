@@ -289,7 +289,10 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     selectStart.Y = 0;
     selectCurrent = selectStart;
 
-	m_videoLoader.LoadFrame(sliderPosition);
+    if (showGuesses && ! scrubbingVideo) {
+        classifier.ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+    }
+    m_videoLoader.LoadFrame(sliderPosition);
     InvalidateRect(&m_videoRect, FALSE);
     return 0;
 }
