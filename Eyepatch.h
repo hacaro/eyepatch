@@ -1,7 +1,5 @@
 #pragma once
 
-#include "precomp.h"
-
 typedef CWinTraits<WS_VISIBLE|WS_SYSMENU|WS_CAPTION,0> EyepatchTraits;
 
 class CEyepatch: public CWindowImpl<CEyepatch,CWindow,EyepatchTraits>
