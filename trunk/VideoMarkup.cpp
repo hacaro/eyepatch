@@ -5,6 +5,7 @@
 #include "VideoLoader.h"
 #include "CamshiftClassifier.h"
 #include "HaarClassifier.h"
+#include "ShapeClassifier.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -391,6 +392,14 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
         case IDC_RADIO_APPEARANCE:
             delete classifier;
             classifier = new HaarClassifier();
+            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+            objGuesses.clear();
+            showGuesses = false;
+            break;
+        case IDC_RADIO_SHAPE:
+            delete classifier;
+            classifier = new ShapeClassifier();
             m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
             m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
             objGuesses.clear();
