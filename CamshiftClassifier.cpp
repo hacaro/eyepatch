@@ -56,8 +56,6 @@ void CamshiftClassifier::StartTraining(TrainingSet *sampleSet) {
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == 0) { // positive sample
-			// for now just take from first pos sample
-			// this should really create a color histogram across all positive samples
 
 			// allocate image buffers
 			hsv = cvCreateImage( cvGetSize(sample->fullImageCopy), 8, 3 );
@@ -146,7 +144,7 @@ void CamshiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 			objRect.Width = rect.width;
 			objRect.Height = rect.height;
 			objList->push_back(objRect);
-	}	
+    	}
 	}
 	cvReleaseMemStorage(&storage);
 
