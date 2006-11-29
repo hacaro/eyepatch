@@ -209,6 +209,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ShapeClassifier.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TrainingSample.cpp"
 				>
 			</File>
@@ -279,6 +283,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ShapeClassifier.h"
 				>
 			</File>
 			<File
