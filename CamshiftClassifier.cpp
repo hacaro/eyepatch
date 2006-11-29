@@ -146,7 +146,7 @@ void CamshiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 			objRect.Width = rect.width;
 			objRect.Height = rect.height;
 			objList->push_back(objRect);
-		}
+	}	
 	}
 	cvReleaseMemStorage(&storage);
 
