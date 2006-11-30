@@ -14,9 +14,9 @@
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004
-#define IDC_RADIO_APPEARANCE            1005
-#define IDC_RADIO_COLOR                 1006
-#define IDC_RADIO_SHAPE                 1007
+#define IDC_RADIO_COLOR                 1005
+#define IDC_RADIO_SHAPE                 1006
+#define IDC_RADIO_FEATURES              1007
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003

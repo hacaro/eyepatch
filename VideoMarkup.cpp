@@ -24,6 +24,7 @@ CVideoMarkup::CVideoMarkup() :
     m_sampleListView(WC_LISTVIEW, this, 2),
     m_filterSelect(this),
     m_videoRect(0,0,VIDEO_X,VIDEO_Y),
+    m_filterRect(0, 0, VIDEO_X, FILTERIMAGE_Y+FILTERIMAGE_HEIGHT),
     posSelectPen(Color(100,100,255,100),2),
     negSelectPen(Color(100,255,100,100),2),
     guessPen(Color(100,255,100),4),
@@ -35,7 +36,7 @@ CVideoMarkup::CVideoMarkup() :
 	guessPen.SetLineJoin(LineJoinRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
-    classifier = new HaarClassifier();
+    classifier = new CamshiftClassifier();
     showGuesses = false;
     selectingRegion = false;
     draggingIcon = false;
@@ -107,12 +108,12 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     }
 
     if (classifier->isTrained) {
-        graphics->DrawImage(classifier->GetFilterImage(), FILTERIMAGE_X, FILTERIMAGE_Y);
+        graphics->DrawImage(classifier->GetFilterImage(), FILTERIMAGE_X+1, FILTERIMAGE_Y+1);
     } else {
         graphics->FillRectangle(&ltgrayBrush, Rect(FILTERIMAGE_X, FILTERIMAGE_Y, WINDOW_X, WINDOW_Y));
     }
     if (showGuesses) {
-        graphics->DrawImage(classifier->GetApplyImage(), FILTERIMAGE_X+FILTERIMAGE_WIDTH+10, FILTERIMAGE_Y);
+        graphics->DrawImage(classifier->GetApplyImage(), FILTERIMAGE_X+FILTERIMAGE_WIDTH+10, FILTERIMAGE_Y+1);
     } else {
         graphics->FillRectangle(&ltgrayBrush, Rect(FILTERIMAGE_X+FILTERIMAGE_WIDTH, FILTERIMAGE_Y, WINDOW_X, WINDOW_Y));
     }
@@ -260,7 +261,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
     } else if (selectingRegion) { // we just finished drawing a path
         ClipCursor(NULL);   // restore full cursor movement
         if (!m_videoRect.PtInRect(p)) {
-            InvalidateRect(m_videoRect,FALSE);
+            InvalidateRect(&m_videoRect,FALSE);
             return 0;
         }
         selectingRegion = false;
@@ -306,7 +307,7 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     if (showGuesses && !scrubbingVideo) {
         classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
     }
-    InvalidateRect(NULL, FALSE);
+    InvalidateRect(&m_filterRect, FALSE);
     return 0;
 }
 
@@ -355,7 +356,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
     m_filterSelect.MoveWindow(VIDEO_X+1, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
-    m_filterSelect.CheckRadioButton(IDC_RADIO_APPEARANCE, IDC_RADIO_SHAPE, IDC_RADIO_APPEARANCE);
+    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_FEATURES, IDC_RADIO_COLOR);
     m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);
 
@@ -401,7 +402,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             objGuesses.clear();
             showGuesses = false;
             break;
-        case IDC_RADIO_APPEARANCE:
+        case IDC_RADIO_FEATURES:
             delete classifier;
             classifier = new HaarClassifier();
             m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
@@ -421,7 +422,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     if (showGuesses) {
         classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
     }
-    InvalidateRect(NULL,FALSE);
+    InvalidateRect(&m_filterRect,FALSE);
 
     return 0;
 }
@@ -480,6 +481,6 @@ void CVideoMarkup::OpenVideoFile() {
 		SendMessage(m_slider, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
 		SendMessage(m_slider, TBM_SETPOS, TRUE, 0);
 		m_videoLoader.LoadFrame(0);
-		InvalidateRect(m_videoRect,FALSE);
+		InvalidateRect(&m_filterRect,FALSE);
 	}
 }
