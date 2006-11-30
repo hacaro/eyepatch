@@ -17,9 +17,6 @@ CamshiftClassifier::CamshiftClassifier() :
 	hdims = 16;
 	hranges_arr[0] = 0;	hranges_arr[1] = 180;
 	hranges = hranges_arr;
-	vmin = 10;
-	vmax = 256;
-	smin = 30;
 
 	// allocate histogram
 	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
@@ -28,23 +25,6 @@ CamshiftClassifier::CamshiftClassifier() :
 CamshiftClassifier::~CamshiftClassifier() {
 	// free histogram
 	cvReleaseHist(&hist);
-}
-
-CvScalar CamshiftClassifier::hsv2rgb( float hue )
-{
-    int rgb[3], p, sector;
-    static const int sector_data[][3]=
-        {{0,2,1}, {1,2,0}, {1,0,2}, {2,0,1}, {2,1,0}, {0,1,2}};
-    hue *= 0.033333333333333333333333333333333f;
-    sector = cvFloor(hue);
-    p = cvRound(255*(hue - sector));
-    p ^= sector & 1 ? 255 : 0;
-
-    rgb[sector_data[sector][0]] = 255;
-    rgb[sector_data[sector][1]] = 0;
-    rgb[sector_data[sector][2]] = p;
-
-    return cvScalar(rgb[2], rgb[1], rgb[0],0);
 }
 
 void CamshiftClassifier::StartTraining(TrainingSet *sampleSet) {
@@ -66,7 +46,7 @@ void CamshiftClassifier::StartTraining(TrainingSet *sampleSet) {
 			cvCvtColor(sample->fullImageCopy, hsv, CV_BGR2HSV);
 
 			// clip max and min range and split out hue channel
-			cvInRangeS(hsv, cvScalar(0,smin,vmin,0),cvScalar(180,256,vmax,0), mask);
+			cvInRangeS(hsv, cvScalar(0,COLOR_SMIN,COLOR_VMIN,0),cvScalar(180,256,COLOR_VMAX,0), mask);
 			cvSplit(hsv, hue, 0, 0, 0);
 
 			// accumulate into hue histogram
@@ -83,11 +63,10 @@ void CamshiftClassifier::StartTraining(TrainingSet *sampleSet) {
     }
 
 	// create histogram image
+	histimg = cvCreateImage( cvSize(320,200), 8, 3 );
 	float max_val = 0.f;
 	cvGetMinMaxHistValue( hist, 0, &max_val, 0, 0 );
 	cvConvertScale( hist->bins, hist->bins, max_val ? 255. / max_val : 0., 0 );
-	histimg = cvCreateImage( cvSize(320,200), 8, 3 );
-	cvZero( histimg );
 	cvZero( histimg );
 	int bin_w = histimg->width / hdims;
 	for(int i = 0; i < hdims; i++)
@@ -98,6 +77,9 @@ void CamshiftClassifier::StartTraining(TrainingSet *sampleSet) {
 			cvPoint((i+1)*bin_w,histimg->height - val),
 			color, -1, 8, 0 );
 	}
+    cvResize(histimg, filterImage);
+    IplToBitmap(filterImage, filterBitmap);
+    cvReleaseImage(&histimg);
 
 	// update member variables
 	nPosSamples = sampleSet->posSampleCount;
@@ -119,12 +101,15 @@ void CamshiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvCvtColor( image, hsv, CV_BGR2HSV );
 
 	// create mask to clip out pixels outside of specified range
-	cvInRangeS(hsv, cvScalar(0,smin,vmin,0), cvScalar(180,256,vmax,0), mask);
+	cvInRangeS(hsv, cvScalar(0,COLOR_SMIN,COLOR_VMIN,0), cvScalar(180,256,COLOR_VMAX,0), mask);
     cvSplit(hsv, hue, 0, 0, 0 );
 
 	// create backprojection image and clip with mask
     cvCalcBackProject(&hue, backproject, hist);
     cvAnd(backproject, mask, backproject, 0);
+
+    // copy back projection into demo image
+    cvCvtColor(backproject, image, CV_GRAY2BGR);
 
 	// find contours in backprojection image
     CvMemStorage* storage = cvCreateMemStorage(0);
@@ -136,7 +121,8 @@ void CamshiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 	objList->clear();
 	for (; contours != NULL; contours = contours->h_next)
 	{
-		if (fabs(cvContourArea(contours)) > COLOR_MIN_AREA) {
+        double contourArea = fabs(cvContourArea(contours));
+		if ((contourArea > COLOR_MIN_AREA) && (contourArea < COLOR_MAX_AREA)) {
 			Rect objRect;
 			CvRect rect = cvBoundingRect(contours);
 			objRect.X = rect.x;
@@ -144,8 +130,16 @@ void CamshiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 			objRect.Width = rect.width;
 			objRect.Height = rect.height;
 			objList->push_back(objRect);
-    	}
+
+            // draw contour in demo image
+            cvDrawContours(image, contours, CV_RGB(0,255,255), CV_RGB(0,255,255), 0, 2, 8);
+        }
 	}
+
+    // update bitmap demo image
+    cvResize(image, applyImage);
+    IplToBitmap(applyImage, applyBitmap);
+
 	cvReleaseMemStorage(&storage);
 
 	cvReleaseImage(&image);

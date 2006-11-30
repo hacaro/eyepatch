@@ -162,15 +162,8 @@ void CVideoLoader::LoadFrame(long framenum) {
         cvFlip(currentFrame,copyFrame);
     }
 
-	Rect videoBounds(0, 0, videoX, videoY);
-    BitmapData bmData;
-    bmData.Width = videoX;
-    bmData.Height = videoY;
-    bmData.PixelFormat = PixelFormat24bppRGB;
-    bmData.Stride = copyFrame->widthStep;
-    bmData.Scan0 = copyFrame->imageData;
-    bmpVideo->LockBits(&videoBounds, ImageLockModeWrite | ImageLockModeUserInputBuf, PixelFormat24bppRGB, &bmData);
-    bmpVideo->UnlockBits(&bmData);
+    IplToBitmap(copyFrame, bmpVideo);
+    Rect videoBounds(0, 0, videoX, videoY);
 }
 
 void CVideoLoader::ConvertFrame() {
@@ -185,15 +178,9 @@ void CVideoLoader::ConvertFrame() {
 	}
 	cvWriteFrame(videoWriter, copyFrame);
 	nFrames++;
-	BitmapData bmData;
-	bmData.Width = videoX;
-	bmData.Height = videoY;
-	bmData.PixelFormat = PixelFormat24bppRGB;
-	bmData.Stride = copyFrame->widthStep;
-	bmData.Scan0 = copyFrame->imageData;
-	bmpVideo->LockBits(&videoBounds, ImageLockModeWrite | ImageLockModeUserInputBuf, PixelFormat24bppRGB, &bmData);
-	bmpVideo->UnlockBits(&bmData);
 
-	// Grab next frame
+    IplToBitmap(copyFrame, bmpVideo);
+
+    // Grab next frame
 	currentFrame = cvQueryFrame(videoCapture);
 }

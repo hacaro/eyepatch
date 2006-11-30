@@ -13,19 +13,27 @@
 #define START_HAAR_STAGES 10
 
 // color matching parameters
-// todo: add paramets for vmin, vmax, smin 
 #define COLOR_MIN_AREA 100
+#define COLOR_MAX_AREA 120000
+#define COLOR_VMIN 15
+#define COLOR_VMAX 230
+#define COLOR_SMIN 30
 
 // shape matching parameters
 // todo: add canny thresholds
 #define SHAPE_MIN_LENGTH 100
-#define SHAPE_SIMILARITY_THRESHOLD 0.5
+#define SHAPE_SIMILARITY_THRESHOLD 0.2
 
+// control placement
 #define WINDOW_X 1024
-#define WINDOW_Y 565
+#define WINDOW_Y 768
 #define VIDEO_X 640
 #define VIDEO_Y 480
 #define SLIDER_Y 35
+#define FILTERIMAGE_X 0
+#define FILTERIMAGE_Y 520
+#define FILTERIMAGE_WIDTH 240
+#define FILTERIMAGE_HEIGHT 180
 
 #define APP_CLASS L"Eyepatch"
 #define FILTER_CREATE_CLASS L"VideoMarkup"
@@ -59,3 +67,9 @@ using namespace std;
 #include "cv.h"
 #include "highgui.h"
 #include "cvhaartraining.h"
+
+
+// Utility functions
+
+void IplToBitmap(IplImage *src, Bitmap *dst);
+CvScalar hsv2rgb(float hue);

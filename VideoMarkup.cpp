@@ -30,7 +30,8 @@ CVideoMarkup::CVideoMarkup() :
     posBrush(Color(50,100,255,100)),
     negBrush(Color(50,255,100,100)),
     hoverBrush(Color(25, 50, 150, 255)),
-    grayBrush(Color(150, 0, 0, 0)) {
+    grayBrush(Color(150, 0, 0, 0)),
+    ltgrayBrush(Color(240,240,240)) {
 	guessPen.SetLineJoin(LineJoinRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
@@ -63,9 +64,9 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     HDC hdc = BeginPaint(&ps);
     Rect drawBounds(0,0,VIDEO_X,VIDEO_Y);
     Rect videoBounds(0,0,m_videoLoader.videoX,m_videoLoader.videoY);
-    graphics->SetClip(drawBounds);
     
     if (m_videoLoader.videoLoaded) {
+        graphics->SetClip(drawBounds);
         if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,drawBounds);
 
         if (showGuesses && !scrubbingVideo) { // highlight computer's guesses
@@ -103,6 +104,17 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
             }
         }
         graphics->ResetClip();
+    }
+
+    if (classifier->isTrained) {
+        graphics->DrawImage(classifier->GetFilterImage(), FILTERIMAGE_X, FILTERIMAGE_Y);
+    } else {
+        graphics->FillRectangle(&ltgrayBrush, Rect(FILTERIMAGE_X, FILTERIMAGE_Y, WINDOW_X, WINDOW_Y));
+    }
+    if (showGuesses) {
+        graphics->DrawImage(classifier->GetApplyImage(), FILTERIMAGE_X+FILTERIMAGE_WIDTH+10, FILTERIMAGE_Y);
+    } else {
+        graphics->FillRectangle(&ltgrayBrush, Rect(FILTERIMAGE_X+FILTERIMAGE_WIDTH, FILTERIMAGE_Y, WINDOW_X, WINDOW_Y));
     }
 
     BitBlt(hdc,0,0,WINDOW_X,WINDOW_Y,hdcmem,0,0,SRCCOPY);
@@ -290,11 +302,11 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     selectStart.Y = 0;
     selectCurrent = selectStart;
 
-    if (showGuesses && ! scrubbingVideo) {
+    m_videoLoader.LoadFrame(sliderPosition);
+    if (showGuesses && !scrubbingVideo) {
         classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
     }
-    m_videoLoader.LoadFrame(sliderPosition);
-    InvalidateRect(&m_videoRect, FALSE);
+    InvalidateRect(NULL, FALSE);
     return 0;
 }
 
@@ -342,7 +354,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 	
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
-    m_filterSelect.MoveWindow(VIDEO_X, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
+    m_filterSelect.MoveWindow(VIDEO_X+1, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
     m_filterSelect.CheckRadioButton(IDC_RADIO_APPEARANCE, IDC_RADIO_SHAPE, IDC_RADIO_APPEARANCE);
     m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);

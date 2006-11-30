@@ -7,11 +7,6 @@
 ShapeClassifier::ShapeClassifier() :
 	Classifier() {
     templateStorage = cvCreateMemStorage(0);
-
-    cvNamedWindow("ShowGrayscale");
-    cvNamedWindow("ShowContours");
-    cvNamedWindow("ShowResults");
-
 }
 
 ShapeClassifier::~ShapeClassifier() {
@@ -44,8 +39,8 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
                 }
 	        }
 
-            cvShowImage("ShowGrayscale",grayscale);
-            cvShowImage("ShowContours",copy);
+            cvResize(copy, filterImage);
+            IplToBitmap(filterImage, filterBitmap);
 
             cvReleaseImage(&copy);
             cvReleaseImage(&grayscale);
@@ -76,46 +71,30 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     CvMemStorage *storage = cvCreateMemStorage(0);
     cvFindContours(grayscale, storage, &frameContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_KCOS);
 
+	objList->clear();
     for (CvSeq *contour = frameContours; contour != NULL; contour = contour->h_next) {
         if (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) {
             for (CvSeq *matchContour = templateContours; matchContour != NULL; matchContour = matchContour->h_next) {
                 if (fabs(cvArcLength(matchContour)) > SHAPE_MIN_LENGTH) {
                     double similarity = cvMatchShapes(contour, matchContour, CV_CONTOURS_MATCH_I1, 0);
                     if (similarity < SHAPE_SIMILARITY_THRESHOLD) {
-                        cvDrawContours(copy, contour, CV_RGB(0,255,255), CV_RGB(255,0,0), 0, 1, 8, cvPoint(0,0));
+                        cvDrawContours(copy, contour, CV_RGB(0,255,255), CV_RGB(0,255,255), 0, 1, 8, cvPoint(0,0));
+			            Rect objRect;
+			            CvRect rect = cvBoundingRect(contour, 1);
+			            objRect.X = rect.x;
+			            objRect.Y = rect.y;
+			            objRect.Width = rect.width;
+			            objRect.Height = rect.height;
+			            objList->push_back(objRect);
                     }
                 }
             }
         }
     }
-    
-    cvShowImage("ShowResults", copy);
+    cvResize(copy, applyImage);
+    IplToBitmap(applyImage, applyBitmap);
 
     cvReleaseMemStorage(&storage);
     cvReleaseImage(&copy);
     cvReleaseImage(&grayscale);
-/*
-
-	// find contours in backprojection image
-    CvMemStorage* storage = cvCreateMemStorage(0);
-	CvSeq* contours = NULL;
-    cvFindContours( backproject, storage, &contours, sizeof(CvContour),
-                    CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0) );
-
-	// Loop over the found contours
-	objList->clear();
-	for (; contours != NULL; contours = contours->h_next)
-	{
-		if (fabs(cvContourArea(contours)) > COLOR_MIN_AREA) {
-			Rect objRect;
-			CvRect rect = cvBoundingRect(contours);
-			objRect.X = rect.x;
-			objRect.Y = rect.y;
-			objRect.Width = rect.width;
-			objRect.Height = rect.height;
-			objList->push_back(objRect);
-    	}	
-	}
-	cvReleaseMemStorage(&storage);
-*/
 }
