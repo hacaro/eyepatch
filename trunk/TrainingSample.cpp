@@ -22,15 +22,7 @@ TrainingSample::TrainingSample(IplImage* srcImage, HWND lc, HIMAGELIST il, Rect 
 
     cvCvtColor(resizedImage,sampleImage,CV_BGR2GRAY);
 
-    BitmapData bmData;
-    bmData.Width = SAMPLE_X;
-    bmData.Height = SAMPLE_Y;
-    bmData.PixelFormat = PixelFormat24bppRGB;
-    bmData.Stride = resizedImage->widthStep;
-    bmData.Scan0 = resizedImage->imageData;
-    Rect sampleRect(0, 0, SAMPLE_X, SAMPLE_Y);
-    bmpImage->LockBits(&sampleRect, ImageLockModeWrite | ImageLockModeUserInputBuf, PixelFormat24bppRGB, &bmData);
-    bmpImage->UnlockBits(&bmData);
+    IplToBitmap(resizedImage, bmpImage);
     bmpImage->GetHBITMAP(NULL, &hbmImage);
 
     // Add image to imagelist

@@ -59,7 +59,7 @@ private:
 	Graphics *graphics;
     PointF selectStart, selectCurrent;
     Pen posSelectPen, negSelectPen, guessPen;
-    SolidBrush posBrush, negBrush, hoverBrush, grayBrush;
+    SolidBrush posBrush, negBrush, hoverBrush, grayBrush, ltgrayBrush;
     bool selectingRegion;
 	bool scrubbingVideo;
     int currentGroupId;
