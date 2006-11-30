@@ -60,6 +60,14 @@ HaarClassifier::~HaarClassifier() {
 }
 
 void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
+
+    int gridSize = (int) ceil(sqrt((double)sampleSet->posSampleCount));
+    int gridX = 0;
+    int gridY = 0;
+    int gridSampleW = FILTERIMAGE_WIDTH / gridSize;
+    int gridSampleH = FILTERIMAGE_HEIGHT / gridSize;
+    cvZero(filterImage);
+
     char tempPathname[MAX_PATH];
     char imageFilename[MAX_PATH];
 
@@ -83,6 +91,22 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == 0) { // positive sample
             icvWriteVecSample(vec, sample->sampleImage);
+
+            // draw sample into demo image
+            IplImage *sampleCopyColor = cvCreateImage(cvSize(SAMPLE_X, SAMPLE_Y), IPL_DEPTH_8U, 3);
+            cvCvtColor(sample->sampleImage, sampleCopyColor, CV_GRAY2BGR);
+            CvMat *filterImageSubRect = cvCreateMat(gridSampleW, gridSampleH, CV_8UC1);
+            cvGetSubRect(filterImage, filterImageSubRect, cvRect(gridX*gridSampleW,gridY*gridSampleH,gridSampleW,gridSampleH));
+            cvResize(sampleCopyColor, filterImageSubRect);
+            cvReleaseMat(&filterImageSubRect);
+            cvReleaseImage(&sampleCopyColor);
+
+            gridX++;
+            if (gridX >= gridSize) {
+                gridX = 0;
+                gridY++;
+            }
+
         } else if (sample->iGroupId == 1) { // negative sample
             sprintf_s(imageFilename, "%sneg%d.jpg", tempPathname, imgNum);
             cvSaveImage(imageFilename, sample->fullImageCopy);
@@ -94,6 +118,9 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
     fclose(neglist);
 	nPosSamples = sampleSet->posSampleCount;
 	nNegSamples = sampleSet->negSampleCount;
+
+    // update demo image
+    IplToBitmap(filterImage, filterBitmap);
 }
 
 void HaarClassifier::StartTraining(TrainingSet* sampleSet) {
@@ -105,21 +132,27 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     if (!isTrained) return;
     if (!cascade) return;
 
-    // Clear the memory storage which was used before
+    // Clear the memory storage we used before
     cvClearMemStorage( storage );
 
     // There can be more than one object in an image, so we create a growable sequence of objects
     // Detect the objects and store them in the sequence
-    CvSeq* objects = cvHaarDetectObjects( frame, cascade, storage,
-                                        1.1, 2, CV_HAAR_DO_CANNY_PRUNING,
-                                        cvSize(SAMPLE_X, SAMPLE_Y) );
+    CvSeq* objects = cvHaarDetectObjects(frame, cascade, storage,
+                                         1.1, 2, CV_HAAR_DO_CANNY_PRUNING,
+                                         cvSize(SAMPLE_X, SAMPLE_Y));
 
+    IplImage *frameCopy = cvCreateImage(cvSize(frame->width,frame->height), IPL_DEPTH_8U, 3);
+    cvCopy(frame, frameCopy);
+
+    int objNum = 0;
     objList->clear();
     // Loop over the found objects
     for(int i = 0; i < (objects ? objects->total : 0); i++ )
     {
         Rect objRect;
         CvRect* r = (CvRect*)cvGetSeqElem(objects, i);
+        cvRectangle(frameCopy, cvPoint(r->x,r->y), cvPoint(r->x+r->width,r->y+r->height), colorSwatch[objNum], 2, 8);
+        objNum = (objNum + 1) % COLOR_SWATCH_SIZE;
 
         objRect.X = r->x;
         objRect.Y = r->y;
@@ -127,4 +160,7 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
         objRect.Height = r->height;
         objList->push_back(objRect);
     }
+
+    cvResize(frameCopy, applyImage);
+    IplToBitmap(applyImage, applyBitmap);
 }

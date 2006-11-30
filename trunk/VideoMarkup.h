@@ -63,7 +63,7 @@ private:
     bool selectingRegion;
 	bool scrubbingVideo;
     int currentGroupId;
-    CRect m_videoRect;
+    CRect m_videoRect, m_filterRect;
 
 	CVideoLoader m_videoLoader;
     TrainingSet sampleSet;

@@ -3,7 +3,7 @@
 class TrainingSample
 {
 public:
-    IplImage *sampleImage, *fullImageCopy;
+    IplImage *sampleImage, *fullImageCopy, *contourImage;
     LVITEM lvi;
     HBITMAP hbmImage;
     UINT id;
@@ -12,6 +12,9 @@ public:
     TrainingSample(IplImage*, HWND, HIMAGELIST, Rect, int);
     ~TrainingSample(void);
     void Draw(Graphics*, int x, int y);
+
+    CvMemStorage *contourStorage;
+    CvSeq *contours;
 
 private:
     IplImage *resizedImage;

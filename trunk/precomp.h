@@ -70,6 +70,10 @@ using namespace std;
 
 
 // Utility functions
-
 void IplToBitmap(IplImage *src, Bitmap *dst);
 CvScalar hsv2rgb(float hue);
+
+// swatch of "nice" colors
+#define COLOR_SWATCH_SIZE 16
+extern CvScalar colorSwatch[];
+

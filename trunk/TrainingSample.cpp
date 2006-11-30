@@ -6,7 +6,11 @@ TrainingSample::TrainingSample(IplImage* srcImage, HWND lc, HIMAGELIST il, Rect 
     hImageList = il;
     iGroupId = groupId;
 
+    contourStorage = cvCreateMemStorage(0);
+    contours = NULL;
+
     fullImageCopy = cvCreateImage(cvSize(bounds.Width,bounds.Height),IPL_DEPTH_8U, 3); 
+    contourImage = cvCreateImage(cvSize(bounds.Width,bounds.Height),IPL_DEPTH_8U, 3); 
     resizedImage = cvCreateImage(cvSize(SAMPLE_X,SAMPLE_Y),IPL_DEPTH_8U, 3); 
     sampleImage = cvCreateImage(cvSize(SAMPLE_X,SAMPLE_Y),IPL_DEPTH_8U, 1);
     bmpImage = new Bitmap(SAMPLE_X, SAMPLE_Y, PixelFormat24bppRGB);
@@ -42,7 +46,9 @@ TrainingSample::TrainingSample(IplImage* srcImage, HWND lc, HIMAGELIST il, Rect 
 }
 
 TrainingSample::~TrainingSample(void) {
+    cvReleaseMemStorage(&contourStorage);
     cvReleaseImage(&sampleImage);
+    cvReleaseImage(&contourImage);
     cvReleaseImage(&fullImageCopy);
     cvReleaseImage(&resizedImage);
     delete bmpImage;

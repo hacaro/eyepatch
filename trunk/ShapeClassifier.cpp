@@ -15,7 +15,11 @@ ShapeClassifier::~ShapeClassifier() {
 
 
 void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
-	// TODO: call into trainingset class to do this instead of accessing samplemap
+    cvClearMemStorage(templateStorage);
+    templateContours = NULL;
+    cvZero(filterImage);
+
+    // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == 0) { // positive sample
@@ -23,32 +27,43 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
             // for now just use first positive sample
             // TODO: get contours for all samples and match against each one
 
-            IplImage *copy = cvCreateImage( cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height), IPL_DEPTH_8U, 3);
             IplImage *grayscale = cvCreateImage( cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height), IPL_DEPTH_8U, 1);
-            cvCopy(sample->fullImageCopy, copy);
             cvCvtColor(sample->fullImageCopy, grayscale, CV_BGR2GRAY);
             cvCanny(grayscale, grayscale, 50, 200, 5);
 
-            cvClearMemStorage(templateStorage);
-            cvFindContours(grayscale, templateStorage, &templateContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_KCOS);
+            CvMemStorage *storage = cvCreateMemStorage(0);
+            CvSeq *sampleContours = NULL;
 
-	        for (CvSeq *contour = templateContours; contour != NULL; contour = contour->h_next)
+            cvFindContours(grayscale, storage, &sampleContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_KCOS);
+
+            for (CvSeq *contour = sampleContours; contour != NULL; contour = contour->h_next)
 	        {
 		        if (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) {
-                    cvDrawContours(copy, contour, CV_RGB(0,255,255), CV_RGB(255,0,0), 0, 1, 8, cvPoint(0,0));
+                    if (!templateContours) {
+                        templateContours = cvCloneSeq(contour, templateStorage);
+                    } else {
+                        CvSeq *newContour = cvCloneSeq(contour, templateStorage);
+                        newContour->h_next = templateContours->h_next;
+                        templateContours->h_next = newContour;
+                    }
                 }
 	        }
-
-            cvResize(copy, filterImage);
-            IplToBitmap(filterImage, filterBitmap);
-
-            cvReleaseImage(&copy);
+            cvReleaseMemStorage(&storage);
             cvReleaseImage(&grayscale);
-            break;
-		} else if (sample->iGroupId == 1) { // negative sample
 
+		} else if (sample->iGroupId == 1) { // negative sample
+            // do nothing for now
+            // TODO: we could compare guesses against these as well and remove them if they match
         }
     }
+
+    int contourNum = 0;
+    for (CvSeq *contour = templateContours; contour != NULL; contour = contour->h_next) {
+        // TODO: draw contours scaled in different places in image so they don't overlap
+        cvDrawContours(filterImage, contour, colorSwatch[contourNum], CV_RGB(0,0,0), 0, 1, 8, cvPoint(0,0));
+        contourNum = (contourNum+1) % COLOR_SWATCH_SIZE;
+    }
+    IplToBitmap(filterImage, filterBitmap);
 
 	// update member variables
 	nPosSamples = sampleSet->posSampleCount;
@@ -60,7 +75,6 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     if (!isTrained) return;
     if(!frame) return;
 
-    
     IplImage *copy = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
     IplImage *grayscale = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
     cvCopy(frame, copy);
@@ -74,20 +88,21 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 	objList->clear();
     for (CvSeq *contour = frameContours; contour != NULL; contour = contour->h_next) {
         if (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) {
+
+            int contourNum = 0;
             for (CvSeq *matchContour = templateContours; matchContour != NULL; matchContour = matchContour->h_next) {
-                if (fabs(cvArcLength(matchContour)) > SHAPE_MIN_LENGTH) {
-                    double similarity = cvMatchShapes(contour, matchContour, CV_CONTOURS_MATCH_I1, 0);
-                    if (similarity < SHAPE_SIMILARITY_THRESHOLD) {
-                        cvDrawContours(copy, contour, CV_RGB(0,255,255), CV_RGB(0,255,255), 0, 1, 8, cvPoint(0,0));
-			            Rect objRect;
-			            CvRect rect = cvBoundingRect(contour, 1);
-			            objRect.X = rect.x;
-			            objRect.Y = rect.y;
-			            objRect.Width = rect.width;
-			            objRect.Height = rect.height;
-			            objList->push_back(objRect);
-                    }
+                double similarity = cvMatchShapes(contour, matchContour, CV_CONTOURS_MATCH_I1, 0);
+                if (similarity < SHAPE_SIMILARITY_THRESHOLD) {
+                    cvDrawContours(copy, contour, colorSwatch[contourNum], CV_RGB(0,0,0), 0, 3, 8, cvPoint(0,0));
+		            Rect objRect;
+		            CvRect rect = cvBoundingRect(contour, 1);
+		            objRect.X = rect.x;
+		            objRect.Y = rect.y;
+		            objRect.Width = rect.width;
+		            objRect.Height = rect.height;
+		            objList->push_back(objRect);
                 }
+                contourNum = (contourNum+1) % COLOR_SWATCH_SIZE;
             }
         }
     }
