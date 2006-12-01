@@ -12,7 +12,7 @@
 #define MIN_HAAR_STAGES 5
 #define START_HAAR_STAGES 10
 
-// color matching parameters
+// Color matching parameters
 #define COLOR_MIN_AREA 100
 #define COLOR_MAX_AREA 120000
 #define COLOR_VMIN 15
@@ -23,6 +23,13 @@
 // todo: add canny thresholds
 #define SHAPE_MIN_LENGTH 100
 #define SHAPE_SIMILARITY_THRESHOLD 0.2
+
+// SIFT matching parameters
+/* the maximum number of keypoint NN candidates to check during BBF search */
+#define KDTREE_BBF_MAX_NN_CHKS 200
+/* threshold on squared ratio of distances between NN and 2nd NN */
+#define NN_SQ_DIST_RATIO_THR 0.49
+#define SIFT_MIN_RANSAC_FEATURES 4
 
 // control placement
 #define WINDOW_X 1024
@@ -68,6 +75,14 @@ using namespace std;
 #include "highgui.h"
 #include "cvhaartraining.h"
 
+// SIFT includes
+extern "C" {
+    #include "SIFT/sift.h"
+    #include "SIFT/imgfeatures.h"
+    #include "SIFT/kdtree.h"
+    #include "SIFT/utils.h"
+    #include "SIFT/xform.h"
+}
 
 // Utility functions
 void IplToBitmap(IplImage *src, Bitmap *dst);
