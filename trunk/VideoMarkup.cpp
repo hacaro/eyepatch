@@ -4,8 +4,9 @@
 #include "FilterSelect.h"
 #include "VideoLoader.h"
 #include "CamshiftClassifier.h"
-#include "HaarClassifier.h"
 #include "ShapeClassifier.h"
+#include "SiftClassifier.h"
+#include "HaarClassifier.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -305,7 +306,9 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
 
     m_videoLoader.LoadFrame(sliderPosition);
     if (showGuesses && !scrubbingVideo) {
+        HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
         classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        SetCursor(hOld);
     }
     InvalidateRect(&m_filterRect, FALSE);
     return 0;
@@ -356,7 +359,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
     m_filterSelect.MoveWindow(VIDEO_X+1, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
-    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_FEATURES, IDC_RADIO_COLOR);
+    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_APPEARANCE, IDC_RADIO_COLOR);
     m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);
 
@@ -402,14 +405,6 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             objGuesses.clear();
             showGuesses = false;
             break;
-        case IDC_RADIO_FEATURES:
-            delete classifier;
-            classifier = new HaarClassifier();
-            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
-            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
-            objGuesses.clear();
-            showGuesses = false;
-            break;
         case IDC_RADIO_SHAPE:
             delete classifier;
             classifier = new ShapeClassifier();
@@ -418,9 +413,27 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             objGuesses.clear();
             showGuesses = false;
             break;
+        case IDC_RADIO_FEATURES:
+            delete classifier;
+            classifier = new SiftClassifier();
+            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+            objGuesses.clear();
+            showGuesses = false;
+            break;
+        case IDC_RADIO_APPEARANCE:
+            delete classifier;
+            classifier = new HaarClassifier();
+            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+            objGuesses.clear();
+            showGuesses = false;
+            break;
     }
     if (showGuesses) {
+        HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
         classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        SetCursor(hOld);
     }
     InvalidateRect(&m_filterRect,FALSE);
 
