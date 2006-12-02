@@ -82,6 +82,7 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
         for(int i=0; i<numSampleFeatures; i++)
         {
             struct feature *feat = sampleFeatures + i;
+            sampleFeatures[i].fwd_match = NULL;
             int k = kdtree_bbf_knn(kd_root, feat, 2, &nbrs, KDTREE_BBF_MAX_NN_CHKS);
             if( k == 2 ) {
                 double d0 = descr_dist_sq(feat, nbrs[0]);
