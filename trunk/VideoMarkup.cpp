@@ -3,6 +3,7 @@
 #include "TrainingSet.h"
 #include "FilterSelect.h"
 #include "VideoLoader.h"
+#include "BrightnessClassifier.h"
 #include "CamshiftClassifier.h"
 #include "ShapeClassifier.h"
 #include "SiftClassifier.h"
@@ -416,6 +417,14 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
         case IDC_RADIO_FEATURES:
             delete classifier;
             classifier = new SiftClassifier();
+            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+            objGuesses.clear();
+            showGuesses = false;
+            break;
+        case IDC_RADIO_BRIGHTNESS:
+            delete classifier;
+            classifier = new BrightnessClassifier();
             m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
             m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
             objGuesses.clear();

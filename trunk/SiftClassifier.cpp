@@ -113,7 +113,6 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
         objRect.Y = ptMin.y;
         objRect.Width = ptMax.x - ptMin.x;
         objRect.Height = ptMax.y - ptMin.y;
-        objList->push_back(objRect);
 
         if (numFeatureMatches >= SIFT_MIN_RANSAC_FEATURES) {
             // try to use RANSAC algorithm to find transformation
