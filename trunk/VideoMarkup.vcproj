@@ -189,6 +189,10 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
+				RelativePath=".\BrightnessClassifier.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\CamshiftClassifier.cpp"
 				>
 			</File>
@@ -289,6 +293,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
+			<File
+				RelativePath=".\BrightnessClassifier.h"
+				>
+			</File>
 			<File
 				RelativePath=".\CamshiftClassifier.h"
 				>
