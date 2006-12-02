@@ -77,9 +77,11 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 
     IplImage *copy = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
     IplImage *grayscale = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
-    cvCopy(frame, copy);
+
     cvCvtColor(frame, grayscale, CV_BGR2GRAY);
     cvCanny(grayscale, grayscale, 50, 200, 5);
+
+    cvCvtColor(grayscale, copy, CV_GRAY2BGR);
 
     CvSeq *frameContours;
     CvMemStorage *storage = cvCreateMemStorage(0);
