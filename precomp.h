@@ -31,6 +31,17 @@
 #define NN_SQ_DIST_RATIO_THR 0.49
 #define SIFT_MIN_RANSAC_FEATURES 4
 
+// Motion parameters
+/* history image and deltas are in frames, not seconds */
+#define MOTION_MHI_DURATION 20.0
+#define MOTION_MAX_TIME_DELTA 10.0
+#define MOTION_MIN_TIME_DELTA 1.0
+/* amount of pixel difference considered motion */
+#define MOTION_DIFF_THRESHOLD 30
+/* number of images used to compute silhouette */
+#define MOTION_NUM_IMAGES 4
+#define MOTION_NUM_HISTORY_FRAMES 20
+
 // control placement
 #define WINDOW_X 1024
 #define WINDOW_Y 768

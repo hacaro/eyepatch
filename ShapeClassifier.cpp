@@ -24,9 +24,6 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == 0) { // positive sample
 
-            // for now just use first positive sample
-            // TODO: get contours for all samples and match against each one
-
             IplImage *grayscale = cvCreateImage( cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height), IPL_DEPTH_8U, 1);
             cvCvtColor(sample->fullImageCopy, grayscale, CV_BGR2GRAY);
             cvCanny(grayscale, grayscale, 50, 200, 5);

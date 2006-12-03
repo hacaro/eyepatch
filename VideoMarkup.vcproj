@@ -209,6 +209,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MotionClassifier.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\precomp.cpp"
 				>
 			</File>
@@ -319,6 +323,10 @@
 			</File>
 			<File
 				RelativePath=".\HaarClassifier.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MotionClassifier.h"
 				>
 			</File>
 			<File

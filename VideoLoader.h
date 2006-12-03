@@ -41,10 +41,12 @@ public:
 	BOOL OpenVideoFile(HWND);
 	BOOL OpenVideoFile(HWND,LPCWSTR);
     void LoadFrame(long);
+    IplImage* GetMotionHistory();
 	void ConvertFrame();
 
     long nFrames;
 	int videoX, videoY;
+    int currentFrameNumber;
     BOOL videoLoaded;
     IplImage *copyFrame;
     Bitmap *bmpVideo;
@@ -54,6 +56,7 @@ private:
 	CvVideoWriter *videoWriter;
 	
     IplImage *currentFrame;
+    IplImage *motionHistory;
 
 	friend class CVideoLoaderDialog;
 	CVideoLoaderDialog m_hVideoLoaderDialog;

@@ -9,6 +9,7 @@
 #include "ShapeClassifier.h"
 #include "SiftClassifier.h"
 #include "HaarClassifier.h"
+#include "MotionClassifier.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -39,7 +40,8 @@ CVideoMarkup::CVideoMarkup() :
 	guessPen.SetLineJoin(LineJoinRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
-    classifier = new CamshiftClassifier();
+//    classifier = new CamshiftClassifier();
+    classifier = new MotionClassifier();
     showGuesses = false;
     selectingRegion = false;
     draggingIcon = false;
@@ -286,7 +288,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 
         // discard tiny samples since they won't help
         if ((selectRect.Width > 10) && (selectRect.Height > 10)) {
-            TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, m_sampleListView, m_hImageList, selectRect, currentGroupId);
+            TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, m_videoLoader.GetMotionHistory(), m_sampleListView, m_hImageList, selectRect, currentGroupId);
             sampleSet.AddSample(sample);
         }
         InvalidateRect(&m_videoRect, FALSE);

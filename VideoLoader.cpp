@@ -76,15 +76,18 @@ CVideoLoader::CVideoLoader() :
     videoLoaded = FALSE;
     videoCapture = NULL;
     copyFrame = NULL;
+    motionHistory = NULL;
     bmpVideo = NULL;
 	nFrames = 0;
+    currentFrameNumber = 0;
 }
 
 CVideoLoader::~CVideoLoader(void) {
     if (videoLoaded) {
         cvReleaseCapture(&videoCapture);
         cvReleaseImage(&copyFrame);
-		delete bmpVideo;
+        cvReleaseImage(&motionHistory);
+        delete bmpVideo;
     }
 }
 
@@ -124,6 +127,7 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner, LPCWSTR filename) {
 	if (videoLoaded) { // We already loaded a video, so this will be a new one
 		cvReleaseCapture(&videoCapture);
 		cvReleaseImage(&copyFrame);
+		cvReleaseImage(&motionHistory);
 		delete bmpVideo;
 		videoLoaded = false;
 	}
@@ -136,6 +140,9 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner, LPCWSTR filename) {
 
 	// create an image to store a copy of the current frame
     copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
+
+    // create an image to store the motion history (for motion tracking)
+    motionHistory = cvCreateImage(cvSize(videoX,videoY), IPL_DEPTH_32F, 1);
 
     // Create a bitmap to display video
     bmpVideo = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
@@ -169,6 +176,8 @@ void CVideoLoader::LoadFrame(long framenum) {
         cvFlip(currentFrame,copyFrame);
     }
 
+    currentFrameNumber = framenum;
+
     IplToBitmap(copyFrame, bmpVideo);
     Rect videoBounds(0, 0, videoX, videoY);
 }
@@ -190,4 +199,59 @@ void CVideoLoader::ConvertFrame() {
 
     // Grab next frame
 	currentFrame = cvQueryFrame(videoCapture);
+}
+
+IplImage* CVideoLoader::GetMotionHistory() {
+    if (!videoLoaded) return NULL;
+    cvZero(motionHistory);
+
+    if (currentFrameNumber < MOTION_NUM_IMAGES+1) return motionHistory;
+
+    // Allocate an image history ring buffer
+    IplImage* buf[MOTION_NUM_IMAGES];
+    memset(buf, 0, MOTION_NUM_IMAGES*sizeof(IplImage*));
+    for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
+        buf[i] = cvCreateImage(cvSize(copyFrame->width,copyFrame->height), IPL_DEPTH_8U, 1);
+        cvZero(buf[i]);
+    }
+
+    int last = 0;
+    int idx1 = 0;
+    int idx2 = 0;
+    IplImage* silh = NULL;
+
+    int startFrame = max(0, currentFrameNumber-MOTION_NUM_HISTORY_FRAMES);
+
+    for (int i=startFrame; i<=currentFrameNumber; i++) {
+
+        cvSetCaptureProperty(videoCapture, CV_CAP_PROP_POS_FRAMES, i);
+        currentFrame = cvQueryFrame(videoCapture);
+	    if (!currentFrame) return motionHistory;
+
+        if (currentFrame->origin  == IPL_ORIGIN_TL) {
+            cvCopy(currentFrame,copyFrame);
+        } else {
+            cvFlip(currentFrame,copyFrame);
+        }
+        
+        // convert frame to grayscale
+        cvCvtColor(copyFrame, buf[last], CV_BGR2GRAY);
+        idx1 = last;
+        idx2 = (last + 1) % MOTION_NUM_IMAGES;
+        last = idx2;
+
+        silh = buf[idx2];
+        cvAbsDiff( buf[idx1], buf[idx2], silh ); // get difference between frames
+        
+        cvThreshold(silh, silh, MOTION_DIFF_THRESHOLD, 1, CV_THRESH_BINARY ); // and threshold it
+        if (i != startFrame) {
+            cvUpdateMotionHistory(silh, motionHistory, (i-startFrame), MOTION_MHI_DURATION); // update MHI
+        }
+    }
+
+    for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
+        cvReleaseImage(&buf[i]);
+    }
+
+    return motionHistory;
 }
