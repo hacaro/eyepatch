@@ -120,6 +120,15 @@ BEGIN
     CONTROL         "Brightness",IDC_RADIO_BRIGHTNESS,"Button",BS_AUTORADIOBUTTON,162,12,48,18
 END
 
+IDD_VIDEORECORDER_DIALOG DIALOGEX 0, 0, 227, 195
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Recording Video"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Stop Recording",IDCANCEL,78,174,71,14
+    LTEXT           "Recording in process...",IDC_PROGRESS_LABEL,7,7,213,12
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -150,6 +159,14 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 222
         BOTTOMMARGIN, 94
+    END
+
+    IDD_VIDEORECORDER_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 188
     END
 END
 #endif    // APSTUDIO_INVOKED

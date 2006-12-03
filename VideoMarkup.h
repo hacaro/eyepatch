@@ -20,6 +20,7 @@ public:
 
     void EnableControls(BOOL);
 	void OpenVideoFile();
+	void RecordVideoFile();
 
     static CWndClassInfo& GetWndClassInfo()
     {
@@ -66,6 +67,7 @@ private:
     CRect m_videoRect, m_filterRect;
 
 	CVideoLoader m_videoLoader;
+	CVideoRecorder m_videoRecorder;
     TrainingSet sampleSet;
     CContainedWindow m_slider, m_sampleListView;
     CFilterSelect m_filterSelect;
