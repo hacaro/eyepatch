@@ -89,23 +89,30 @@ CVideoLoader::~CVideoLoader(void) {
 }
 
 BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner) {
-    USES_CONVERSION;
-    OPENFILENAMEW ofn;
     WCHAR szFileName[MAX_PATH] = L"";
+    OPENFILENAMEW ofn;
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
     ofn.hwndOwner = hwndOwner;
-	ofn.lpstrFilter = L"Video Files\0*.avi;*.mpg;*.mp4;*.wmv;*.flv;*.mpeg;*.m2v;*.mpv;*.mov;*.qt;*.vob;*.rm\0";
+    ofn.lpstrFilter = L"Video Files\0*.avi;*.mpg;*.mp4;*.wmv;*.flv;*.mpeg;*.m2v;*.mpv;*.mov;*.qt;*.vob;*.rm\0";
     ofn.lpstrFile = szFileName;
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
     ofn.lpstrDefExt = L"avi";
 
     if(!GetOpenFileName(&ofn)) {
-		return FALSE;
-	}
+	    return FALSE;
+    }
+    return OpenVideoFile(hwndOwner, szFileName);
+}
 
-	// Attempt to load the video file and get dimensions
+BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner, LPCWSTR filename) {
+    USES_CONVERSION;
+
+    WCHAR szFileName[MAX_PATH] = L"";
+    wcscpy(szFileName, filename);
+
+    // Attempt to load the video file and get dimensions
     CvCapture *vc = cvCreateFileCapture(W2A(szFileName));
 
     if (vc == NULL) {

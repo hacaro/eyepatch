@@ -1,0 +1,164 @@
+#include "precomp.h"
+#include "VideoRecorder.h"
+
+CVideoRecorderDialog::CVideoRecorderDialog(CVideoRecorder *p) :
+	videoRect(10, 35, 330, 275), 
+	drawRect(10, 35, 320, 240) {
+	m_hMutex = NULL;
+	parent = p;
+}
+
+CVideoRecorderDialog::~CVideoRecorderDialog() {
+	if (m_hMutex) CloseHandle(m_hMutex);
+}
+
+LRESULT CVideoRecorderDialog::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+    CenterWindow();
+	m_hMutex = CreateMutex(NULL,FALSE,NULL);
+	m_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadCallback, (LPVOID)this, 0, &threadID);
+	return TRUE;    // let the system set the focus
+}
+
+LRESULT CVideoRecorderDialog::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    EndDialog(IDCANCEL);
+    return 0;
+}
+
+LRESULT CVideoRecorderDialog::OnCancel(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) {	
+	EndDialog(IDCANCEL);
+    return 0;
+}
+
+LRESULT CVideoRecorderDialog::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
+{
+	PAINTSTRUCT ps;
+    HDC hdc = BeginPaint(&ps);
+	Graphics graphics(hdc);
+	if (parent->bmpVideo != NULL) {
+		graphics.DrawImage(parent->bmpVideo, drawRect);
+	}
+    EndPaint(&ps);
+    return 0;
+}
+
+LRESULT CVideoRecorderDialog::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    // TODO: figure out why this wait never returns (mutex somehow was not released?)
+//	WaitForSingleObject(m_hMutex,INFINITE);
+	TerminateThread(m_hThread, 0);
+	return 0;
+}
+
+DWORD WINAPI CVideoRecorderDialog::ThreadCallback(CVideoRecorderDialog* instance) {
+	instance->ConvertFrames();
+	return 1L;
+}
+
+void CVideoRecorderDialog::ConvertFrames() {
+	while (1) {
+		WaitForSingleObject(m_hMutex,INFINITE);
+		if (parent->currentFrame != NULL) {
+			parent->ConvertFrame();
+	        ReleaseMutex(m_hMutex);
+			// Redraw dialog window
+			InvalidateRect(&videoRect,FALSE);
+		} else {
+			ReleaseMutex(m_hMutex);
+			EndDialog(0);
+			return;
+		}
+   }
+}
+
+
+CVideoRecorder::CVideoRecorder() :
+	m_hVideoRecorderDialog(this) {
+    videoCapture = NULL;
+    copyFrame = NULL;
+    bmpVideo = NULL;
+    recordingVideo = false;
+    nFrames = 0;
+    wcscpy(szFileName, L"");
+}
+
+CVideoRecorder::~CVideoRecorder(void) {
+    if (recordingVideo) {
+        cvReleaseCapture(&videoCapture);
+        cvReleaseImage(&copyFrame);
+		delete bmpVideo;
+    }
+}
+
+BOOL CVideoRecorder::RecordVideoFile(HWND hwndOwner) {
+    USES_CONVERSION;
+    OPENFILENAMEW ofn;
+    wcscpy(szFileName, L"");
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwndOwner;
+    ofn.lpstrFilter = L"Video Files\0*.avi\0";;
+    ofn.lpstrCustomFilter = NULL;
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFile = szFileName;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+    ofn.lpstrDefExt = L"avi";
+
+    if(!GetSaveFileName(&ofn)) {
+		return FALSE;
+	}
+
+	// Attempt to access the camera and get dimensions
+    CvCapture *vc = cvCreateCameraCapture(0);
+
+    if (vc == NULL) {
+		MessageBox(GetActiveWindow(), L"Error Accessing Camera",
+			L"Sorry, I'm unable to connect to a camera.  Please make sure that your camera is plugged in and its drivers are installed.", MB_OK);
+		return FALSE;
+	}
+
+	videoCapture = vc;
+
+    // TODO: allow user to select camera resolution and other properties
+    currentFrame = cvQueryFrame(videoCapture);
+    videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
+    videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
+    fps = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FPS);
+
+	// create an image to store a copy of the current frame
+    copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
+
+    // Create a bitmap to display video
+    bmpVideo = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
+
+	// create video writer and begin recording
+	videoWriter = cvCreateVideoWriter(W2A(szFileName), CV_FOURCC('D','I','V','X'), 30, cvSize(videoX, videoY), 1);
+
+    recordingVideo = true;
+	m_hVideoRecorderDialog.DoModal();
+
+    // release camera and video writer
+    cvReleaseVideoWriter(&videoWriter);
+	cvReleaseCapture(&videoCapture);
+
+	return TRUE;
+}
+
+void CVideoRecorder::ConvertFrame() {
+
+	if (currentFrame == NULL) return;
+
+	Rect videoBounds(0,0,videoX,videoY);
+	if (currentFrame->origin  == IPL_ORIGIN_TL) {
+		cvCopy(currentFrame,copyFrame);
+	} else {
+		cvFlip(currentFrame,copyFrame);
+	}
+	cvWriteFrame(videoWriter, copyFrame);
+	nFrames++;
+
+    IplToBitmap(copyFrame, bmpVideo);
+
+    // Grab next frame
+	currentFrame = cvQueryFrame(videoCapture);
+}

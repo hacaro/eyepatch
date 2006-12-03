@@ -1,14 +1,14 @@
 #pragma once
 
-class CVideoLoader;
+class CVideoRecorder;
 
-class CVideoLoaderDialog : public CDialogImpl<CVideoLoaderDialog> {
+class CVideoRecorderDialog : public CDialogImpl<CVideoRecorderDialog> {
 public:
-	CVideoLoaderDialog(CVideoLoader*);
-	~CVideoLoaderDialog();
+	CVideoRecorderDialog(CVideoRecorder*);
+	~CVideoRecorderDialog();
 
-    enum { IDD = IDD_VIDEOLOADER_DIALOG };
-    BEGIN_MSG_MAP(CVideoLoaderDialog)
+    enum { IDD = IDD_VIDEORECORDER_DIALOG };
+    BEGIN_MSG_MAP(CVideoRecorderDialog)
         MESSAGE_HANDLER(WM_PAINT, OnPaint)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
         MESSAGE_HANDLER(WM_CLOSE, OnClose)
@@ -29,23 +29,23 @@ private:
 	DWORD threadID;
 	HANDLE m_hMutex;
 	HANDLE m_hThread;
-	static DWORD WINAPI ThreadCallback(CVideoLoaderDialog*);
-	CVideoLoader *parent;
+	static DWORD WINAPI ThreadCallback(CVideoRecorderDialog*);
+	CVideoRecorder *parent;
 };
 
-class CVideoLoader
+class CVideoRecorder
 {
 public: 
-	CVideoLoader();
-	~CVideoLoader();
-	BOOL OpenVideoFile(HWND);
-	BOOL OpenVideoFile(HWND,LPCWSTR);
-    void LoadFrame(long);
+	CVideoRecorder();
+	~CVideoRecorder();
+	BOOL RecordVideoFile(HWND);
 	void ConvertFrame();
 
-    long nFrames;
+    WCHAR szFileName[MAX_PATH];
 	int videoX, videoY;
-    BOOL videoLoaded;
+    int fps;
+    int nFrames;
+    bool recordingVideo;
     IplImage *copyFrame;
     Bitmap *bmpVideo;
 
@@ -55,6 +55,6 @@ private:
 	
     IplImage *currentFrame;
 
-	friend class CVideoLoaderDialog;
-	CVideoLoaderDialog m_hVideoLoaderDialog;
+	friend class CVideoRecorderDialog;
+	CVideoRecorderDialog m_hVideoRecorderDialog;
 };

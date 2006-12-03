@@ -3,6 +3,7 @@
 #include "TrainingSet.h"
 #include "FilterSelect.h"
 #include "VideoLoader.h"
+#include "VideoRecorder.h"
 #include "BrightnessClassifier.h"
 #include "CamshiftClassifier.h"
 #include "ShapeClassifier.h"
@@ -355,7 +356,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     AddListViewGroup(m_sampleListView, L"Trash", 2);
 
     // Create the video slider
-    m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS | TBS_BOTH );
+    m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS |  TBS_ENABLESELRANGE | TBS_BOTH );
 	
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
@@ -505,4 +506,19 @@ void CVideoMarkup::OpenVideoFile() {
 		m_videoLoader.LoadFrame(0);
 		InvalidateRect(&m_filterRect,FALSE);
 	}
+}
+
+void CVideoMarkup::RecordVideoFile() {
+    if (m_videoRecorder.RecordVideoFile(m_hWnd)) {
+        // Video was successfully recorded, so we will load it now
+        m_videoLoader.OpenVideoFile(m_hWnd, m_videoRecorder.szFileName);
+	    if (m_videoLoader.videoLoaded) {
+		    EnableControls(TRUE);
+		    SendMessage(m_slider, TBM_SETRANGEMIN, FALSE, 0);
+		    SendMessage(m_slider, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
+		    SendMessage(m_slider, TBM_SETPOS, TRUE, 0);
+		    m_videoLoader.LoadFrame(0);
+		    InvalidateRect(&m_filterRect,FALSE);
+	    }
+    }
 }
