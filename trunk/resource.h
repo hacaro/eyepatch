@@ -11,6 +11,7 @@
 #define IDD_VIDEOLOADER_DIALOG          106
 #define IDD_HAAR_DIALOG                 107
 #define IDD_FILTERSELECT_DIALOG         108
+#define IDD_VIDEORECORDER_DIALOG        109
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004

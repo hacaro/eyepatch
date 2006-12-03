@@ -236,6 +236,10 @@
 				RelativePath=".\VideoMarkup.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\VideoRecorder.cpp"
+				>
+			</File>
 			<Filter
 				Name="CVHaar"
 				>
@@ -347,6 +351,10 @@
 			</File>
 			<File
 				RelativePath=".\VideoMarkup.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoRecorder.h"
 				>
 			</File>
 			<Filter
