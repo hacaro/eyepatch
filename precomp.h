@@ -34,8 +34,8 @@
 // Motion parameters
 #define MOTION_MIN_COMPONENT_AREA 100
 /* history image and deltas are in frames, not seconds */
-#define MOTION_MHI_DURATION 20.0
-#define MOTION_MAX_TIME_DELTA 10.0
+#define MOTION_MHI_DURATION 15.0
+#define MOTION_MAX_TIME_DELTA 7.0
 #define MOTION_MIN_TIME_DELTA 1.0
 /* amount of pixel difference considered motion */
 #define MOTION_DIFF_THRESHOLD 30
@@ -43,7 +43,7 @@
 #define MOTION_ANGLE_DIFF_THRESHOLD 30
 /* number of images used to compute silhouette */
 #define MOTION_NUM_IMAGES 4
-#define MOTION_NUM_HISTORY_FRAMES 20
+#define MOTION_NUM_HISTORY_FRAMES 15
 
 // control placement
 #define WINDOW_X 1024
@@ -101,6 +101,7 @@ extern "C" {
 // Utility functions
 void IplToBitmap(IplImage *src, Bitmap *dst);
 CvScalar hsv2rgb(float hue);
+void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness=1);
 
 // swatch of "nice" colors
 #define COLOR_SWATCH_SIZE 16
