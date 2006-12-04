@@ -32,12 +32,15 @@
 #define SIFT_MIN_RANSAC_FEATURES 4
 
 // Motion parameters
+#define MOTION_MIN_COMPONENT_AREA 100
 /* history image and deltas are in frames, not seconds */
 #define MOTION_MHI_DURATION 20.0
 #define MOTION_MAX_TIME_DELTA 10.0
 #define MOTION_MIN_TIME_DELTA 1.0
 /* amount of pixel difference considered motion */
 #define MOTION_DIFF_THRESHOLD 30
+/* amount of angle difference (in degrees) that we still consider the same direction */
+#define MOTION_ANGLE_DIFF_THRESHOLD 30
 /* number of images used to compute silhouette */
 #define MOTION_NUM_IMAGES 4
 #define MOTION_NUM_HISTORY_FRAMES 20
