@@ -63,7 +63,7 @@ IDC_TRASHCURSOR         CURSOR                  "Resources\\Trash.cur"
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_EYEPATCH            ICON                    "Resources\\VideoMarkup.ico"
+IDI_EYEPATCH            ICON                    "Resources\\Eyepatch.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
