@@ -3,7 +3,7 @@
 class TrainingSample
 {
 public:
-    IplImage *sampleImage, *fullImageCopy, *motionHistory;
+    IplImage *fullImageCopy, *motionHistory;
     LVITEM lvi;
     HBITMAP hbmImage;
     UINT id;

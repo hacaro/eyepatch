@@ -347,9 +347,10 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     m_sampleListView.Create(m_hWnd, CRect(VIDEO_X,0,WINDOW_X-5,VIDEO_Y-50), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_BORDER | LVS_ICON | LVS_AUTOARRANGE);
 
     // create the list of example images
-    m_hImageList = ImageList_Create(SAMPLE_X, SAMPLE_Y, ILC_COLOR32 | ILC_MASK, 0, MAX_SAMPLES);
+    m_hImageList = ImageList_Create(LISTVIEW_SAMPLE_X, LISTVIEW_SAMPLE_Y, ILC_COLOR32 | ILC_MASK, 0, MAX_SAMPLES);
     ListView_SetImageList(m_sampleListView, m_hImageList, LVSIL_NORMAL);
-    ListView_SetIconSpacing(m_sampleListView, SAMPLE_X*2, SAMPLE_Y*1.5);
+//    ListView_SetIconSpacing(m_sampleListView, LISTVIEW_SAMPLE_X*2, LISTVIEW_SAMPLE_Y*1.5);
+    ListView_SetIconSpacing(m_sampleListView, LISTVIEW_SAMPLE_X+20, LISTVIEW_SAMPLE_Y+20);
     ListView_EnableGroupView(m_sampleListView, TRUE);
     ListView_SetExtendedListViewStyle(m_sampleListView, LVS_EX_DOUBLEBUFFER | LVS_EX_BORDERSELECT | LVS_EX_FLATSB);
 
@@ -484,7 +485,7 @@ LRESULT CVideoMarkup::OnBeginDrag(int idCtrl, LPNMHDR pnmh, BOOL&) {
         }
     }
 
-    ImageList_BeginDrag(hDragImageList, 0, SAMPLE_X/2, SAMPLE_Y/2);
+    ImageList_BeginDrag(hDragImageList, 0, LISTVIEW_SAMPLE_X/2, LISTVIEW_SAMPLE_Y/2);
     POINT pt = ((NM_LISTVIEW*)pnmh)->ptAction;
     RECT listViewRect;
     m_sampleListView.GetClientRect(&listViewRect);
@@ -498,6 +499,7 @@ LRESULT CVideoMarkup::OnBeginDrag(int idCtrl, LPNMHDR pnmh, BOOL&) {
 }
 
 void CVideoMarkup::OpenVideoFile() {
+    HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
     m_videoLoader.OpenVideoFile(m_hWnd);
 	if (m_videoLoader.videoLoaded) {
 		EnableControls(TRUE);
@@ -507,11 +509,13 @@ void CVideoMarkup::OpenVideoFile() {
 		m_videoLoader.LoadFrame(0);
 		InvalidateRect(&m_filterRect,FALSE);
 	}
+    SetCursor(hOld);
 }
 
 void CVideoMarkup::RecordVideoFile() {
     if (m_videoRecorder.RecordVideoFile(m_hWnd)) {
         // Video was successfully recorded, so we will load it now
+        HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
         m_videoLoader.OpenVideoFile(m_hWnd, m_videoRecorder.szFileName);
 	    if (m_videoLoader.videoLoaded) {
 		    EnableControls(TRUE);
@@ -521,6 +525,7 @@ void CVideoMarkup::RecordVideoFile() {
 		    m_videoLoader.LoadFrame(0);
 		    InvalidateRect(&m_filterRect,FALSE);
 	    }
+        SetCursor(hOld);
     }
 }
 

@@ -23,7 +23,7 @@ LRESULT HaarClassifierDialog::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam,
 	TerminateThread(m_hThread, 0);
 	parent->isTrained = false;
 	if (parent->nStagesCompleted >= MIN_HAAR_STAGES) {
-		parent->cascade = cvLoadHaarClassifierCascade(parent->classifierName, cvSize(SAMPLE_X, SAMPLE_Y));
+		parent->cascade = cvLoadHaarClassifierCascade(parent->classifierName, cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y));
 		if (parent->cascade != NULL) {
 			parent->isTrained = true;
 		}
@@ -39,7 +39,7 @@ DWORD WINAPI HaarClassifierDialog::ThreadCallback(HaarClassifierDialog* instance
 void HaarClassifierDialog::Train() {
     cvCreateCascadeClassifier(parent->classifierPathname,  parent->vecFilename, parent->negFilename, 
         parent->nPosSamples, parent->nNegSamples, parent->nStages,
-		0, 2, .99, .5, .95, 0, 1, 1, SAMPLE_X, SAMPLE_Y, 3, 0,
+		0, 2, .99, .5, .95, 0, 1, 1, HAAR_SAMPLE_X, HAAR_SAMPLE_Y, 3, 0,
 		GetDlgItem(IDC_HAAR_PROGRESS), &(parent->nStagesCompleted));
 	::EndDialog(m_hWnd, IDOK);
 }
@@ -84,22 +84,33 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
     FILE *neglist = fopen(negFilename,"w");
     int imgNum=0;
 
-    icvWriteVecHeader(vec, sampleSet->posSampleCount, SAMPLE_X, SAMPLE_Y);
+    icvWriteVecHeader(vec, sampleSet->posSampleCount, HAAR_SAMPLE_X, HAAR_SAMPLE_Y);
 
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == 0) { // positive sample
-            icvWriteVecSample(vec, sample->sampleImage);
 
-            // draw sample into demo image
-            IplImage *sampleCopyColor = cvCreateImage(cvSize(SAMPLE_X, SAMPLE_Y), IPL_DEPTH_8U, 3);
-            cvCvtColor(sample->sampleImage, sampleCopyColor, CV_GRAY2BGR);
+            // create a scaled-down, grayscale version of the sample
+            IplImage *sampleCopyColor = cvCreateImage(cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y), IPL_DEPTH_8U, 3);
+            IplImage *sampleCopyGrayscale = cvCreateImage(cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y), IPL_DEPTH_8U, 1);
+            if (sample->fullImageCopy->width >= HAAR_SAMPLE_X && sample->fullImageCopy->height >= HAAR_SAMPLE_Y) {
+                cvResize(sample->fullImageCopy, sampleCopyColor, CV_INTER_AREA);
+            } else { 
+                cvResize(sample->fullImageCopy, sampleCopyColor, CV_INTER_LINEAR);
+            }
+            cvCvtColor(sampleCopyColor, sampleCopyGrayscale, CV_BGR2GRAY);
+
+            // draw the grayscale version into the filter demo image
+            cvCvtColor(sampleCopyGrayscale, sampleCopyColor, CV_GRAY2BGR);
             CvMat *filterImageSubRect = cvCreateMat(gridSampleW, gridSampleH, CV_8UC1);
             cvGetSubRect(filterImage, filterImageSubRect, cvRect(gridX*gridSampleW,gridY*gridSampleH,gridSampleW,gridSampleH));
             cvResize(sampleCopyColor, filterImageSubRect);
             cvReleaseMat(&filterImageSubRect);
             cvReleaseImage(&sampleCopyColor);
+
+            // add the grayscale image to vector of positive samples
+            icvWriteVecSample(vec, sampleCopyGrayscale);
 
             gridX++;
             if (gridX >= gridSize) {
@@ -139,7 +150,7 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     // Detect the objects and store them in the sequence
     CvSeq* objects = cvHaarDetectObjects(frame, cascade, storage,
                                          1.1, 2, CV_HAAR_DO_CANNY_PRUNING,
-                                         cvSize(SAMPLE_X, SAMPLE_Y));
+                                         cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y));
 
     IplImage *frameCopy = cvCreateImage(cvSize(frame->width,frame->height), IPL_DEPTH_8U, 3);
     cvCopy(frame, frameCopy);

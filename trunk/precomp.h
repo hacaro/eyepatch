@@ -5,9 +5,13 @@
 #define _WIN32_IE 0x0700
 #define UNICODE
 
+// Listview Icon size
+#define LISTVIEW_SAMPLE_X 64
+#define LISTVIEW_SAMPLE_Y 64
+
 // Haar Training parameters
-#define SAMPLE_X 24
-#define SAMPLE_Y 24
+#define HAAR_SAMPLE_X 24
+#define HAAR_SAMPLE_Y 24
 #define MAX_SAMPLES 100
 #define MIN_HAAR_STAGES 5
 #define START_HAAR_STAGES 10
