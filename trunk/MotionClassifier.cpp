@@ -6,12 +6,16 @@
 
 MotionClassifier::MotionClassifier() :
 	Classifier() {
+    motionAngles.clear();
 }
 
 MotionClassifier::~MotionClassifier() {
 }
 
 void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
+
+    // clear list of motion directions
+    motionAngles.clear();
 
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
@@ -40,26 +44,27 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
             // get the global motion of the sample image
             CvPoint center;
             CvScalar color;
-            double angle, magnitude;  
+            double magnitude, motionAngle;  
             color = CV_RGB(255,255,255);
             magnitude = min(size.width/3, size.height/3);
 
-            // calculate orientation
-            angle = cvCalcGlobalOrientation( orient, mask, sample->motionHistory, 1.0, MOTION_MHI_DURATION);
-            angle = 360.0 - angle;  // adjust for images with top-left origin
+            // calculate orientation and add to list of motion directions
+            motionAngle = cvCalcGlobalOrientation( orient, mask, sample->motionHistory, 1.0, MOTION_MHI_DURATION);
+            motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
+            motionAngles.push_back(motionAngle);
 
             // draw a clock with arrow indicating the direction
             center = cvPoint(size.width/2,size.height/2);
 
             cvCircle( dst, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
-            cvLine( dst, center, cvPoint( cvRound( center.x + magnitude*cos(angle*CV_PI/180)),
-                    cvRound( center.y - magnitude*sin(angle*CV_PI/180))), color, 3, CV_AA, 0 );
+            cvLine( dst, center, cvPoint( cvRound( center.x + magnitude*cos(motionAngle*CV_PI/180)),
+                    cvRound( center.y - magnitude*sin(motionAngle*CV_PI/180))), color, 3, CV_AA, 0 );
 
             // copy the motion picture to the demo image
             cvResize(dst, filterImage);
             IplToBitmap(filterImage, filterBitmap);
 
-            cvReleaseMemStorage(&storage);            
+            cvReleaseMemStorage(&storage);
             cvReleaseImage(&orient);
             cvReleaseImage(&segmask);
             cvReleaseImage(&mask);

@@ -193,7 +193,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CamshiftClassifier.cpp"
+				RelativePath=".\ColorClassifier.cpp"
 				>
 			</File>
 			<File
@@ -306,11 +306,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CamshiftClassifier.h"
+				RelativePath=".\Classifier.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Classifier.h"
+				RelativePath=".\ColorClassifier.h"
 				>
 			</File>
 			<File

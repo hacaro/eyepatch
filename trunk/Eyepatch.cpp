@@ -4,7 +4,7 @@
 #include "FilterSelect.h"
 #include "VideoLoader.h"
 #include "VideoRecorder.h"
-#include "CamshiftClassifier.h"
+#include "ColorClassifier.h"
 #include "HaarClassifier.h"
 #include "VideoMarkup.h"
 #include "Eyepatch.h"

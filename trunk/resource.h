@@ -20,6 +20,7 @@
 #define IDC_RADIO_FEATURES              1007
 #define IDC_RADIO_BRIGHTNESS            1008
 #define IDC_RADIO_APPEARANCE            1009
+#define IDC_RADIO_MOTION                1010
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003

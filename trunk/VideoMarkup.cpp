@@ -5,7 +5,7 @@
 #include "VideoLoader.h"
 #include "VideoRecorder.h"
 #include "BrightnessClassifier.h"
-#include "CamshiftClassifier.h"
+#include "ColorClassifier.h"
 #include "ShapeClassifier.h"
 #include "SiftClassifier.h"
 #include "HaarClassifier.h"
@@ -40,8 +40,8 @@ CVideoMarkup::CVideoMarkup() :
 	guessPen.SetLineJoin(LineJoinRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
-//    classifier = new CamshiftClassifier();
-    classifier = new MotionClassifier();
+    classifier = new ColorClassifier();
+    recognizerMode = IDC_RADIO_COLOR;
     showGuesses = false;
     selectingRegion = false;
     draggingIcon = false;
@@ -363,7 +363,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
     m_filterSelect.MoveWindow(VIDEO_X+1, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
-    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_APPEARANCE, IDC_RADIO_COLOR);
+    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_MOTION, IDC_RADIO_COLOR);
     m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);
 
@@ -402,44 +402,28 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             showGuesses = !showGuesses;
             break;
         case IDC_RADIO_COLOR:
-            delete classifier;
-            classifier = new CamshiftClassifier();
-            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
-            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
-            objGuesses.clear();
-            showGuesses = false;
+            recognizerMode = IDC_RADIO_COLOR;
+            ReplaceClassifier(new ColorClassifier());
             break;
         case IDC_RADIO_SHAPE:
-            delete classifier;
-            classifier = new ShapeClassifier();
-            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
-            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
-            objGuesses.clear();
-            showGuesses = false;
+            recognizerMode = IDC_RADIO_SHAPE;
+            ReplaceClassifier(new ShapeClassifier());
             break;
         case IDC_RADIO_FEATURES:
-            delete classifier;
-            classifier = new SiftClassifier();
-            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
-            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
-            objGuesses.clear();
-            showGuesses = false;
+            recognizerMode = IDC_RADIO_FEATURES;
+            ReplaceClassifier(new SiftClassifier());
             break;
         case IDC_RADIO_BRIGHTNESS:
-            delete classifier;
-            classifier = new BrightnessClassifier();
-            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
-            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
-            objGuesses.clear();
-            showGuesses = false;
+            recognizerMode = IDC_RADIO_BRIGHTNESS;
+            ReplaceClassifier(new BrightnessClassifier());
             break;
         case IDC_RADIO_APPEARANCE:
-            delete classifier;
-            classifier = new HaarClassifier();
-            m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
-            m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
-            objGuesses.clear();
-            showGuesses = false;
+            recognizerMode = IDC_RADIO_APPEARANCE;
+            ReplaceClassifier(new HaarClassifier());
+            break;
+        case IDC_RADIO_MOTION:
+            recognizerMode = IDC_RADIO_MOTION;
+            ReplaceClassifier(new MotionClassifier());
             break;
     }
     if (showGuesses) {
@@ -523,4 +507,13 @@ void CVideoMarkup::RecordVideoFile() {
 		    InvalidateRect(&m_filterRect,FALSE);
 	    }
     }
+}
+
+void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
+    delete classifier;
+    classifier = newClassifier;
+    m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+    m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+    objGuesses.clear();
+    showGuesses = false;
 }

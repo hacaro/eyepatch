@@ -10,4 +10,5 @@ public:
 	void ClassifyFrame(IplImage*, list<Rect>*);
 
 private:
+    list<double> motionAngles;
 };
