@@ -70,7 +70,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     HDC hdc = BeginPaint(&ps);
     Rect drawBounds(0,0,VIDEO_X,VIDEO_Y);
     Rect videoBounds(0,0,m_videoLoader.videoX,m_videoLoader.videoY);
-    
+
     if (m_videoLoader.videoLoaded) {
         graphics->SetClip(drawBounds);
         if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,drawBounds);
@@ -88,7 +88,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
             }
 			guessRegion.Complement(videoBounds);
 			graphics->FillRegion(&grayBrush, &guessRegion);
-			graphics->SetClip(&guessRegion, CombineModeReplace);
+//			graphics->SetClip(&guessRegion, CombineModeReplace);
 			graphics->DrawPath(&guessPen, &guessPath);
 			graphics->ResetTransform();
 			graphics->SetClip(drawBounds, CombineModeReplace);
@@ -311,7 +311,11 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     m_videoLoader.LoadFrame(sliderPosition);
     if (showGuesses && !scrubbingVideo) {
         HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
-        classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        if (recognizerMode == IDC_RADIO_MOTION) {
+            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), &objGuesses);
+        } else {
+            classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        }
         SetCursor(hOld);
     }
     InvalidateRect(&m_filterRect, FALSE);
@@ -428,7 +432,11 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     }
     if (showGuesses) {
         HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
-        classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        if (recognizerMode == IDC_RADIO_MOTION) {
+            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), &objGuesses);
+        } else {
+            classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+        }
         SetCursor(hOld);
     }
     InvalidateRect(&m_filterRect,FALSE);
