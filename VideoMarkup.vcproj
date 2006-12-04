@@ -438,10 +438,6 @@
 				RelativePath=".\Resources\Trash.cur"
 				>
 			</File>
-			<File
-				RelativePath=".\Resources\VideoMarkup.ico"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>
