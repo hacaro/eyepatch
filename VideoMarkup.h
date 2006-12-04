@@ -21,6 +21,7 @@ public:
     void EnableControls(BOOL);
 	void OpenVideoFile();
 	void RecordVideoFile();
+    void ReplaceClassifier(Classifier *newClassifier);
 
     static CWndClassInfo& GetWndClassInfo()
     {
@@ -72,6 +73,9 @@ private:
     CContainedWindow m_slider, m_sampleListView;
     CFilterSelect m_filterSelect;
     Classifier *classifier;
+
+    // currently selected recognizer mode
+    int recognizerMode;
 
     // drag and drop stuff
     HIMAGELIST hGroupHeaderImages;
