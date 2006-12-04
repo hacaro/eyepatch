@@ -70,6 +70,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     HDC hdc = BeginPaint(&ps);
     Rect drawBounds(0,0,VIDEO_X,VIDEO_Y);
     Rect videoBounds(0,0,m_videoLoader.videoX,m_videoLoader.videoY);
+    Rect videoBoundsExt(2,2,m_videoLoader.videoX-4,m_videoLoader.videoY-4);
 
     if (m_videoLoader.videoLoaded) {
         graphics->SetClip(drawBounds);
@@ -88,7 +89,13 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
             }
 			guessRegion.Complement(videoBounds);
 			graphics->FillRegion(&grayBrush, &guessRegion);
-//			graphics->SetClip(&guessRegion, CombineModeReplace);
+
+            // add the outer ring of pixels for guesses that fill the whole video rectangle
+            Region borderRegion(videoBoundsExt);
+            borderRegion.Complement(videoBounds);
+            guessRegion.Union(&borderRegion);
+
+			graphics->SetClip(&guessRegion, CombineModeReplace);
 			graphics->DrawPath(&guessPen, &guessPath);
 			graphics->ResetTransform();
 			graphics->SetClip(drawBounds, CombineModeReplace);

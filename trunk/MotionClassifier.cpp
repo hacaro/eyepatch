@@ -17,6 +17,12 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
     // clear list of motion directions
     motionAngles.clear();
 
+    IplImage *filterImageMotion = cvCloneImage(filterImage);
+    IplImage *filterImageArrows = cvCloneImage(filterImage);
+    cvZero(filterImage);
+    cvZero(filterImageMotion);
+    cvZero(filterImageArrows);
+
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
@@ -41,25 +47,21 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
             // Segmask is marked motion components map.  It is not used further.
             CvSeq *seq = cvSegmentMotion(sample->motionHistory, segmask, storage, MOTION_NUM_HISTORY_FRAMES, MOTION_MAX_TIME_DELTA );
 
-            // get the global motion of the sample image
-            CvScalar color = CV_RGB(255,255,255);
-            double magnitude = min(size.width/3, size.height/3);
-
             // calculate orientation and add to list of motion directions
             double motionAngle = cvCalcGlobalOrientation( orient, mask, sample->motionHistory, 1.0, MOTION_MHI_DURATION);
             motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
             motionAngles.push_back(motionAngle);
 
-            // draw a clock with arrow indicating the direction
-            CvPoint center = cvPoint(size.width/2,size.height/2);
+            // copy the motion to the demo image
+            cvResize(dst, filterImageMotion);
+            cvAddWeighted(filterImageMotion, 1.0/((float)sampleSet->posSampleCount), filterImage, 1.0, 0, filterImage);
 
-            cvCircle( dst, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
-            cvLine( dst, center, cvPoint( cvRound( center.x + magnitude*cos(motionAngle*CV_PI/180)),
-                    cvRound( center.y - magnitude*sin(motionAngle*CV_PI/180))), color, 3, CV_AA, 0 );
-
-            // copy the motion picture to the demo image
-            cvResize(dst, filterImage);
-            IplToBitmap(filterImage, filterBitmap);
+            // draw the motion arrow for demo image
+            CvScalar color = CV_RGB(255,255,255);
+            double magnitude = min(filterImage->width/3, filterImage->height/3);
+            CvPoint center = cvPoint(filterImage->width/2,filterImage->height/2);
+            cvCircle(filterImageArrows, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
+            DrawArrow(filterImageArrows, center, motionAngle, magnitude, color, 3);
 
             cvReleaseImage(&orient);
             cvReleaseImage(&segmask);
@@ -70,6 +72,12 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
 		} else if (sample->iGroupId == 1) { // negative sample
         }
     }
+
+    // copy arrows to demo image
+    cvAdd(filterImageArrows, filterImage, filterImage);
+    IplToBitmap(filterImage, filterBitmap);
+    cvReleaseImage(&filterImageMotion);
+    cvReleaseImage(&filterImageArrows);
 
     // update member variables
 	nPosSamples = sampleSet->posSampleCount;
@@ -113,7 +121,6 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
         CvRect comp_rect = ((CvConnectedComp*)cvGetSeqElem(seq, i ))->rect;
         if(comp_rect.width * comp_rect.height < MOTION_MIN_COMPONENT_AREA ) // reject very small components
             continue;
-        CvScalar color = CV_RGB(255,0,0);
         double magnitude = 30;
 
         // select component ROI
@@ -129,23 +136,17 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
         cvResetImageROI(orient);
         cvResetImageROI(mask);
 
-        // draw a clock with arrow indicating the direction
-        CvPoint center = cvPoint((comp_rect.x + comp_rect.width/2), (comp_rect.y + comp_rect.height/2));
+        // draw mogion components in red unless there is a motion direction match
+        CvScalar color = CV_RGB(255,100,100);
 
-        cvCircle(dst, center, cvRound(magnitude*1.2), colorSwatch[i%COLOR_SWATCH_SIZE], 3, CV_AA, 0 );
-        cvLine(dst, center, cvPoint( cvRound( center.x + magnitude*cos(motionAngle*CV_PI/180)),
-                cvRound( center.y - magnitude*sin(motionAngle*CV_PI/180))), colorSwatch[i%COLOR_SWATCH_SIZE], 3, CV_AA, 0 );
-
-        // copy motion picture to demo image
-        cvResize(dst, applyImage);
-        IplToBitmap(applyImage, applyBitmap);
-
-        // now check if the direction of this component matches the direction in one of the samples
+        // check if the direction of this component matches the direction in one of the samples
         for (list<double>::iterator i = motionAngles.begin(); i!=motionAngles.end(); i++) {
             double angleDiff = fabs((*i)-motionAngle);
             // for angles close to 360
-            angleDiff = min(angleDiff, (((int)(*i+motionAngle)) % 360));
+            if (angleDiff > (360-MOTION_ANGLE_DIFF_THRESHOLD)) angleDiff = 360-angleDiff;
+
             if (angleDiff < MOTION_ANGLE_DIFF_THRESHOLD) { // add to list of guesses
+                color = CV_RGB(255,255,255);
                 Rect objRect;
                 objRect.X = comp_rect.x;
                 objRect.Y = comp_rect.y;
@@ -154,10 +155,16 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
                 objList->push_back(objRect);
             }
 
+            // draw a clock with arrow indicating the direction
+            CvPoint center = cvPoint((comp_rect.x + comp_rect.width/2), (comp_rect.y + comp_rect.height/2));
+
+            cvCircle(dst, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
+            DrawArrow(dst, center, motionAngle, magnitude, color, 3);
         }
-
-
     }
+    // copy motion picture to demo image
+    cvResize(dst, applyImage);
+    IplToBitmap(applyImage, applyBitmap);
 
     cvReleaseImage(&orient);
     cvReleaseImage(&segmask);

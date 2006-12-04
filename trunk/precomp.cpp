@@ -47,3 +47,19 @@ CvScalar colorSwatch[COLOR_SWATCH_SIZE] = {
     CV_RGB(0x44,0x44,0xBF)
 };
 
+void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness) {
+	CvPoint endpoint, arrowpoint;
+    double angle = angleDegrees*CV_PI/180.0;
+	endpoint.x = (int) (center.x + magnitude*cos(angle));
+	endpoint.y = (int) (center.y + magnitude*sin(angle));
+
+	/* Draw the main line of the arrow. */
+	cvLine(img, center, endpoint, color, thickness, CV_AA, 0);
+	/* Now draw the tips of the arrow, scaled to the size of the main part*/			
+	arrowpoint.x = (int) (endpoint.x + 12* cos(angle + 3*CV_PI/4));
+	arrowpoint.y = (int) (endpoint.y + 12* sin(angle + 3*CV_PI/4));
+	cvLine(img, arrowpoint, endpoint, color, thickness, CV_AA, 0);
+	arrowpoint.x = (int) (endpoint.x + 12* cos(angle - 3*CV_PI/4));
+	arrowpoint.y = (int) (endpoint.y + 12* sin(angle - 3*CV_PI/4));
+	cvLine(img, arrowpoint, endpoint, color, thickness, CV_AA, 0);
+}
