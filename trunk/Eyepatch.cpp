@@ -25,6 +25,9 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             case ID_FILE_RECORDVIDEO:
                 m_videoMarkup.RecordVideoFile();
                 break;
+            case ID_FILE_EMPTYTRASH:
+                m_videoMarkup.EmptyTrash();
+                break;
             case ID_FILE_EXIT:
                 PostMessage(WM_CLOSE, 0, 0);
                 break;

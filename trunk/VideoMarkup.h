@@ -22,6 +22,7 @@ public:
 	void OpenVideoFile();
 	void RecordVideoFile();
     void ReplaceClassifier(Classifier *newClassifier);
+    void EmptyTrash();
 
     static CWndClassInfo& GetWndClassInfo()
     {
