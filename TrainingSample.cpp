@@ -39,9 +39,9 @@ TrainingSample::TrainingSample(IplImage* srcImage, IplImage* motionHist, HWND lc
     lvi.iItem = imgIndex;
     lvi.iImage = imgIndex;
     lvi.iSubItem = 0;
-    ListView_InsertItem(hwndListControl, &lvi);
+    int newListItemPos = ListView_InsertItem(hwndListControl, &lvi);
 
-    id = imgIndex;
+    id = ListView_MapIndexToID(hwndListControl, newListItemPos);
 }
 
 TrainingSample::~TrainingSample(void) {

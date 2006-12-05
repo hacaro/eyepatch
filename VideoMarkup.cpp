@@ -254,6 +254,8 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         int numSelected = ListView_GetSelectedCount(m_sampleListView);
         int iSelection = -1;
         for (int iIndex=0; iIndex<numSelected; iIndex++) {
+
+            // retrieve the selected item and update its group id
             LVITEM lvi;
             iSelection = ListView_GetNextItem(m_sampleListView, iSelection, LVNI_SELECTED);
             lvi.mask = LVIF_IMAGE | LVIF_STATE | LVIF_GROUPID;
@@ -263,12 +265,15 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
             lvi.iSubItem = 0;
             ListView_GetItem(m_sampleListView, &lvi);
             lvi.iGroupId = newGroupId;
-            ListView_DeleteItem(m_sampleListView, iSelection);
-            ListView_InsertItem(m_sampleListView, &lvi);
 
-            // update sample in training set too
-            sampleSet.SetSampleGroup(iSelection, newGroupId);
+            // update sample group in training set
+            UINT sampleId = ListView_MapIndexToID(m_sampleListView, iSelection);
+            sampleSet.SetSampleGroup(sampleId, newGroupId);
+
+            // Update item in list view with new group id
+            ListView_SetItem(m_sampleListView, &lvi);
         }
+        m_sampleListView.Invalidate(FALSE);
 
     } else if (selectingRegion) { // we just finished drawing a path
         ClipCursor(NULL);   // restore full cursor movement
@@ -414,6 +419,9 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             showGuesses = !showGuesses;
             break;
         case IDC_RADIO_COLOR:
+            // FOR DEBUGGING (remove this)
+            sampleSet.ShowSamples();
+
             recognizerMode = IDC_RADIO_COLOR;
             ReplaceClassifier(new ColorClassifier());
             break;
@@ -536,4 +544,34 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
     objGuesses.clear();
     showGuesses = false;
+}
+
+void CVideoMarkup::EmptyTrash() {
+
+    // delete all the samples in the "trash" group
+    int iItem = ListView_GetNextItem(m_sampleListView, -1, LVNI_ALL);
+    while (iItem != -1) {
+        LVITEM lvi;
+        lvi.mask = LVIF_IMAGE | LVIF_STATE | LVIF_GROUPID;
+        lvi.state = 0;
+        lvi.stateMask = 0;
+        lvi.iItem = iItem;
+        lvi.iSubItem = 0;
+        ListView_GetItem(m_sampleListView, &lvi);
+
+        int iNextItem = ListView_GetNextItem(m_sampleListView, iItem, LVNI_ALL);
+        if (lvi.iGroupId == 2) {
+
+            // remove this sample from the listview
+            UINT sampleIdToDelete = ListView_MapIndexToID(m_sampleListView, iItem);
+            ListView_DeleteItem(m_sampleListView, iItem);
+
+            // update sample in training set too
+            sampleSet.RemoveSample(sampleIdToDelete);
+
+            // indices have changed so we need to start at the beginning of the list again
+            iNextItem = ListView_GetNextItem(m_sampleListView, -1, LVNI_ALL);
+        }
+        iItem = iNextItem;
+    }
 }
