@@ -10,6 +10,7 @@ public:
     int iGroupId;
 
     TrainingSample(IplImage*, IplImage*, HWND, HIMAGELIST, Rect, int);
+    TrainingSample(char *filename, HWND lc, HIMAGELIST il, int groupId);
     ~TrainingSample(void);
     void Draw(Graphics*, int x, int y);
 

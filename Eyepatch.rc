@@ -76,6 +76,7 @@ BEGIN
     BEGIN
         MENUITEM "&Open Video",                 ID_FILE_OPENVIDEO
         MENUITEM "&Record Video",               ID_FILE_RECORDVIDEO
+        MENUITEM "Open &Sample",                ID_FILE_OPENSAMPLE
         MENUITEM SEPARATOR
         MENUITEM "Empty &Trash",                ID_FILE_EMPTYTRASH
         MENUITEM SEPARATOR

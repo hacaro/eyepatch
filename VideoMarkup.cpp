@@ -56,10 +56,14 @@ CVideoMarkup::~CVideoMarkup() {
 
 void CVideoMarkup::EnableControls(BOOL enabled) {
     m_filterSelect.EnableWindow(enabled);
-    if (enabled && !classifier->isTrained) {
+    if ((!m_videoLoader.videoLoaded) || (enabled && !classifier->isTrained)) {
         m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
     }
-	m_slider.EnableWindow(enabled);
+    if (!m_videoLoader.videoLoaded) {
+    	m_slider.EnableWindow(FALSE);
+    } else {
+    	m_slider.EnableWindow(enabled);
+    }
     m_sampleListView.EnableWindow(enabled);
 }
 
@@ -170,8 +174,6 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
     p.x = LOWORD(lParam);
     p.y = HIWORD(lParam);
 
-    if (!m_videoLoader.videoLoaded) return 0;
-
     if ((wParam & MK_LBUTTON) || (wParam & MK_RBUTTON)) { // mouse is down
         if (draggingIcon) { // we are dragging in listview
 
@@ -206,7 +208,7 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
             ClientToScreen(&p);
             ImageList_DragMove(p.x, p.y);
 
-         } else { // we are drawing highlights
+         } else if (m_videoLoader.videoLoaded) { // we are drawing highlights
             if (!m_videoRect.PtInRect(p)) return 0;
 
             selectCurrent.X = (REAL) p.x;
@@ -223,8 +225,6 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
     POINT p;
     p.x = LOWORD(lParam);
     p.y = HIWORD(lParam);
-
-    if (!m_videoLoader.videoLoaded) return 0;
 
     if (draggingIcon) { // we just completed an icon drag
         // End the drag-and-drop process
@@ -275,7 +275,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         }
         m_sampleListView.Invalidate(FALSE);
 
-    } else if (selectingRegion) { // we just finished drawing a path
+    } else if (m_videoLoader.videoLoaded && selectingRegion) { // we just finished drawing a path
         ClipCursor(NULL);   // restore full cursor movement
         if (!m_videoRect.PtInRect(p)) {
             InvalidateRect(&m_videoRect,FALSE);
@@ -409,6 +409,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
         case IDC_TRAINBUTTON:
             if (sampleSet.posSampleCount < 1) {
                 // TODO: display informative error message
+                // TODO: also check for too few negative/positive samples if we are in Haar mode
                 break;
             }
             EnableControls(FALSE);
@@ -419,9 +420,6 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             showGuesses = !showGuesses;
             break;
         case IDC_RADIO_COLOR:
-            // FOR DEBUGGING (remove this)
-            sampleSet.ShowSamples();
-
             recognizerMode = IDC_RADIO_COLOR;
             ReplaceClassifier(new ColorClassifier());
             break;
@@ -518,6 +516,12 @@ void CVideoMarkup::OpenVideoFile() {
 		InvalidateRect(&m_filterRect,FALSE);
 	}
     SetCursor(hOld);
+}
+
+void CVideoMarkup::OpenSampleFile(char *filename) {
+    TrainingSample *sample = new TrainingSample(filename, m_sampleListView, m_hImageList, 0);
+    sampleSet.AddSample(sample);
+    EnableControls(TRUE);
 }
 
 void CVideoMarkup::RecordVideoFile() {

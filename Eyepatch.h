@@ -11,6 +11,7 @@ public:
 	LRESULT OnCreate(UINT, WPARAM, LPARAM, BOOL& );
 	LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
 	LRESULT OnCommand( UINT, WPARAM, LPARAM, BOOL& );
+    void LoadSampleFromFile();
 
 	static CWndClassInfo& GetWndClassInfo()
 	{
