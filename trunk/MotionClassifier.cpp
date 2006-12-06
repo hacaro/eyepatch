@@ -27,7 +27,10 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == 0) { // positive sample
-
+            if (sample->motionHistory == NULL) {
+                // no motion history associated with this sample so we skip to the next one
+                continue;
+            }
             CvSize size = cvSize(sample->motionHistory->width,sample->motionHistory->height);
             IplImage *orient = cvCreateImage(size, IPL_DEPTH_32F, 1);
             IplImage *segmask = cvCreateImage(size, IPL_DEPTH_32F, 1);

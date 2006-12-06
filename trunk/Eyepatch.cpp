@@ -25,6 +25,9 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             case ID_FILE_RECORDVIDEO:
                 m_videoMarkup.RecordVideoFile();
                 break;
+            case ID_FILE_OPENSAMPLE:
+                LoadSampleFromFile();
+                break;
             case ID_FILE_EMPTYTRASH:
                 m_videoMarkup.EmptyTrash();
                 break;
@@ -56,6 +59,42 @@ LRESULT CEyepatch::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
     DestroyMenu(hMenu);
     PostQuitMessage( 0 );
 	return 0;
+}
+
+void CEyepatch::LoadSampleFromFile() {
+    USES_CONVERSION;
+    WCHAR szFileNameList[MAX_PATH*16] = L"";
+    WCHAR szPathName[MAX_PATH] = L"";
+    WCHAR szFileName[MAX_PATH] = L"";
+    OPENFILENAMEW ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
+    ofn.hwndOwner = m_hWnd;
+    ofn.lpstrFilter = L"Image Files\0*.jpg;*.png;*.bmp;*.dib;*.jpeg;*.pbm;*.ppm;*.pgm;*.sr;*.ras;*.tiff;*.tif\0";
+    ofn.lpstrFile = szFileNameList;
+    ofn.nMaxFile = MAX_PATH*16;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_HIDEREADONLY;
+    ofn.lpstrDefExt = L"jpg";
+
+    if(!GetOpenFileName(&ofn)) {
+        return;
+    }
+
+    WCHAR *strPtr = szFileNameList;
+    wcscpy(szPathName, strPtr);
+    strPtr += (wcslen(strPtr) + 1);
+
+    if (wcslen(strPtr) == 0) { // only one filename selected
+        m_videoMarkup.OpenSampleFile(W2A(szPathName));
+    } else { // step through all the filenames
+        while(wcslen(strPtr) != 0) {
+            wcscpy(szFileName, szPathName);
+            wcscat(szFileName, L"\\" );
+            wcscat(szFileName, strPtr);
+            m_videoMarkup.OpenSampleFile(W2A(szFileName));
+            strPtr += (wcslen(strPtr) + 1);
+        }
+    }
 }
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)

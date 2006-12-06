@@ -21,6 +21,7 @@ public:
     void EnableControls(BOOL);
 	void OpenVideoFile();
 	void RecordVideoFile();
+    void OpenSampleFile(char *filename);
     void ReplaceClassifier(Classifier *newClassifier);
     void EmptyTrash();
 

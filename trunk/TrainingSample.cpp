@@ -44,10 +44,50 @@ TrainingSample::TrainingSample(IplImage* srcImage, IplImage* motionHist, HWND lc
     id = ListView_MapIndexToID(hwndListControl, newListItemPos);
 }
 
+TrainingSample::TrainingSample(char *filename, HWND lc, HIMAGELIST il, int groupId) {
+    hwndListControl = lc;
+    hImageList = il;
+    iGroupId = groupId;
+
+    fullImageCopy = cvLoadImage(filename, 1);
+    if (fullImageCopy == NULL) {
+        fullImageCopy = cvCreateImage(cvSize(LISTVIEW_SAMPLE_X,LISTVIEW_SAMPLE_Y),IPL_DEPTH_8U, 3);
+        cvZero(fullImageCopy);
+    }
+    motionHistory = NULL;
+
+    resizedImage = cvCreateImage(cvSize(LISTVIEW_SAMPLE_X,LISTVIEW_SAMPLE_Y),IPL_DEPTH_8U, 3); 
+    bmpImage = new Bitmap(LISTVIEW_SAMPLE_X, LISTVIEW_SAMPLE_Y, PixelFormat24bppRGB);
+
+    if (fullImageCopy->width >= LISTVIEW_SAMPLE_X && fullImageCopy->height >= LISTVIEW_SAMPLE_Y) {
+        cvResize(fullImageCopy, resizedImage, CV_INTER_AREA);
+    } else { 
+        cvResize(fullImageCopy, resizedImage, CV_INTER_LINEAR);
+    }
+
+    IplToBitmap(resizedImage, bmpImage);
+    bmpImage->GetHBITMAP(NULL, &hbmImage);
+
+    // Add image to imagelist
+    int imgIndex = ImageList_Add(hImageList, hbmImage, NULL);
+
+    // Add item to list view
+    lvi.mask = LVIF_IMAGE | LVIF_STATE | LVIF_GROUPID;
+    lvi.state = 0;
+    lvi.stateMask = 0;
+    lvi.iGroupId = groupId;
+    lvi.iItem = imgIndex;
+    lvi.iImage = imgIndex;
+    lvi.iSubItem = 0;
+    int newListItemPos = ListView_InsertItem(hwndListControl, &lvi);
+
+    id = ListView_MapIndexToID(hwndListControl, newListItemPos);
+}
+
 TrainingSample::~TrainingSample(void) {
     cvReleaseImage(&fullImageCopy);
     cvReleaseImage(&resizedImage);
-    cvReleaseImage(&motionHistory);
+    if (motionHistory != NULL) cvReleaseImage(&motionHistory);
     delete bmpImage;
 }
 
