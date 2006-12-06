@@ -120,7 +120,20 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
 
         } else if (sample->iGroupId == 1) { // negative sample
             sprintf_s(imageFilename, "%sneg%d.jpg", tempPathname, imgNum);
-            cvSaveImage(imageFilename, sample->fullImageCopy);
+            CvSize negImageSize = cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height);
+
+            if ((negImageSize.width < 2*HAAR_SAMPLE_X) || (negImageSize.height < 2*HAAR_SAMPLE_Y)) {
+                negImageSize.width = max(negImageSize.width, 2*HAAR_SAMPLE_X);
+                negImageSize.height = max(negImageSize.height, 2*HAAR_SAMPLE_Y);
+
+                IplImage *negImageCopy = cvCreateImage(negImageSize, IPL_DEPTH_8U, 3);
+                cvResize(sample->fullImageCopy, negImageCopy);
+                cvSaveImage(imageFilename, negImageCopy);
+                cvReleaseImage(&negImageCopy);
+            } else {
+                cvSaveImage(imageFilename, sample->fullImageCopy);
+            }
+
             fprintf(neglist, "neg%d.jpg\n", imgNum);
             imgNum++;
         }
