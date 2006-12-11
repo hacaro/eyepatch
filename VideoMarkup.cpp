@@ -12,6 +12,7 @@
 #include "HaarClassifier.h"
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
+#include "Gesture/BlobTracker.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -617,6 +618,7 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     // change slider attributes to select either a range or just a single frame, depending on classifier type
     if (recognizerMode == IDC_RADIO_GESTURE) {
         m_videoControl.EnableSelectionRange(true);
+        m_videoLoader.LearnTrajectories();
     } else {
         m_videoControl.EnableSelectionRange(false);
     }

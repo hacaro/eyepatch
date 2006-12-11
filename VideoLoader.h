@@ -42,6 +42,7 @@ public:
 	BOOL OpenVideoFile(HWND,LPCWSTR);
     void LoadFrame(long);
     IplImage* GetMotionHistory();
+    void LearnTrajectories();
 	void ConvertFrame();
 
     long nFrames;
@@ -57,6 +58,8 @@ private:
 	
     IplImage *currentFrame;
     IplImage *motionHistory;
+
+    BlobTracker m_blobTracker;
 
 	friend class CVideoLoaderDialog;
 	CVideoLoaderDialog m_hVideoLoaderDialog;

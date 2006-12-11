@@ -1,5 +1,6 @@
 #include "precomp.h"
-#include "_cvhaartraining.h"
+
+// Eyepatch includes
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
