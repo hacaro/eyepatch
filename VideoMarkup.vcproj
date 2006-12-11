@@ -205,6 +205,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GestureClassifier.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\HaarClassifier.cpp"
 				>
 			</File>
@@ -230,6 +234,10 @@
 			</File>
 			<File
 				RelativePath=".\TrainingSet.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoControl.cpp"
 				>
 			</File>
 			<File
@@ -322,6 +330,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GestureClassifier.h"
+				>
+			</File>
+			<File
 				RelativePath=".\HaarClassifier.h"
 				>
 			</File>
@@ -351,6 +363,10 @@
 			</File>
 			<File
 				RelativePath=".\TrainingSet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoControl.h"
 				>
 			</File>
 			<File

@@ -26,5 +26,6 @@ LRESULT CFilterSelect::OnEnable(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
     GetDlgItem(IDC_RADIO_FEATURES).EnableWindow(wParam);
     GetDlgItem(IDC_RADIO_APPEARANCE).EnableWindow(wParam);
     GetDlgItem(IDC_RADIO_MOTION).EnableWindow(wParam);
+    GetDlgItem(IDC_RADIO_GESTURE).EnableWindow(wParam);
     return 1;
 }

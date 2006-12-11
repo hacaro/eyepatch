@@ -2,10 +2,11 @@
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "FilterSelect.h"
+#include "VideoControl.h"
 #include "VideoLoader.h"
 #include "VideoRecorder.h"
-#include "ColorClassifier.h"
-#include "HaarClassifier.h"
+#include "Classifier.h"
+#include "GestureClassifier.h"
 #include "VideoMarkup.h"
 #include "Eyepatch.h"
 
