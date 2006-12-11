@@ -51,16 +51,16 @@ public:
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
         NOTIFY_CODE_HANDLER(LVN_BEGINDRAG, OnBeginDrag)
         NOTIFY_CODE_HANDLER(NM_CUSTOMDRAW, OnCustomDraw)
-    ALT_MSG_MAP(1)  // video slider
-	ALT_MSG_MAP(2)  // sample list
+	ALT_MSG_MAP(1)  // sample listview
     END_MSG_MAP()
 
 private:
-	HDC hdcmem;
-	HBITMAP hbm;
+	HDC hdcmem, hdcmemExamples;
+	HBITMAP hbm, hbmExamples;
+    HRGN activeRgn;
     HCURSOR hTrashCursor, hDropCursor;
 
-	Graphics *graphics;
+	Graphics *graphics, *graphicsExamples;
     PointF selectStart, selectCurrent;
     Pen posSelectPen, negSelectPen, guessPen;
     SolidBrush posBrush, negBrush, hoverBrush, grayBrush, ltgrayBrush;
@@ -72,8 +72,9 @@ private:
 	CVideoLoader m_videoLoader;
 	CVideoRecorder m_videoRecorder;
     TrainingSet sampleSet;
-    CContainedWindow m_slider, m_sampleListView;
+    CContainedWindow m_sampleListView;
     CFilterSelect m_filterSelect;
+    CVideoControl m_videoControl;
     Classifier *classifier;
 
     // currently selected recognizer mode

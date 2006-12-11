@@ -2,6 +2,7 @@
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "FilterSelect.h"
+#include "VideoControl.h"
 #include "VideoLoader.h"
 #include "VideoRecorder.h"
 #include "BrightnessClassifier.h"
@@ -10,6 +11,7 @@
 #include "SiftClassifier.h"
 #include "HaarClassifier.h"
 #include "MotionClassifier.h"
+#include "GestureClassifier.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -24,11 +26,11 @@ void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
 }
 
 CVideoMarkup::CVideoMarkup() :
-    m_slider(TRACKBAR_CLASS, this, 1),
-    m_sampleListView(WC_LISTVIEW, this, 2),
+    m_sampleListView(WC_LISTVIEW, this, 1),
     m_filterSelect(this),
+    m_videoControl(this),
     m_videoRect(0,0,VIDEO_X,VIDEO_Y),
-    m_filterRect(0, 0, VIDEO_X, FILTERIMAGE_Y+FILTERIMAGE_HEIGHT),
+    m_filterRect(0, VIDEO_Y+SLIDER_Y, VIDEO_X, WINDOW_Y),
     posSelectPen(Color(100,100,255,100),2),
     negSelectPen(Color(100,255,100,100),2),
     guessPen(Color(100,255,100),4),
@@ -60,15 +62,14 @@ void CVideoMarkup::EnableControls(BOOL enabled) {
         m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
     }
     if (!m_videoLoader.videoLoaded) {
-    	m_slider.EnableWindow(FALSE);
+    	m_videoControl.EnableWindow(FALSE);
     } else {
-    	m_slider.EnableWindow(enabled);
+    	m_videoControl.EnableWindow(enabled);
     }
     m_sampleListView.EnableWindow(enabled);
 }
 
-LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
-{
+LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 	PAINTSTRUCT ps;
 
     HDC hdc = BeginPaint(&ps);
@@ -124,17 +125,18 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
     }
 
     if (classifier->isTrained) {
-        graphics->DrawImage(classifier->GetFilterImage(), FILTERIMAGE_X+1, FILTERIMAGE_Y+1);
+        graphicsExamples->DrawImage(classifier->GetFilterImage(),0,0);
     } else {
-        graphics->FillRectangle(&ltgrayBrush, Rect(FILTERIMAGE_X, FILTERIMAGE_Y, WINDOW_X, WINDOW_Y));
+        graphicsExamples->FillRectangle(&ltgrayBrush, Rect(0,0,EXAMPLEWINDOW_WIDTH/2,EXAMPLEWINDOW_HEIGHT));
     }
     if (showGuesses) {
-        graphics->DrawImage(classifier->GetApplyImage(), FILTERIMAGE_X+FILTERIMAGE_WIDTH+10, FILTERIMAGE_Y+1);
+        graphicsExamples->DrawImage(classifier->GetApplyImage(),EXAMPLEWINDOW_WIDTH/2, 0);
     } else {
-        graphics->FillRectangle(&ltgrayBrush, Rect(FILTERIMAGE_X+FILTERIMAGE_WIDTH, FILTERIMAGE_Y, WINDOW_X, WINDOW_Y));
+        graphicsExamples->FillRectangle(&ltgrayBrush, Rect(EXAMPLEWINDOW_WIDTH/2, 0, EXAMPLEWINDOW_WIDTH/2, EXAMPLEWINDOW_HEIGHT));
     }
 
-    BitBlt(hdc,0,0,WINDOW_X,WINDOW_Y,hdcmem,0,0,SRCCOPY);
+    BitBlt(hdc,0,0,VIDEO_X,VIDEO_Y,hdcmem,0,0,SRCCOPY);
+    BitBlt(hdc,EXAMPLEWINDOW_X,EXAMPLEWINDOW_Y,EXAMPLEWINDOW_WIDTH,EXAMPLEWINDOW_HEIGHT,hdcmemExamples,0,0,SRCCOPY);
     EndPaint(&ps);
 
     return 0;
@@ -208,13 +210,13 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
             ClientToScreen(&p);
             ImageList_DragMove(p.x, p.y);
 
-         } else if (m_videoLoader.videoLoaded) { // we are drawing highlights
+         } else if (m_videoLoader.videoLoaded) { // we are selecting a region
             if (!m_videoRect.PtInRect(p)) return 0;
 
             selectCurrent.X = (REAL) p.x;
             selectCurrent.Y = (REAL) p.y;
            
-            InvalidateRect(&m_videoRect, FALSE);
+            InvalidateRgn(activeRgn, FALSE);
         }
     }
 	return 0;
@@ -275,7 +277,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         }
         m_sampleListView.Invalidate(FALSE);
 
-    } else if (m_videoLoader.videoLoaded && selectingRegion) { // we just finished drawing a path
+    } else if (m_videoLoader.videoLoaded && selectingRegion) { // we just finished drawing a selection
         ClipCursor(NULL);   // restore full cursor movement
         if (!m_videoRect.PtInRect(p)) {
             InvalidateRect(&m_videoRect,FALSE);
@@ -309,7 +311,8 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 }
 
 LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
-    long sliderPosition = (long) SendMessage(m_slider, TBM_GETPOS, 0, 0);
+    long sliderPosition =
+        (long) ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETPOS, 0, 0);
     selectingRegion = false;
 	if (LOWORD(wParam) == SB_THUMBTRACK) {
 		scrubbingVideo = true;
@@ -330,21 +333,35 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
         }
         SetCursor(hOld);
     }
-    InvalidateRect(&m_filterRect, FALSE);
+    InvalidateRgn(activeRgn, FALSE);
     return 0;
 }
 
 LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 {
-    // create graphics structures
+    // create graphics structures for video and examples
 	HDC hdc = GetDC();
 	hdcmem = CreateCompatibleDC(hdc);
+	hdcmemExamples = CreateCompatibleDC(hdc);
 	hbm = CreateCompatibleBitmap(hdc,WINDOW_X,WINDOW_Y);
+	hbmExamples = CreateCompatibleBitmap(hdc,EXAMPLEWINDOW_WIDTH,EXAMPLEWINDOW_HEIGHT);
 	SelectObject(hdcmem,hbm);
+	SelectObject(hdcmemExamples,hbmExamples);
 	ReleaseDC(hdc);
-	graphics = new Graphics(hdcmem);
+    graphics = new Graphics(hdcmem);
+    graphicsExamples = new Graphics(hdcmemExamples);
 	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
     graphics->Clear(Color(255,255,255));
+    graphicsExamples->Clear(Color(255,255,255));
+
+    // create the active window region to invalidate
+    HRGN filterRgn = CreateRectRgnIndirect(&m_filterRect);
+    HRGN videoRgn = CreateRectRgnIndirect(&m_videoRect);
+    activeRgn = CreateRectRgnIndirect(&m_filterRect);
+    CombineRgn(activeRgn, filterRgn, videoRgn, RGN_OR);
+    DeleteObject(filterRgn);
+    DeleteObject(videoRgn);
+
     hTrashCursor = LoadCursor(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDC_TRASHCURSOR));
     hDropCursor = LoadCursor(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDC_DROPCURSOR));
 
@@ -375,12 +392,16 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     AddListViewGroup(m_sampleListView, L"Trash", 2);
 
     // Create the video slider
-    m_slider.Create(m_hWnd, CRect(5,VIDEO_Y+5,VIDEO_X-5,VIDEO_Y+SLIDER_Y), _T(""), WS_CHILD | WS_VISIBLE | WS_DISABLED | TBS_NOTICKS |  TBS_ENABLESELRANGE | TBS_BOTH );
+    m_videoControl.Create(m_hWnd, WS_CHILD | WS_VISIBLE | WS_DISABLED );
+    m_videoControl.MoveWindow(0,VIDEO_Y,VIDEO_X,SLIDER_Y);
+    m_videoControl.ShowWindow(TRUE);
+    m_videoControl.EnableWindow(FALSE);
+    m_videoControl.EnableSelectionRange(false);
 	
     // Create the filter selector
-    m_filterSelect.Create(m_hWnd, CRect(VIDEO_X,VIDEO_Y-50,WINDOW_X-5,WINDOW_Y), WS_CHILD | WS_VISIBLE | WS_DISABLED);
+    m_filterSelect.Create(m_hWnd, WS_CHILD | WS_VISIBLE | WS_DISABLED);
     m_filterSelect.MoveWindow(VIDEO_X+1, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
-    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_MOTION, IDC_RADIO_COLOR);
+    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_COLOR);
     m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);
 
@@ -392,19 +413,24 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
     ImageList_RemoveAll(m_hImageList);
     ImageList_Destroy(m_hImageList);
 	delete graphics;
+    delete graphicsExamples;
 	DeleteDC(hdcmem);
+    DeleteDC(hdcmemExamples);
 	DeleteObject(hbm);
+    DeleteObject(hbmExamples);
     DeleteObject(hTrashCursor);
     DeleteObject(hDropCursor);
+    DeleteObject(activeRgn);
     m_sampleListView.DestroyWindow();
-    m_slider.DestroyWindow();
     m_filterSelect.DestroyWindow();
+    m_videoControl.DestroyWindow();
     // TODO: non window-related variables should be deleted in destructor instead of here
     PostQuitMessage( 0 );
 	return 0;
 }
 
-LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
+LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    long sliderPosition, sliderRange, selStart, selEnd;
     switch(wParam) {
         case IDC_TRAINBUTTON:
             if (sampleSet.posSampleCount < 1) {
@@ -415,6 +441,32 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             EnableControls(FALSE);
 		    classifier->StartTraining(&sampleSet);
             EnableControls(TRUE);
+            break;
+        case IDC_FRAMELEFT:
+        case IDC_FRAMERIGHT:
+            sliderPosition =
+                (long) ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETPOS, 0, 0);
+            sliderPosition = (wParam==IDC_FRAMELEFT) ? sliderPosition-1 : sliderPosition+1;
+            ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, sliderPosition);
+            OnTrack(0,0,0,bHandled);
+            break;
+        case IDC_MARKIN:
+        case IDC_MARKOUT:
+            if (recognizerMode != IDC_RADIO_GESTURE) break;
+            sliderPosition =
+                (long) ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETPOS, 0, 0);
+            sliderRange = 
+                (long) ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETRANGEMAX, 0, 0);
+            selStart = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELSTART, 0, 0);
+            selEnd = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELEND, 0, 0);
+            if (wParam==IDC_MARKIN) {
+                selStart = sliderPosition;
+                selEnd = (selEnd>sliderPosition) ? selEnd : sliderRange;
+            } else {
+                selStart = (selStart<sliderPosition) ? selStart : 0;
+                selEnd = sliderPosition;
+            }
+            ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETSEL, TRUE, MAKELONG (selStart, selEnd));
             break;
         case IDC_SHOWBUTTON:
             showGuesses = !showGuesses;
@@ -443,6 +495,10 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             recognizerMode = IDC_RADIO_MOTION;
             ReplaceClassifier(new MotionClassifier());
             break;
+        case IDC_RADIO_GESTURE:
+            recognizerMode = IDC_RADIO_GESTURE;
+            ReplaceClassifier(new GestureClassifier());
+            break;
     }
     if (showGuesses) {
         HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
@@ -453,7 +509,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
         }
         SetCursor(hOld);
     }
-    InvalidateRect(&m_filterRect,FALSE);
+    InvalidateRgn(activeRgn,FALSE);
 
     return 0;
 }
@@ -509,11 +565,11 @@ void CVideoMarkup::OpenVideoFile() {
     m_videoLoader.OpenVideoFile(m_hWnd);
 	if (m_videoLoader.videoLoaded) {
 		EnableControls(TRUE);
-		SendMessage(m_slider, TBM_SETRANGEMIN, FALSE, 0);
-		SendMessage(m_slider, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
-		SendMessage(m_slider, TBM_SETPOS, TRUE, 0);
+        ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETRANGEMIN, FALSE, 0);
+        ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
+        ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, 0);
 		m_videoLoader.LoadFrame(0);
-		InvalidateRect(&m_filterRect,FALSE);
+		InvalidateRgn(activeRgn,FALSE);
 	}
     SetCursor(hOld);
 }
@@ -531,11 +587,11 @@ void CVideoMarkup::RecordVideoFile() {
         m_videoLoader.OpenVideoFile(m_hWnd, m_videoRecorder.szFileName);
 	    if (m_videoLoader.videoLoaded) {
 		    EnableControls(TRUE);
-		    SendMessage(m_slider, TBM_SETRANGEMIN, FALSE, 0);
-		    SendMessage(m_slider, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
-		    SendMessage(m_slider, TBM_SETPOS, TRUE, 0);
+		    ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETRANGEMIN, FALSE, 0);
+		    ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
+		    ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, 0);
 		    m_videoLoader.LoadFrame(0);
-		    InvalidateRect(&m_filterRect,FALSE);
+		    InvalidateRgn(activeRgn,FALSE);
 	    }
         SetCursor(hOld);
     }
@@ -548,6 +604,13 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
     objGuesses.clear();
     showGuesses = false;
+
+    // change slider attributes to select either a range or just a single frame, depending on classifier type
+    if (recognizerMode == IDC_RADIO_GESTURE) {
+        m_videoControl.EnableSelectionRange(true);
+    } else {
+        m_videoControl.EnableSelectionRange(false);
+    }
 }
 
 void CVideoMarkup::EmptyTrash() {
