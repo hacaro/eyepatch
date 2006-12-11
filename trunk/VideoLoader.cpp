@@ -255,3 +255,9 @@ IplImage* CVideoLoader::GetMotionHistory() {
 
     return motionHistory;
 }
+
+void CVideoLoader::LearnTrajectories() { 
+    if (!videoLoaded) return;
+    m_blobTracker.LearnTrajectories(videoCapture);
+    LoadFrame(currentFrameNumber);
+}

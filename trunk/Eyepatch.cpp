@@ -6,7 +6,6 @@
 #include "VideoLoader.h"
 #include "VideoRecorder.h"
 #include "Classifier.h"
-#include "GestureClassifier.h"
 #include "VideoMarkup.h"
 #include "Eyepatch.h"
 

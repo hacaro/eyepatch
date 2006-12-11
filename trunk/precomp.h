@@ -49,6 +49,14 @@
 #define MOTION_NUM_IMAGES 4
 #define MOTION_NUM_HISTORY_FRAMES 15
 
+// constants for gesture recognition
+// number of frames for which we collect background information before detecting blobs
+#define GESTURE_NUM_FGTRAINING_FRAMES 10
+// minimum number of frames required for a valid gesture
+#define GESTURE_MIN_TRAJECTORY_LENGTH 20
+// number of samples away from the end we need to be to consider the gesture finished
+#define GESTURE_PHASE_CUTOFF 10
+
 // control placement
 #define WINDOW_X 1024
 #define WINDOW_Y 768
@@ -68,6 +76,7 @@
 #include <windows.h>
 #include "resource.h"
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <float.h>
 #include <io.h>
@@ -78,22 +87,26 @@ using namespace Gdiplus;
 
 #include <list>
 #include <map>
-#include <algorithm>
+#include <vector>
+#include <deque>
 using namespace std;
 
+// ATL includes
 #include <atlbase.h>
 #include <atltypes.h>
 #include <atlfile.h>
 #include <atlwin.h>
-//#include <atlmisc.h>
-//#include <atlcrack.h>
-//#include <atltheme.h>   // XP/Vista theme support
-//#include <dwmapi.h>     // DWM APIs
 
 // OpenCV Includes
 #include "cv.h"
 #include "highgui.h"
-#include "cvhaartraining.h"
+#include "cvaux.h"
+
+// Haar Training Includes
+#include "CVHaar/_cvcommon.h"
+#include "CVHaar/_cvhaartraining.h"
+#include "CVHaar/cvhaartraining.h"
+#include "CVHaar/cvclassifier.h"
 
 // SIFT includes
 extern "C" {
@@ -103,6 +116,20 @@ extern "C" {
     #include "SIFT/utils.h"
     #include "SIFT/xform.h"
 }
+
+
+// MotionSample and MotionTrack types for gestures
+typedef struct _MotionSample {
+    double vx, vy, sizex, sizey;
+} MotionSample;
+typedef vector<MotionSample> MotionTrack;
+
+// Gesture Tracking includes
+#include "Gesture/RandomUtils.h"
+#include "Gesture/TrajectoryList.h"
+#include "Gesture/BlobTracker.h"
+#include "Gesture/TrajectoryModel.h"
+#include "Gesture/Condensation.h"
 
 // Utility functions
 void IplToBitmap(IplImage *src, Bitmap *dst);
