@@ -6,6 +6,7 @@ public:
     ColorClassifier();
     ~ColorClassifier();
 
+    BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
 

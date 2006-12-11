@@ -48,7 +48,7 @@ CVideoMarkup::CVideoMarkup() :
     selectingRegion = false;
     draggingIcon = false;
 	scrubbingVideo = false;
-	currentGroupId = 0;
+	currentGroupId = GROUPID_POSSAMPLES;
 }
 
 
@@ -113,7 +113,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
         selectRect.Height = (INT) abs(selectStart.Y - selectCurrent.Y);
 
         if (selectingRegion) {
-            if (currentGroupId == 0) {
+            if (currentGroupId == GROUPID_POSSAMPLES) {
                 graphics->FillRectangle(&posBrush, selectRect);
                 graphics->DrawRectangle(&posSelectPen, selectRect);
             } else {
@@ -155,8 +155,8 @@ LRESULT CVideoMarkup::OnButtonDown( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
 
     // If the right button is down, we consider this a negative sample
     // TODO: do this some better way
-    if (MK_RBUTTON & wParam) currentGroupId = 1;
-    else currentGroupId = 0;
+    if (MK_RBUTTON & wParam) currentGroupId = GROUPID_NEGSAMPLES;
+    else currentGroupId = GROUPID_POSSAMPLES;
 
     selectStart.X = (REAL) p.x;
     selectStart.Y = (REAL) p.y;
@@ -186,8 +186,8 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
             ::ScreenToClient(m_sampleListView, &lvhti.pt);
             ListView_HitTestEx(m_sampleListView, &lvhti);
             CRect posRect, negRect;
-            ListView_GetGroupRect(m_sampleListView, 0, LVGGR_GROUP, &posRect);
-            ListView_GetGroupRect(m_sampleListView, 1, LVGGR_GROUP, &negRect);
+            ListView_GetGroupRect(m_sampleListView, GROUPID_POSSAMPLES, LVGGR_GROUP, &posRect);
+            ListView_GetGroupRect(m_sampleListView, GROUPID_NEGSAMPLES, LVGGR_GROUP, &negRect);
             if (posRect.PtInRect(lvhti.pt)) { // highlight positive group
                 SetCursor(hDropCursor);
                 dragHover = true;
@@ -244,13 +244,13 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         ::ScreenToClient(m_sampleListView, &lvhti.pt);
         ListView_HitTestEx(m_sampleListView, &lvhti);
         CRect posRect, negRect;
-        ListView_GetGroupRect(m_sampleListView, 0, LVGGR_GROUP, &posRect);
-        ListView_GetGroupRect(m_sampleListView, 1, LVGGR_GROUP, &negRect);
+        ListView_GetGroupRect(m_sampleListView, GROUPID_POSSAMPLES, LVGGR_GROUP, &posRect);
+        ListView_GetGroupRect(m_sampleListView, GROUPID_NEGSAMPLES, LVGGR_GROUP, &negRect);
 
         int newGroupId;
-        if (posRect.PtInRect(lvhti.pt)) newGroupId = 0;
-        else if (negRect.PtInRect(lvhti.pt)) newGroupId = 1;
-        else newGroupId = 2;
+        if (posRect.PtInRect(lvhti.pt)) newGroupId = GROUPID_POSSAMPLES;
+        else if (negRect.PtInRect(lvhti.pt)) newGroupId = GROUPID_NEGSAMPLES;
+        else newGroupId = GROUPID_TRASH;
 
         // update group membership of selected items based on drop location
         int numSelected = ListView_GetSelectedCount(m_sampleListView);
@@ -387,9 +387,10 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     //ListView_SetGroupHeaderImageList(m_sampleListView, hGroupHeaderImages);
 
     // add the "positive" and "negative" groups
-    AddListViewGroup(m_sampleListView, L"Positive Examples", 0);
-    AddListViewGroup(m_sampleListView, L"Negative Examples", 1);
-    AddListViewGroup(m_sampleListView, L"Trash", 2);
+    AddListViewGroup(m_sampleListView, L"Positive Image Examples", GROUPID_POSSAMPLES);
+    AddListViewGroup(m_sampleListView, L"Negative Image Examples", GROUPID_NEGSAMPLES);
+    AddListViewGroup(m_sampleListView, L"Video Range Examples", GROUPID_RANGESAMPLES);
+    AddListViewGroup(m_sampleListView, L"Trash", GROUPID_TRASH);
 
     // Create the video slider
     m_videoControl.Create(m_hWnd, WS_CHILD | WS_VISIBLE | WS_DISABLED );
@@ -431,11 +432,16 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     long sliderPosition, sliderRange, selStart, selEnd;
+    WCHAR errorMessage[1000] = L"Sorry, you don't have enough examples to train this recognizer.  Please add some more examples and try again.\n";
     switch(wParam) {
         case IDC_TRAINBUTTON:
-            if (sampleSet.posSampleCount < 1) {
-                // TODO: display informative error message
-                // TODO: also check for too few negative/positive samples if we are in Haar mode
+            if (!classifier->ContainsSufficientSamples(&sampleSet)) {
+                if (recognizerMode == IDC_RADIO_APPEARANCE) {
+                    wcscat(errorMessage, L"To build an appearance recognizer you need at least 3 positive and 3 negative examples.");
+                } else if (recognizerMode == IDC_RADIO_GESTURE) {
+                    wcscat(errorMessage, L"To build a gesture recognizer you need to to select a range of frames using the 'Mark In' and 'Mark Out' buttons.");
+                }
+		        MessageBox(errorMessage, L"Error Training Recognizer", MB_OK | MB_ICONERROR);
                 break;
             }
             EnableControls(FALSE);
@@ -467,6 +473,9 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
                 selEnd = sliderPosition;
             }
             ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETSEL, TRUE, MAKELONG (selStart, selEnd));
+            break;
+        case IDC_GRABRANGE:
+            sampleSet.ShowSamples();
             break;
         case IDC_SHOWBUTTON:
             showGuesses = !showGuesses;
@@ -627,7 +636,7 @@ void CVideoMarkup::EmptyTrash() {
         ListView_GetItem(m_sampleListView, &lvi);
 
         int iNextItem = ListView_GetNextItem(m_sampleListView, iItem, LVNI_ALL);
-        if (lvi.iGroupId == 2) {
+        if (lvi.iGroupId == GROUPID_TRASH) {
 
             // remove this sample from the listview
             UINT sampleIdToDelete = ListView_MapIndexToID(m_sampleListView, iItem);

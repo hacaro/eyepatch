@@ -5,7 +5,7 @@ class TrainingSet
 public:
     HIMAGELIST m_imageList;
     map<UINT, TrainingSample*> sampleMap;
-    int posSampleCount, negSampleCount;
+    int posSampleCount, negSampleCount, rangeSampleCount;
 
     TrainingSet(void);
     ~TrainingSet(void);

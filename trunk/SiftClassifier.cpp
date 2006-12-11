@@ -18,6 +18,9 @@ SiftClassifier::~SiftClassifier() {
     if (numSampleFeatures > 0) free(sampleFeatures);
 }
 
+BOOL SiftClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
+    return (sampleSet->posSampleCount > 0);
+}
 
 void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
 
@@ -27,7 +30,7 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 0) { // positive sample
+        if (sample->iGroupId == GROUPID_POSSAMPLES) { // positive sample
 
             // store a copy of the sample image for later
             sampleCopy = cvCloneImage(sample->fullImageCopy);
@@ -40,15 +43,13 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
             // for now just get features from first sample
             // TODO: collect feature sets from each sample?
             break;
-		} else if (sample->iGroupId == 1) { // negative sample
+		} else if (sample->iGroupId == GROUPID_NEGSAMPLES) { // negative sample
         }
     }
 
     IplToBitmap(filterImage, filterBitmap);
 
 	// update member variables
-	nPosSamples = sampleSet->posSampleCount;
-	nNegSamples = sampleSet->negSampleCount;
 	isTrained = true;
 }
 

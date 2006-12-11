@@ -189,14 +189,6 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
-				RelativePath=".\BrightnessClassifier.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ColorClassifier.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Eyepatch.cpp"
 				>
 			</File>
@@ -205,27 +197,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\GestureClassifier.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\HaarClassifier.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MotionClassifier.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\precomp.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ShapeClassifier.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SiftClassifier.cpp"
 				>
 			</File>
 			<File
@@ -304,23 +276,43 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Classifiers"
+				>
+				<File
+					RelativePath=".\BrightnessClassifier.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ColorClassifier.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\GestureClassifier.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\HaarClassifier.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\MotionClassifier.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ShapeClassifier.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SiftClassifier.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
-			<File
-				RelativePath=".\BrightnessClassifier.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Classifier.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ColorClassifier.h"
-				>
-			</File>
 			<File
 				RelativePath=".\Eyepatch.h"
 				>
@@ -330,31 +322,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\GestureClassifier.h"
-				>
-			</File>
-			<File
-				RelativePath=".\HaarClassifier.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MotionClassifier.h"
-				>
-			</File>
-			<File
 				RelativePath=".\precomp.h"
 				>
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ShapeClassifier.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SiftClassifier.h"
 				>
 			</File>
 			<File
@@ -429,6 +401,42 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Classifiers"
+				>
+				<File
+					RelativePath=".\BrightnessClassifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Classifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ColorClassifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\GestureClassifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\HaarClassifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MotionClassifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ShapeClassifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SiftClassifier.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -448,6 +456,22 @@
 			</File>
 			<File
 				RelativePath=".\Eyepatch.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\Resources\frameleft.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\Resources\frameright.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\Resources\markin.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\Resources\markout.ico"
 				>
 			</File>
 			<File

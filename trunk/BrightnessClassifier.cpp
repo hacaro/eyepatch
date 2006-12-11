@@ -20,6 +20,10 @@ BrightnessClassifier::~BrightnessClassifier() {
 	cvReleaseHist(&hist);
 }
 
+BOOL BrightnessClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
+    return (sampleSet->posSampleCount > 0);
+}
+
 void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
 
 	// clear out the histogram
@@ -28,7 +32,7 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
 	// TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 0) { // positive sample
+        if (sample->iGroupId == GROUPID_POSSAMPLES) { // positive sample
 
 			// create grayscale copy
 			IplImage *brightness = cvCreateImage( cvGetSize(sample->fullImageCopy), IPL_DEPTH_8U, 1);
@@ -40,7 +44,7 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
 			// free grayscale copy
 			cvReleaseImage(&brightness);
 
-		} else if (sample->iGroupId == 1) { // negative sample
+		} else if (sample->iGroupId == GROUPID_NEGSAMPLES) { // negative sample
 			// TODO: we could potentially subtract this from histogram
         }
     }
@@ -68,8 +72,6 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
     cvReleaseImage(&histimg);
 
 	// update member variables
-	nPosSamples = sampleSet->posSampleCount;
-	nNegSamples = sampleSet->negSampleCount;
 	isTrained = true;
 }
 

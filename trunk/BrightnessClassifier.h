@@ -6,7 +6,8 @@ public:
     BrightnessClassifier();
     ~BrightnessClassifier();
 
-	void StartTraining(TrainingSet*);
+    BOOL ContainsSufficientSamples(TrainingSet*);
+    void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
 
 private:

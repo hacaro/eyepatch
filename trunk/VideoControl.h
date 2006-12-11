@@ -21,4 +21,6 @@ public:
 
 private:
     CWindow *parent;
+
+    HANDLE hiMarkin, hiMarkout, hiFrameleft, hiFrameright;
 };

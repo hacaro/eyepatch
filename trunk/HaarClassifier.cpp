@@ -51,12 +51,18 @@ HaarClassifier::HaarClassifier() :
     cascade = NULL;
     nStages = START_HAAR_STAGES;
     storage = cvCreateMemStorage(0);
+	nPosSamples = 0;
+	nNegSamples = 0;
 	nStagesCompleted = 0;
 }
 
 HaarClassifier::~HaarClassifier() {
     cvReleaseMemStorage(&storage);
     if (isTrained) cvReleaseHaarClassifierCascade(&cascade);
+}
+
+BOOL HaarClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
+    return ((sampleSet->posSampleCount > 3) && (sampleSet->negSampleCount > 3));
 }
 
 void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
@@ -89,7 +95,7 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 0) { // positive sample
+        if (sample->iGroupId == GROUPID_POSSAMPLES) { // positive sample
 
             // create a scaled-down, grayscale version of the sample
             IplImage *sampleCopyColor = cvCreateImage(cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y), IPL_DEPTH_8U, 3);
@@ -118,7 +124,7 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
                 gridY++;
             }
 
-        } else if (sample->iGroupId == 1) { // negative sample
+        } else if (sample->iGroupId == GROUPID_NEGSAMPLES) { // negative sample
             sprintf_s(imageFilename, "%sneg%d.jpg", tempPathname, imgNum);
             CvSize negImageSize = cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height);
 
