@@ -64,6 +64,10 @@ IDC_TRASHCURSOR         CURSOR                  "Resources\\Trash.cur"
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_EYEPATCH            ICON                    "Resources\\Eyepatch.ico"
+IDI_FRAMELEFT           ICON                    "resources\\frameleft.ico"
+IDI_FRAMERIGHT          ICON                    "resources\\frameright.ico"
+IDI_MARKIN              ICON                    "resources\\markin.ico"
+IDI_MARKOUT             ICON                    "resources\\markout.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -139,11 +143,11 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     CONTROL         "",IDC_VIDEOSLIDER,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,31,1,343,18
-    PUSHBUTTON      "Mark In",IDC_MARKIN,67,20,81,14
-    PUSHBUTTON      "Mark Out",IDC_MARKOUT,169,20,81,14
+    PUSHBUTTON      "  Mark In",IDC_MARKIN,67,20,81,14
+    PUSHBUTTON      "  Mark Out",IDC_MARKOUT,169,20,81,14
     PUSHBUTTON      "Grab Range",IDC_GRABRANGE,268,20,81,14
-    PUSHBUTTON      "<",IDC_FRAMELEFT,7,1,21,17
-    PUSHBUTTON      ">",IDC_FRAMERIGHT,377,1,21,17
+    PUSHBUTTON      "<",IDC_FRAMELEFT,7,1,21,17,BS_ICON
+    PUSHBUTTON      ">",IDC_FRAMERIGHT,377,1,21,17,BS_ICON
 END
 
 

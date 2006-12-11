@@ -31,6 +31,7 @@ public:
     HaarClassifier();
     ~HaarClassifier();
 
+    BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
 
@@ -41,6 +42,8 @@ private:
 
 	CvHaarClassifierCascade* cascade;
     CvMemStorage* storage;
+
+    int nPosSamples, nNegSamples;
 
     char vecFilename[MAX_PATH];
     char negFilename[MAX_PATH];

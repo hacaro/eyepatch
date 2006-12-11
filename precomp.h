@@ -113,3 +113,11 @@ void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnit
 #define COLOR_SWATCH_SIZE 16
 extern CvScalar colorSwatch[];
 
+// listview group IDs
+
+typedef enum {
+    GROUPID_POSSAMPLES = 0,
+    GROUPID_NEGSAMPLES,
+    GROUPID_RANGESAMPLES,
+    GROUPID_TRASH
+} ListviewGroupId;

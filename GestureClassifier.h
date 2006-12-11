@@ -6,6 +6,7 @@ public:
     GestureClassifier();
     ~GestureClassifier();
 
+    BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
 

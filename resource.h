@@ -13,6 +13,10 @@
 #define IDD_FILTERSELECT_DIALOG         109
 #define IDD_VIDEORECORDER_DIALOG        110
 #define IDI_EYEPATCH                    111
+#define IDI_FRAMELEFT                   115
+#define IDI_FRAMERIGHT                  116
+#define IDI_MARKIN                      117
+#define IDI_MARKOUT                     118
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004
@@ -41,7 +45,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        110
+#define _APS_NEXT_RESOURCE_VALUE        120
 #define _APS_NEXT_COMMAND_VALUE         40007
 #define _APS_NEXT_CONTROL_VALUE         1015
 #define _APS_NEXT_SYMED_VALUE           101

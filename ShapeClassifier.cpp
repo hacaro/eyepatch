@@ -13,6 +13,9 @@ ShapeClassifier::~ShapeClassifier() {
     cvReleaseMemStorage(&templateStorage);
 }
 
+BOOL ShapeClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
+    return (sampleSet->posSampleCount > 0);
+}
 
 void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
     cvClearMemStorage(templateStorage);
@@ -22,7 +25,7 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 0) { // positive sample
+        if (sample->iGroupId == GROUPID_POSSAMPLES) { // positive sample
 
             IplImage *grayscale = cvCreateImage( cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height), IPL_DEPTH_8U, 1);
             cvCvtColor(sample->fullImageCopy, grayscale, CV_BGR2GRAY);
@@ -48,7 +51,7 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
             cvReleaseMemStorage(&storage);
             cvReleaseImage(&grayscale);
 
-		} else if (sample->iGroupId == 1) { // negative sample
+		} else if (sample->iGroupId == GROUPID_NEGSAMPLES) { // negative sample
             // do nothing for now
             // TODO: we could compare guesses against these as well and remove them if they match
         }
@@ -63,8 +66,6 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
     IplToBitmap(filterImage, filterBitmap);
 
 	// update member variables
-	nPosSamples = sampleSet->posSampleCount;
-	nNegSamples = sampleSet->negSampleCount;
 	isTrained = true;
 }
 

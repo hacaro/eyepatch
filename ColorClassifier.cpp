@@ -27,6 +27,10 @@ ColorClassifier::~ColorClassifier() {
 	cvReleaseHist(&hist);
 }
 
+BOOL ColorClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
+    return (sampleSet->posSampleCount > 0);
+}
+
 void ColorClassifier::StartTraining(TrainingSet *sampleSet) {
 
 	// clear out the histogram
@@ -35,7 +39,7 @@ void ColorClassifier::StartTraining(TrainingSet *sampleSet) {
 	// TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 0) { // positive sample
+        if (sample->iGroupId == GROUPID_POSSAMPLES) { // positive sample
 
 			// allocate image buffers
 			hsv = cvCreateImage( cvGetSize(sample->fullImageCopy), 8, 3 );
@@ -57,7 +61,7 @@ void ColorClassifier::StartTraining(TrainingSet *sampleSet) {
 			cvReleaseImage(&hue);
 			cvReleaseImage(&mask);
 
-		} else if (sample->iGroupId == 1) { // negative sample
+		} else if (sample->iGroupId == GROUPID_NEGSAMPLES) { // negative sample
 			// TODO: we could potentially subtract this from histogram
         }
     }
@@ -82,8 +86,6 @@ void ColorClassifier::StartTraining(TrainingSet *sampleSet) {
     cvReleaseImage(&histimg);
 
 	// update member variables
-	nPosSamples = sampleSet->posSampleCount;
-	nNegSamples = sampleSet->negSampleCount;
 	isTrained = true;
 }
 

@@ -113,7 +113,7 @@ BOOL CVideoRecorder::RecordVideoFile(HWND hwndOwner) {
 
     if (vc == NULL) {
 		MessageBox(GetActiveWindow(), L"Error Accessing Camera",
-			L"Sorry, I'm unable to connect to a camera.  Please make sure that your camera is plugged in and its drivers are installed.", MB_OK);
+			L"Sorry, I'm unable to connect to a camera.  Please make sure that your camera is plugged in and its drivers are installed.", MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 

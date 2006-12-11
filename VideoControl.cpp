@@ -3,12 +3,24 @@
 
 CVideoControl::CVideoControl(CWindow *caller) {
     parent = caller;
+    hiMarkin = LoadImage(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDI_MARKIN), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+    hiMarkout = LoadImage(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDI_MARKOUT), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+    hiFrameleft = LoadImage(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDI_FRAMELEFT), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+    hiFrameright = LoadImage(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDI_FRAMERIGHT), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
 }
 
 CVideoControl::~CVideoControl(void) {
+    DeleteObject(hiMarkin);
+    DeleteObject(hiMarkout);
+    DeleteObject(hiFrameleft);
+    DeleteObject(hiFrameright);
 }
 
 LRESULT CVideoControl::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    SendDlgItemMessage(IDC_MARKIN, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hiMarkin);
+    SendDlgItemMessage(IDC_MARKOUT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hiMarkout);
+    SendDlgItemMessage(IDC_FRAMELEFT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hiFrameleft);
+    SendDlgItemMessage(IDC_FRAMERIGHT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hiFrameright);
     return 0;
 }
 

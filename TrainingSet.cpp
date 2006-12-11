@@ -5,6 +5,7 @@
 TrainingSet::TrainingSet(void) {
     posSampleCount = 0;
     negSampleCount = 0;
+    rangeSampleCount = 0;
 }
 
 TrainingSet::~TrainingSet(void) {
@@ -21,8 +22,9 @@ HIMAGELIST TrainingSet::GetImageList() {
 }
 
 void TrainingSet::AddSample(TrainingSample *sample) {
-    if (sample->iGroupId == 0) posSampleCount++;
-    else if (sample->iGroupId == 1) negSampleCount++;
+    if (sample->iGroupId == GROUPID_POSSAMPLES) posSampleCount++;
+    else if (sample->iGroupId == GROUPID_NEGSAMPLES) negSampleCount++;
+    else if (sample->iGroupId == GROUPID_RANGESAMPLES) rangeSampleCount++;
     sampleMap[sample->id] = sample;
 }
 
@@ -33,12 +35,14 @@ void  TrainingSet::SetSampleGroup(UINT sampleId, int groupId) {
 
         // reduce count of old group id
         int oldGroupId = sample->iGroupId;
-        if (oldGroupId == 0) posSampleCount--;
-        else if (oldGroupId == 1) negSampleCount--;
+        if (oldGroupId == GROUPID_POSSAMPLES) posSampleCount--;
+        else if (oldGroupId == GROUPID_POSSAMPLES) negSampleCount--;
+        else if (oldGroupId == GROUPID_RANGESAMPLES) rangeSampleCount--;
 
         // increase count of new group id
-        if (groupId == 0) posSampleCount++;
-        else if (groupId == 1) negSampleCount++;
+        if (groupId == GROUPID_POSSAMPLES) posSampleCount++;
+        else if (groupId == GROUPID_NEGSAMPLES) negSampleCount++;
+        else if (groupId == GROUPID_RANGESAMPLES) rangeSampleCount++;
 
         // set new group id
         sample->iGroupId = groupId;
@@ -63,7 +67,7 @@ void TrainingSet::ShowSamples() {
     // draw the positive samples
     for (map<UINT, TrainingSample*>::iterator i = sampleMap.begin(); i != sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 0) {
+        if (sample->iGroupId == GROUPID_POSSAMPLES) {
             IplImage *copy = cvCloneImage(sample->fullImageCopy);
             cvPutText(copy, "Positive Sample", cvPoint(10,10), &font, CV_RGB(0,255,0));
             cvShowImage("Samples", copy);
@@ -75,7 +79,7 @@ void TrainingSet::ShowSamples() {
     // draw the negative samples
     for (map<UINT, TrainingSample*>::iterator i = sampleMap.begin(); i != sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 1) {
+        if (sample->iGroupId == GROUPID_NEGSAMPLES) {
             IplImage *copy = cvCloneImage(sample->fullImageCopy);
             cvPutText(copy, "Negative Sample", cvPoint(10,10), &font, CV_RGB(255,0,0));
             cvShowImage("Samples", copy);
@@ -87,7 +91,7 @@ void TrainingSet::ShowSamples() {
     // draw the trash
     for (map<UINT, TrainingSample*>::iterator i = sampleMap.begin(); i != sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 2) {
+        if (sample->iGroupId == GROUPID_TRASH) {
             IplImage *copy = cvCloneImage(sample->fullImageCopy);
             cvPutText(copy, "Trash", cvPoint(10,10), &font, CV_RGB(150,150,150));
             cvShowImage("Samples", copy);

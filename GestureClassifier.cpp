@@ -16,15 +16,17 @@ void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == 0) { // positive sample
-		} else if (sample->iGroupId == 1) { // negative sample
+        if (sample->iGroupId == GROUPID_POSSAMPLES) { // positive sample
+		} else if (sample->iGroupId == GROUPID_NEGSAMPLES) { // negative sample
         }
     }
 
     // update member variables
-	nPosSamples = sampleSet->posSampleCount;
-	nNegSamples = sampleSet->negSampleCount;
 	isTrained = true;
+}
+
+BOOL GestureClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
+    return (sampleSet->rangeSampleCount > 0);
 }
 
 void GestureClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
