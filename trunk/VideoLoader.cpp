@@ -119,8 +119,9 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner, LPCWSTR filename) {
     CvCapture *vc = cvCreateFileCapture(W2A(szFileName));
 
     if (vc == NULL) {
-		MessageBox(GetActiveWindow(), L"Error Loading Video",
-			L"Sorry, I'm unable to load this video file.  It may be in a format I can't recognize.", MB_OK | MB_ICONERROR);
+		MessageBox(GetActiveWindow(), 
+			L"Sorry, I'm unable to load this video file.  It may be in a format I can't recognize.", 
+			L"Error Loading Video", MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 
