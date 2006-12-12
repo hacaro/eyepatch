@@ -361,6 +361,7 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
         } else if (recognizerMode == IDC_RADIO_GESTURE) {
             vector<MotionTrack> trackList;
             m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
+			objGuesses.clear();
             for (int i=0; i<trackList.size(); i++) {
                 // TODO: figure out how to visualize multiple tracks in demo image
                 MotionTrack mt = trackList[i];
@@ -565,6 +566,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
         } else if (recognizerMode == IDC_RADIO_GESTURE) {
             vector<MotionTrack> trackList;
             m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
+			objGuesses.clear();
             for (int i=0; i<trackList.size(); i++) {
                 // TODO: figure out how to visualize multiple tracks in demo image
                 MotionTrack mt = trackList[i];
@@ -575,8 +577,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
         }
         SetCursor(hOld);
     }
-    InvalidateRgn(activeRgn,FALSE);
-
+    InvalidateRgn(activeRgn, FALSE);
     return 0;
 }
 

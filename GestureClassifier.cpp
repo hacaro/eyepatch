@@ -86,7 +86,7 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
         double probability = condensSampleSet.GetModelProbability(modelNum);
         double completionProb = condensSampleSet.GetModelCompletionProbability(modelNum);
 
-        CvPoint tl = cvPoint(barWidth+(modelNum*2)*barWidth, (int)(startY-completionProb*maxY));
+        CvPoint tl = cvPoint(barWidth+(modelNum*2)*barWidth, (int)(startY-5-completionProb*maxY));
         CvPoint br = cvPoint(barWidth+(modelNum*2+1)*barWidth, startY);
         cvRectangle(applyImage, tl, br, colorSwatch[modelNum % COLOR_SWATCH_SIZE], -1, CV_AA);
 
@@ -100,6 +100,10 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
         }
     }
     cvLine(applyImage,cvPoint(0,startY),cvPoint(applyImage->width,startY),CV_RGB(255,255,255),1);
-    
+ 
+	CvFont font;
+	cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, 0.4,0.4,0,1);
+	cvPutText (applyImage,"Gesture Completion Probabilities",cvPoint(10,20), &font, cvScalar(255,255,255));
+
     IplToBitmap(applyImage, applyBitmap);
 }
