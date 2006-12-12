@@ -261,3 +261,13 @@ void CVideoLoader::LearnTrajectories() {
     m_blobTracker.LearnTrajectories(videoCapture);
     LoadFrame(currentFrameNumber);
 }
+
+void CVideoLoader::GetTrajectories(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
+    m_blobTracker.GetTrajectories(trackList, startFrame, endFrame);
+}
+
+void CVideoLoader::GetTrajectories(vector<MotionTrack> *trackList) {
+    long startFrame = max(0,currentFrameNumber-GESTURE_MIN_TRAJECTORY_LENGTH);
+    m_blobTracker.GetTrajectories(trackList, startFrame, currentFrameNumber);
+}
+

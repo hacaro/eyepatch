@@ -9,7 +9,9 @@ public:
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
+    void ClassifyTrack(MotionTrack mt, list<Rect>*);
 
 private:
-//    list<double> motionAngles;
+    int nModels;
+    TrajectoryModel** models;
 };

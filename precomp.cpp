@@ -63,3 +63,14 @@ void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnit
 	arrowpoint.y = (int) (endpoint.y + 12* sin(angle - 3*CV_PI/4));
 	cvLine(img, arrowpoint, endpoint, color, thickness, CV_AA, 0);
 }
+
+void DrawTrack(IplImage *img, MotionTrack mt,  CvScalar color, int thickness) {
+    int nPoints = mt.size();
+    CvPoint *trackPoints = new CvPoint[nPoints];
+    for (int i=0; i<mt.size(); i++) {
+        trackPoints[i].x = mt[i].x;
+        trackPoints[i].y = mt[i].y;
+    }
+    cvPolyLine(img, &trackPoints, &nPoints, 1, 0, color, thickness, CV_AA);
+    delete[] trackPoints;
+}

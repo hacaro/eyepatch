@@ -62,7 +62,7 @@ private:
 
 	Graphics *graphics, *graphicsExamples;
     PointF selectStart, selectCurrent;
-    Pen posSelectPen, negSelectPen, guessPen;
+    Pen posSelectPen, negSelectPen, guessPen, gesturePen;
     SolidBrush posBrush, negBrush, hoverBrush, grayBrush, ltgrayBrush;
     bool selectingRegion;
 	bool scrubbingVideo;

@@ -44,6 +44,8 @@ public:
     IplImage* GetMotionHistory();
     void LearnTrajectories();
 	void ConvertFrame();
+    void GetTrajectories(vector<MotionTrack> *trackList, long startFrame, long endFrame);
+    void GetTrajectories(vector<MotionTrack> *trackList);
 
     long nFrames;
 	int videoX, videoY;

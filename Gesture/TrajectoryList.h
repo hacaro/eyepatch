@@ -9,7 +9,7 @@ public:
     void Process(IplImage* pImg = NULL, IplImage* pFG = NULL);
     void Release();
 
-    int GetTracks(vector<MotionTrack> *trackList);
+    int GetTracks(vector<MotionTrack> *trackList, long startFrame, long endFrame);
 
 protected:
     int         m_Frame;
