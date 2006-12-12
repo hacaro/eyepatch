@@ -8,9 +8,11 @@ public:
     HBITMAP hbmImage;
     UINT id;
     int iGroupId;
+    MotionTrack motionTrack;
 
     TrainingSample(IplImage*, IplImage*, HWND, HIMAGELIST, Rect, int);
     TrainingSample(char *filename, HWND lc, HIMAGELIST il, int groupId);
+    TrainingSample(IplImage*, MotionTrack mt, HWND lc, HIMAGELIST il, int groupId);
     ~TrainingSample(void);
     void Draw(Graphics*, int x, int y);
 

@@ -35,12 +35,16 @@ CVideoMarkup::CVideoMarkup() :
     posSelectPen(Color(100,100,255,100),2),
     negSelectPen(Color(100,255,100,100),2),
     guessPen(Color(100,255,100),4),
+    gesturePen(Color(200,100,255,100),4),
     posBrush(Color(50,100,255,100)),
     negBrush(Color(50,255,100,100)),
     hoverBrush(Color(25, 50, 150, 255)),
     grayBrush(Color(150, 0, 0, 0)),
     ltgrayBrush(Color(240,240,240)) {
 	guessPen.SetLineJoin(LineJoinRound);
+    gesturePen.SetLineJoin(LineJoinRound);
+    gesturePen.SetDashStyle(DashStyleDot);
+    gesturePen.SetDashCap(DashCapRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
     classifier = new ColorClassifier();
@@ -134,6 +138,27 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
         graphicsExamples->DrawImage(classifier->GetApplyImage(),EXAMPLEWINDOW_WIDTH/2, 0);
     } else {
         graphicsExamples->FillRectangle(&ltgrayBrush, Rect(EXAMPLEWINDOW_WIDTH/2, 0, EXAMPLEWINDOW_WIDTH/2, EXAMPLEWINDOW_HEIGHT));
+    }
+
+    if (recognizerMode == IDC_RADIO_GESTURE) {
+        // draw the current gesture motion trajectories in this frame
+	    REAL scaleX = ((REAL)VIDEO_X) / ((REAL)m_videoLoader.videoX);
+	    REAL scaleY = ((REAL)VIDEO_Y) / ((REAL)m_videoLoader.videoY);
+	    graphics->ScaleTransform(scaleX, scaleY);
+
+        vector<MotionTrack> trackList;
+        m_videoLoader.GetTrajectories(&trackList);
+        for (int i=0; i<trackList.size(); i++) {
+            MotionTrack mt = trackList[i];
+            PointF *trackPoints = new PointF[mt.size()];
+            for (int j = 0; j<mt.size(); j++) {
+                MotionSample ms = mt[j];
+                trackPoints[j] = PointF(ms.x, ms.y);                
+            }
+            graphics->DrawCurve(&gesturePen, trackPoints, mt.size());
+            delete[] trackPoints;
+        }
+		graphics->ResetTransform();
     }
 
     BitBlt(hdc,0,0,VIDEO_X,VIDEO_Y,hdcmem,0,0,SRCCOPY);
@@ -433,6 +458,7 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     long sliderPosition, sliderRange, selStart, selEnd;
+    vector<MotionTrack> trackList;
     WCHAR errorMessage[1000] = L"Sorry, you don't have enough examples to train this recognizer.  Please add some more examples and try again.\n";
     switch(wParam) {
         case IDC_TRAINBUTTON:
@@ -476,7 +502,17 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETSEL, TRUE, MAKELONG (selStart, selEnd));
             break;
         case IDC_GRABRANGE:
-            sampleSet.ShowSamples();
+            selStart = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELSTART, 0, 0);
+            selEnd = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELEND, 0, 0);
+            // TODO: display informative error message if not enough frames are selected
+            if (selEnd - selStart < GESTURE_MIN_TRAJECTORY_LENGTH) break;
+
+            m_videoLoader.GetTrajectories(&trackList, selStart, selEnd);
+            for (int i=0; i<trackList.size(); i++) {
+                MotionTrack mt = trackList[i];
+                TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, mt, m_sampleListView, m_hImageList, GROUPID_RANGESAMPLES);
+                sampleSet.AddSample(sample);
+            }
             break;
         case IDC_SHOWBUTTON:
             showGuesses = !showGuesses;
@@ -514,6 +550,9 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
         HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
         if (recognizerMode == IDC_RADIO_MOTION) {
             classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), &objGuesses);
+        } else if (recognizerMode == IDC_RADIO_GESTURE) {
+//          TODO: figure out how to pass in gesture here
+//            classifier->ClassifyTrack(
         } else {
             classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
         }
@@ -585,7 +624,7 @@ void CVideoMarkup::OpenVideoFile() {
 }
 
 void CVideoMarkup::OpenSampleFile(char *filename) {
-    TrainingSample *sample = new TrainingSample(filename, m_sampleListView, m_hImageList, 0);
+    TrainingSample *sample = new TrainingSample(filename, m_sampleListView, m_hImageList, GROUPID_POSSAMPLES);
     sampleSet.AddSample(sample);
     EnableControls(TRUE);
 }

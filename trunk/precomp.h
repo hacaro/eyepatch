@@ -56,6 +56,7 @@
 #define GESTURE_MIN_TRAJECTORY_LENGTH 20
 // number of samples away from the end we need to be to consider the gesture finished
 #define GESTURE_PHASE_CUTOFF 10
+#define GESTURE_NUM_CONDENSATION_SAMPLES 2000
 
 // control placement
 #define WINDOW_X 1024
@@ -120,7 +121,7 @@ extern "C" {
 
 // MotionSample and MotionTrack types for gestures
 typedef struct _MotionSample {
-    double vx, vy, sizex, sizey;
+    double x, y, vx, vy, sizex, sizey;
 } MotionSample;
 typedef vector<MotionSample> MotionTrack;
 
@@ -135,6 +136,7 @@ typedef vector<MotionSample> MotionTrack;
 void IplToBitmap(IplImage *src, Bitmap *dst);
 CvScalar hsv2rgb(float hue);
 void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness=1);
+void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness);
 
 // swatch of "nice" colors
 #define COLOR_SWATCH_SIZE 16

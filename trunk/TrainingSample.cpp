@@ -5,6 +5,7 @@ TrainingSample::TrainingSample(IplImage* srcImage, IplImage* motionHist, HWND lc
     hwndListControl = lc;
     hImageList = il;
     iGroupId = groupId;
+    motionTrack.clear();
 
     fullImageCopy = cvCreateImage(cvSize(bounds.Width,bounds.Height),IPL_DEPTH_8U, 3); 
     motionHistory = cvCreateImage(cvSize(bounds.Width,bounds.Height),IPL_DEPTH_32F, 1);
@@ -48,6 +49,7 @@ TrainingSample::TrainingSample(char *filename, HWND lc, HIMAGELIST il, int group
     hwndListControl = lc;
     hImageList = il;
     iGroupId = groupId;
+    motionTrack.clear();
 
     fullImageCopy = cvLoadImage(filename, 1);
     if (fullImageCopy == NULL) {
@@ -64,6 +66,45 @@ TrainingSample::TrainingSample(char *filename, HWND lc, HIMAGELIST il, int group
     } else { 
         cvResize(fullImageCopy, resizedImage, CV_INTER_LINEAR);
     }
+
+    IplToBitmap(resizedImage, bmpImage);
+    bmpImage->GetHBITMAP(NULL, &hbmImage);
+
+    // Add image to imagelist
+    int imgIndex = ImageList_Add(hImageList, hbmImage, NULL);
+
+    // Add item to list view
+    lvi.mask = LVIF_IMAGE | LVIF_STATE | LVIF_GROUPID;
+    lvi.state = 0;
+    lvi.stateMask = 0;
+    lvi.iGroupId = groupId;
+    lvi.iItem = imgIndex;
+    lvi.iImage = imgIndex;
+    lvi.iSubItem = 0;
+    int newListItemPos = ListView_InsertItem(hwndListControl, &lvi);
+
+    id = ListView_MapIndexToID(hwndListControl, newListItemPos);
+}
+
+TrainingSample::TrainingSample(IplImage *frame, MotionTrack mt, HWND lc, HIMAGELIST il, int groupId) {
+    hwndListControl = lc;
+    hImageList = il;
+    iGroupId = groupId;
+    motionTrack = mt;
+
+    fullImageCopy = cvCreateImage(cvSize(frame->width,frame->height),IPL_DEPTH_8U, 3);
+    cvZero(fullImageCopy);
+    cvAddWeighted(frame, 0.5, fullImageCopy, 0.5, 0.0, fullImageCopy);
+    
+    // draw the trajectory in the sample image
+    DrawTrack(fullImageCopy, mt, CV_RGB(100,255,100), 3);
+
+    motionHistory = NULL;
+
+    resizedImage = cvCreateImage(cvSize(LISTVIEW_SAMPLE_X,LISTVIEW_SAMPLE_Y),IPL_DEPTH_8U, 3); 
+    bmpImage = new Bitmap(LISTVIEW_SAMPLE_X, LISTVIEW_SAMPLE_Y, PixelFormat24bppRGB);
+
+    cvResize(fullImageCopy, resizedImage, CV_INTER_AREA);
 
     IplToBitmap(resizedImage, bmpImage);
     bmpImage->GetHBITMAP(NULL, &hbmImage);

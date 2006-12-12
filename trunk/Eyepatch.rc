@@ -150,6 +150,15 @@ BEGIN
     PUSHBUTTON      ">",IDC_FRAMERIGHT,377,1,21,17,BS_ICON
 END
 
+IDD_BLOBTRACKER_DIALOG DIALOGEX 0, 0, 227, 195
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Learning Gestures"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Stop Learning Gestures",IDCANCEL,70,174,89,14
+    LTEXT           "Identifying the gestures in this video...",IDC_PROGRESS_LABEL,7,7,213,12
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -196,6 +205,14 @@ BEGIN
         RIGHTMARGIN, 398
         TOPMARGIN, 1
         BOTTOMMARGIN, 34
+    END
+
+    IDD_BLOBTRACKER_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 188
     END
 END
 #endif    // APSTUDIO_INVOKED
