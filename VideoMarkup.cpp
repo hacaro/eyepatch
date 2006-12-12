@@ -150,12 +150,16 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
         m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
         for (int i=0; i<trackList.size(); i++) {
             MotionTrack mt = trackList[i];
-            PointF *trackPoints = new PointF[mt.size()];
-            for (int j = 0; j<mt.size(); j++) {
+
+            int startPoint = max(0, mt.size()-GESTURE_MIN_TRAJECTORY_LENGTH);
+            int nPoints = min(GESTURE_MIN_TRAJECTORY_LENGTH,mt.size());
+
+            PointF *trackPoints = new PointF[nPoints];
+            for (int j = startPoint; j<mt.size(); j++) {
                 MotionSample ms = mt[j];
-                trackPoints[j] = PointF(ms.x, ms.y);                
+                trackPoints[j-startPoint] = PointF(ms.x, ms.y);                
             }
-            graphics->DrawCurve(&gesturePen, trackPoints, mt.size());
+            graphics->DrawCurve(&gesturePen, trackPoints, nPoints);
             delete[] trackPoints;
         }
 		graphics->ResetTransform();

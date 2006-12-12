@@ -88,10 +88,10 @@ BlobTracker::BlobTracker() :
     // Create Blob Entrance Detection module
 //    param.pBD = cvCreateBlobDetectorSimple();
     param.pBD = cvCreateBlobDetectorCC();
-    param.pBD->SetParam("MinDistToBorder",0);
+    param.pBD->SetParam("MinDistToBorder",1.0);
     param.pBD->SetParam("Latency",5);
-    param.pBD->SetParam("HMin",0.05);
-    param.pBD->SetParam("WMin",0.05);
+    param.pBD->SetParam("HMin",0.08);
+    param.pBD->SetParam("WMin",0.08);
 
     // Create blob tracker module
     param.pBT = cvCreateBlobTrackerCCMSPF();
