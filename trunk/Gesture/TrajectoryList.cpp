@@ -63,7 +63,7 @@ TrajectoryList::~TrajectoryList() {
 
 // copies the trajectories into the passed in list, and returns number of trajectories
 // trajectories shorter than GESTURE_MIN_TRAJECTORY_LENGTH are discarded
-int TrajectoryList::GetTracks(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
+int TrajectoryList::GetTracksInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
     trackList->clear();
     int nTracks = m_TrackList.GetBlobNum();
     int nFullTracks = 0;
@@ -77,6 +77,26 @@ int TrajectoryList::GetTracks(vector<MotionTrack> *trackList, long startFrame, l
             if ((pTrack->FrameBegin < endFrame) && (pTrack->FrameLast > startFrame)) {
                 nFullTracks++;
                 AddTrackToList(pTrack, trackList, startFrame, endFrame);
+            }
+        }
+    }
+    return nFullTracks;
+}
+
+int TrajectoryList::GetTracksAtFrame(vector<MotionTrack> *trackList, long frameNum) {
+    trackList->clear();
+    int nTracks = m_TrackList.GetBlobNum();
+    int nFullTracks = 0;
+    for(int i=0; i<nTracks; i++) {
+        DefBlobTrack* pTrack = (DefBlobTrack*)m_TrackList.GetBlob(i);
+
+        // check if this trajectory is long enough to count
+        if (pTrack->FrameLast - pTrack->FrameBegin > GESTURE_MIN_TRAJECTORY_LENGTH) {
+
+            // check if it is in the right range
+            if ((pTrack->FrameBegin < frameNum) && (pTrack->FrameLast >= frameNum)) {
+                nFullTracks++;
+                AddTrackToList(pTrack, trackList, pTrack->FrameBegin, frameNum);
             }
         }
     }

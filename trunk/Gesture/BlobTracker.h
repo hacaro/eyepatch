@@ -42,7 +42,8 @@ public:
     BlobTracker();
     ~BlobTracker(void);
     void LearnTrajectories(CvCapture* pCap);
-    void GetTrajectories(vector<MotionTrack> *trackList, long startFrame, long endFrame);
+    void GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame);
+    void GetTrajectoriesAtFrame(vector<MotionTrack> *trackList, long frameNum);
     void ProcessFrame();
 
     bool isTrained;
