@@ -13,6 +13,8 @@
 #define IDD_FILTERSELECT_DIALOG         109
 #define IDD_VIDEORECORDER_DIALOG        110
 #define IDI_EYEPATCH                    111
+#define IDD_VIDEOLOADER_DIALOG1         111
+#define IDD_BLOBTRACKER_DIALOG          111
 #define IDI_FRAMELEFT                   115
 #define IDI_FRAMERIGHT                  116
 #define IDI_MARKIN                      117
