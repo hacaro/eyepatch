@@ -90,13 +90,14 @@ BlobTracker::BlobTracker() :
     param.pBD = cvCreateBlobDetectorCC();
     param.pBD->SetParam("MinDistToBorder",0);
     param.pBD->SetParam("Latency",5);
+    param.pBD->SetParam("HMin",0.05);
+    param.pBD->SetParam("WMin",0.05);
 
     // Create blob tracker module
     param.pBT = cvCreateBlobTrackerCCMSPF();
 
     // create blob trajectory generation module (currently not needed)
     param.pBTGen = (CvBlobTrackGen*) &trajectories;
-    param.pBTGen->SetFileName("C:\\users\\monzy\\Desktop\\trajectorylog.txt");
 
     // create blob trajectory post processing module
     param.pBTPP = cvCreateModuleBlobTrackPostProcKalman();
@@ -195,6 +196,10 @@ void BlobTracker::LearnTrajectories(CvCapture* vidCap) {
     isTrained = true;
 }
 
-void BlobTracker::GetTrajectories(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
-    trajectories.GetTracks(trackList, startFrame, endFrame);
+void BlobTracker::GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
+    trajectories.GetTracksInRange(trackList, startFrame, endFrame);
+}
+
+void BlobTracker::GetTrajectoriesAtFrame(vector<MotionTrack> *trackList, long frameNum) {
+    trajectories.GetTracksAtFrame(trackList, frameNum);
 }

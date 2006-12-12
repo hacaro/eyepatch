@@ -147,7 +147,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 	    graphics->ScaleTransform(scaleX, scaleY);
 
         vector<MotionTrack> trackList;
-        m_videoLoader.GetTrajectories(&trackList);
+        m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
         for (int i=0; i<trackList.size(); i++) {
             MotionTrack mt = trackList[i];
             PointF *trackPoints = new PointF[mt.size()];
@@ -354,6 +354,14 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
         HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
         if (recognizerMode == IDC_RADIO_MOTION) {
             classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), &objGuesses);
+        } else if (recognizerMode == IDC_RADIO_GESTURE) {
+            vector<MotionTrack> trackList;
+            m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
+            for (int i=0; i<trackList.size(); i++) {
+                // TODO: figure out how to visualize multiple tracks in demo image
+                MotionTrack mt = trackList[i];
+                ((GestureClassifier*)classifier)->ClassifyTrack(mt, &objGuesses);
+            }
         } else {
             classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
         }
@@ -507,7 +515,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             // TODO: display informative error message if not enough frames are selected
             if (selEnd - selStart < GESTURE_MIN_TRAJECTORY_LENGTH) break;
 
-            m_videoLoader.GetTrajectories(&trackList, selStart, selEnd);
+            m_videoLoader.GetTrajectoriesInRange(&trackList, selStart, selEnd);
             for (int i=0; i<trackList.size(); i++) {
                 MotionTrack mt = trackList[i];
                 TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, mt, m_sampleListView, m_hImageList, GROUPID_RANGESAMPLES);
@@ -551,8 +559,13 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
         if (recognizerMode == IDC_RADIO_MOTION) {
             classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), &objGuesses);
         } else if (recognizerMode == IDC_RADIO_GESTURE) {
-//          TODO: figure out how to pass in gesture here
-//            classifier->ClassifyTrack(
+            vector<MotionTrack> trackList;
+            m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
+            for (int i=0; i<trackList.size(); i++) {
+                // TODO: figure out how to visualize multiple tracks in demo image
+                MotionTrack mt = trackList[i];
+                ((GestureClassifier*)classifier)->ClassifyTrack(mt, &objGuesses);
+            }
         } else {
             classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
         }

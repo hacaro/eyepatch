@@ -70,42 +70,26 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
     objList->clear();
     CondensationSampleSet condensSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
 
-    // allocate storage for graph points (one curve for each model to show its match probability)
-    int nCurvePts = mt.size();
-    CvPoint **curvePts = new CvPoint*[nModels];
-    for (int i=0; i<nModels; i++) {
-        curvePts[i] = new CvPoint[nCurvePts];
-    }
-
-    // initialize graph size values
-    double xStep = ((double)applyImage->width) / ((double)mt.size());
-    double yMax = (double)applyImage->height;
-    double xPos = 0.0;
-
     MotionSample ms;
     for (int i = 0; i<mt.size(); i++) {
         // update probabilities based on this sample point
         ms = mt[i];
         condensSampleSet.Update(ms.vx, ms.vy, ms.sizex, ms.sizey);
+    }
 
-        for (int modelNum=0; modelNum<nModels; modelNum++) {
-            double probability = condensSampleSet.GetModelProbability(modelNum);
-            double completionProb = condensSampleSet.GetModelCompletionProbability(modelNum);
-            curvePts[modelNum][i] = cvPoint(xPos, probability*yMax);
-        }
-        xPos += xStep;
-    }
     cvZero(applyImage);
-    for (int modelNum=0; modelNum<nModels; modelNum++) {
-        cvPolyLine(applyImage, &(curvePts[modelNum]), &nCurvePts, 1, 0, colorSwatch[modelNum % COLOR_SWATCH_SIZE], 2, CV_AA);
-        delete[] curvePts[modelNum];
-    }
-    delete[] curvePts;
-    IplToBitmap(applyImage, applyBitmap);
+    int barWidth = applyImage->width/(nModels*2+1);
+    double maxY = (double)applyImage->height - 20.0;
+    int startY = applyImage->height-10;
 
     for (int modelNum=0; modelNum<nModels; modelNum++) {
         double probability = condensSampleSet.GetModelProbability(modelNum);
         double completionProb = condensSampleSet.GetModelCompletionProbability(modelNum);
+
+        CvPoint tl = cvPoint(barWidth+(modelNum*2)*barWidth, (int)(startY-completionProb*maxY));
+        CvPoint br = cvPoint(barWidth+(modelNum*2+1)*barWidth, startY);
+        cvRectangle(applyImage, tl, br, colorSwatch[modelNum % COLOR_SWATCH_SIZE], -1, CV_AA);
+
         if (completionProb>0.1) {
             Rect objRect;
             objRect.X = ms.x - ms.sizex/2;
@@ -115,4 +99,7 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
             objList->push_back(objRect);
         }
     }
+    cvLine(applyImage,cvPoint(0,startY),cvPoint(applyImage->width,startY),CV_RGB(255,255,255),1);
+    
+    IplToBitmap(applyImage, applyBitmap);
 }
