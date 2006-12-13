@@ -130,7 +130,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
     }
 
     if (classifier->isTrained) {
-        graphicsExamples->DrawImage(classifier->GetFilterImage(),0,0);
+        graphicsExamples->DrawImage(classifier->GetFilterImage(),20,0);
     } else {
         graphicsExamples->FillRectangle(&ltgrayBrush, Rect(0,0,EXAMPLEWINDOW_WIDTH/2,EXAMPLEWINDOW_HEIGHT));
     }
