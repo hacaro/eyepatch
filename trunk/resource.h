@@ -13,7 +13,6 @@
 #define IDD_FILTERSELECT_DIALOG         109
 #define IDD_VIDEORECORDER_DIALOG        110
 #define IDI_EYEPATCH                    111
-#define IDD_VIDEOLOADER_DIALOG1         111
 #define IDD_BLOBTRACKER_DIALOG          111
 #define IDI_FRAMELEFT                   115
 #define IDI_FRAMERIGHT                  116
@@ -41,6 +40,8 @@
 #define ID_Menu                         40004
 #define ID_FILE_EMPTYTRASH              40005
 #define ID_FILE_OPENSAMPLE              40006
+#define ID_SETTINGS_CAPTURESOURCE       40007
+#define ID_SETTINGS_CAPTUREFORMAT       40008
 #define IDC_PROGRESS_LABEL              -1
 
 // Next default values for new objects
@@ -48,7 +49,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        120
-#define _APS_NEXT_COMMAND_VALUE         40007
+#define _APS_NEXT_COMMAND_VALUE         40009
 #define _APS_NEXT_CONTROL_VALUE         1015
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
