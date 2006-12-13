@@ -17,6 +17,7 @@ CEyepatch::~CEyepatch() {
 }
 
 LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
+    CvCapture *capture;
     if (HIWORD(wParam) == 0) { // this command came from a menu
         switch (LOWORD(wParam)) {
             case ID_FILE_OPENVIDEO:
@@ -31,6 +32,16 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             case ID_FILE_EMPTYTRASH:
                 m_videoMarkup.EmptyTrash();
                 break;
+            case ID_SETTINGS_CAPTURESOURCE:
+                capture = cvCreateCameraCapture(0);
+                cvSetCaptureProperty(capture, CV_CAP_PROP_DIALOG_SOURCE, 0 );
+                cvReleaseCapture(&capture);
+                break;
+            case ID_SETTINGS_CAPTUREFORMAT:
+                capture = cvCreateCameraCapture(0);
+                cvSetCaptureProperty(capture, CV_CAP_PROP_DIALOG_FORMAT, 0 );
+                cvReleaseCapture(&capture);
+                break;
             case ID_FILE_EXIT:
                 PostMessage(WM_CLOSE, 0, 0);
                 break;
@@ -38,8 +49,6 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     }
     return 0;
 }
-
-
 
 LRESULT CEyepatch::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 {
