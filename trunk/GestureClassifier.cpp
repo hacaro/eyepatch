@@ -7,6 +7,7 @@
 GestureClassifier::GestureClassifier() :
 	Classifier() {
     nModels = 0;
+    maxModelLength = 0;
     models = NULL;
 }
 
@@ -26,6 +27,7 @@ void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
         }
         delete[] models;
     }
+    maxModelLength = 0;
 
     nModels = sampleSet->rangeSampleCount;
     models = new TrajectoryModel*[nModels];
@@ -43,6 +45,7 @@ void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
             cvResize(gestureImage, resizedGestureImage);
             cvAdd(filterImage, resizedGestureImage, filterImage);
             models[modelNum] = new TrajectoryModel(sample->motionTrack);
+            maxModelLength = max(maxModelLength, sample->motionTrack.size());
             modelNum++;
 		}
     }
@@ -70,8 +73,11 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
     objList->clear();
     CondensationSampleSet condensSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
 
+    // don't start all the way at the beginning of the track if it's really long
+    int startFrame = max(0, mt.size()-RHO_MAX*((double)maxModelLength));
+
     MotionSample ms;
-    for (int i = 0; i<mt.size(); i++) {
+    for (int i = startFrame; i<mt.size(); i++) {
         // update probabilities based on this sample point
         ms = mt[i];
         condensSampleSet.Update(ms.vx, ms.vy, ms.sizex, ms.sizey);
@@ -79,7 +85,7 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
 
     cvZero(applyImage);
     int barWidth = applyImage->width/(nModels*2+1);
-    double maxY = (double)applyImage->height - 20.0;
+    double maxY = (double)applyImage->height - 40.0;
     int startY = applyImage->height-10;
 
     for (int modelNum=0; modelNum<nModels; modelNum++) {
