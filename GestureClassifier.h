@@ -13,5 +13,6 @@ public:
 
 private:
     int nModels;
+    int maxModelLength;
     TrajectoryModel** models;
 };
