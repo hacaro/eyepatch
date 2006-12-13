@@ -108,8 +108,8 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
     cvLine(applyImage,cvPoint(0,startY),cvPoint(applyImage->width,startY),CV_RGB(255,255,255),1);
  
 	CvFont font;
-	cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, 0.4,0.4,0,1);
-	cvPutText (applyImage,"Gesture Completion Probabilities",cvPoint(10,20), &font, cvScalar(255,255,255));
+	cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX_SMALL, 0.55,0.6,0,1, CV_AA);
+	cvPutText (applyImage,"Gesture Completion Probabilities",cvPoint(7,20), &font, cvScalar(255,255,255));
 
     IplToBitmap(applyImage, applyBitmap);
 }
