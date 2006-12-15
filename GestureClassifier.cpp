@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
@@ -112,4 +113,12 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
 	cvPutText (applyImage,"Gesture Completion Probabilities",cvPoint(7,20), &font, cvScalar(255,255,255));
 
     IplToBitmap(applyImage, applyBitmap);
+}
+
+void GestureClassifier::Save() {
+
+}
+
+void GestureClassifier::Load(LPCWSTR pathname) {
+
 }

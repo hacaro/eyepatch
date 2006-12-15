@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 
 // Eyepatch includes
 #include "TrainingSample.h"
@@ -154,5 +155,13 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 
     cvReleaseImage(&frameCopy);
     cvReleaseImage(&featureImage);
+
+}
+
+void SiftClassifier::Save() {
+
+}
+
+void SiftClassifier::Load(LPCWSTR pathname) {
 
 }

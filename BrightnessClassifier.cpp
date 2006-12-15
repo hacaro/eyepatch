@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
@@ -49,29 +50,9 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
         }
     }
 
-	// create histogram image
-	IplImage *histimg = cvCreateImage(cvSize(320,200), 8, 3);
-	float max_val = 0.f;
-	cvGetMinMaxHistValue(hist, 0, &max_val, 0, 0 );
-	cvConvertScale(hist->bins, hist->bins, max_val ? 255./max_val : 0., 0);
-	cvSet(histimg, CV_RGB(220,220,240));
-	int bin_w = histimg->width / hdims;
-	for(int i = 0; i < hdims; i++)
-	{
-		int val = cvRound( cvGetReal1D(hist->bins,i)*histimg->height/255 );
-		CvScalar color = CV_RGB(i*255.f/hdims,i*255.f/hdims,i*255.f/hdims);
-		cvRectangle( histimg, cvPoint(i*bin_w,histimg->height),
-			cvPoint((i+1)*bin_w,histimg->height - val),
-			color, -1, 8, 0 );
-		cvRectangle( histimg, cvPoint(i*bin_w,histimg->height),
-			cvPoint((i+1)*bin_w,histimg->height - val),
-			CV_RGB(0,0,0), 1, 8, 0 );
-	}
-    cvResize(histimg, filterImage);
-    IplToBitmap(filterImage, filterBitmap);
-    cvReleaseImage(&histimg);
-
-	// update member variables
+    UpdateHistogramImage();
+    
+    // update member variables
 	isTrained = true;
 }
 
@@ -126,4 +107,67 @@ void BrightnessClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 	cvReleaseImage(&image);
 	cvReleaseImage(&brightness);
 	cvReleaseImage(&backproject);
+}
+
+void BrightnessClassifier::UpdateHistogramImage() {
+
+    // create histogram image
+	IplImage *histimg = cvCreateImage(cvSize(320,200), 8, 3);
+	float max_val = 0.f;
+	cvGetMinMaxHistValue(hist, 0, &max_val, 0, 0 );
+	cvConvertScale(hist->bins, hist->bins, max_val ? 255./max_val : 0., 0);
+	cvSet(histimg, CV_RGB(220,220,240));
+	int bin_w = histimg->width / hdims;
+	for(int i = 0; i < hdims; i++)
+	{
+		int val = cvRound( cvGetReal1D(hist->bins,i)*histimg->height/255 );
+		CvScalar color = CV_RGB(i*255.f/hdims,i*255.f/hdims,i*255.f/hdims);
+		cvRectangle( histimg, cvPoint(i*bin_w,histimg->height),
+			cvPoint((i+1)*bin_w,histimg->height - val),
+			color, -1, 8, 0 );
+		cvRectangle( histimg, cvPoint(i*bin_w,histimg->height),
+			cvPoint((i+1)*bin_w,histimg->height - val),
+			CV_RGB(0,0,0), 1, 8, 0 );
+	}
+    cvResize(histimg, filterImage);
+    IplToBitmap(filterImage, filterBitmap);
+    cvReleaseImage(&histimg);
+}
+
+void BrightnessClassifier::Save() {
+    USES_CONVERSION;
+
+    WCHAR pathname[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathname);
+    int classifiernum = (int)time(0);
+    wsprintf(filename, L"%s\\Eyepatch\\%s%d", pathname, FILE_BRIGHTNESS_IDENTIFIER, classifiernum);
+    SHCreateDirectory(NULL, filename);
+
+    wcscat(filename, FILE_BRIGHTNESS_HISTOGRAM);
+    FILE *datafile = fopen(W2A(filename), "wb");
+	for(int i = 0; i < hdims; i++)
+	{
+		float val = cvGetReal1D(hist->bins,i);
+        fwrite(&val, sizeof(float), 1, datafile);
+	}
+    fclose(datafile);
+}
+
+void BrightnessClassifier::Load(LPCWSTR pathname) {
+    USES_CONVERSION;
+    WCHAR filename[MAX_PATH];
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_BRIGHTNESS_HISTOGRAM);
+    FILE *datafile = fopen(W2A(filename), "rb");
+	for(int i = 0; i < hdims; i++)
+	{
+        float val;
+        fread(&val, sizeof(float), 1, datafile);
+		cvSetReal1D(hist->bins,i,val);
+    }
+    fclose(datafile);
+
+    UpdateHistogramImage();
+    isTrained = true;
 }

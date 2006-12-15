@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
@@ -112,4 +113,12 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvReleaseMemStorage(&storage);
     cvReleaseImage(&copy);
     cvReleaseImage(&grayscale);
+}
+
+void ShapeClassifier::Save() {
+
+}
+
+void ShapeClassifier::Load(LPCWSTR pathname) {
+
 }

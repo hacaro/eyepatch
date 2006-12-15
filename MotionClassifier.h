@@ -9,6 +9,8 @@ public:
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
+    void Save();
+    void Load(LPCWSTR);
 
 private:
     list<double> motionAngles;

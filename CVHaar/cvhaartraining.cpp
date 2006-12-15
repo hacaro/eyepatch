@@ -44,6 +44,7 @@
  *
  * training of cascade of boosted classifiers based on haar features
  */
+#include "precomp.h"
 
 #include <windows.h>
 #include <commctrl.h>

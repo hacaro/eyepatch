@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 
 // Eyepatch includes
 #include "TrainingSample.h"
@@ -194,4 +195,12 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 
     cvResize(frameCopy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
+}
+
+void HaarClassifier::Save() {
+
+}
+
+void HaarClassifier::Load(LPCWSTR pathname) {
+
 }

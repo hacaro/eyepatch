@@ -44,6 +44,7 @@
  *
  * support functions for training and test samples creation.
  */
+#include "precomp.h"
 
 #include <cvhaartraining.h>
 #include <_cvhaartraining.h>
