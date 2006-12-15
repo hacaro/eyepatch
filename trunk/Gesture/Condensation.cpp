@@ -1,4 +1,5 @@
-#include "../precomp.h"
+#include "precomp.h"
+#include "../constants.h"
 #include "Condensation.h"
 #include "RandomUtils.h"
 

@@ -1,4 +1,4 @@
-#include "../precomp.h"
+#include "precomp.h"
 #include "TrajectoryModel.h"
 
 TrajectoryModel::TrajectoryModel(MotionTrack track)

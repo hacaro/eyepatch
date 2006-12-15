@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "VideoRecorder.h"
 
 CVideoRecorderDialog::CVideoRecorderDialog(CVideoRecorder *p) :

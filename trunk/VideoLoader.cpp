@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "VideoLoader.h"
 
 CVideoLoaderDialog::CVideoLoaderDialog(CVideoLoader *p) :

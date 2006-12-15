@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "TrainingSample.h"
 
 TrainingSample::TrainingSample(IplImage* srcImage, IplImage* motionHist, HWND lc, HIMAGELIST il, Rect bounds, int groupId) {

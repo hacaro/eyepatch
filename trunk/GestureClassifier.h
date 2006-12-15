@@ -10,6 +10,8 @@ public:
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
     void ClassifyTrack(MotionTrack mt, list<Rect>*);
+    void Save();
+    void Load(LPCWSTR);
 
 private:
     int nModels;

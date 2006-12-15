@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
@@ -149,4 +150,12 @@ void ColorClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 	cvReleaseImage(&hue);
 	cvReleaseImage(&mask);
 	cvReleaseImage(&backproject);
+}
+
+void ColorClassifier::Save() {
+
+}
+
+void ColorClassifier::Load(LPCWSTR pathname) {
+
 }

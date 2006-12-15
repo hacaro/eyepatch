@@ -38,6 +38,7 @@
 // the use of this software, even if advised of the possibility of such damage.
 //
 //M*/
+#include "precomp.h"
 
 #ifdef HAVE_CONFIG_H
     #include <cvconfig.h>

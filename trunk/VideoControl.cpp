@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "VideoControl.h"
 
 CVideoControl::CVideoControl(CWindow *caller) {

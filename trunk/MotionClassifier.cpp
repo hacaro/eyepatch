@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
@@ -176,4 +177,12 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvReleaseImage(&mask);
     cvReleaseImage(&dst);
     cvReleaseMemStorage(&storage);
+}
+
+void MotionClassifier::Save() {
+
+}
+
+void MotionClassifier::Load(LPCWSTR pathname) {
+
 }

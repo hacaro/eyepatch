@@ -44,6 +44,7 @@
  *
  * haar classifiers (stump, CART, stage, cascade)
  */
+#include "precomp.h"
 
 #include <_cvhaartraining.h>
 

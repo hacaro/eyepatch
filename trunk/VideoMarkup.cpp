@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "FilterSelect.h"
@@ -65,6 +66,7 @@ void CVideoMarkup::EnableControls(BOOL enabled) {
     m_filterSelect.EnableWindow(enabled);
     if ((!m_videoLoader.videoLoaded) || (enabled && !classifier->isTrained)) {
         m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+        m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
     }
     if (!m_videoLoader.videoLoaded) {
     	m_videoControl.EnableWindow(FALSE);
@@ -470,23 +472,25 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 }
 
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    USES_CONVERSION;
     long sliderPosition, sliderRange, selStart, selEnd;
-    vector<MotionTrack> trackList;
-    WCHAR errorMessage[1000] = L"Sorry, you don't have enough examples to train this recognizer.  Please add some more examples and try again.\n";
     switch(wParam) {
         case IDC_TRAINBUTTON:
-            if (!classifier->ContainsSufficientSamples(&sampleSet)) {
-                if (recognizerMode == IDC_RADIO_APPEARANCE) {
-                    wcscat(errorMessage, L"To build an appearance recognizer you need at least 3 positive and 3 negative examples.");
-                } else if (recognizerMode == IDC_RADIO_GESTURE) {
-                    wcscat(errorMessage, L"To build a gesture recognizer you need to to select a range of frames using the 'Mark In' and 'Mark Out' buttons.");
+            {
+                WCHAR errorMessage[1000] = L"Sorry, you don't have enough examples to train this recognizer. Please add some more examples and try again.\n";
+                if (!classifier->ContainsSufficientSamples(&sampleSet)) {
+                    if (recognizerMode == IDC_RADIO_APPEARANCE) {
+                        wcscat(errorMessage, L"To build an appearance recognizer you need at least 3 positive and 3 negative examples.");
+                    } else if (recognizerMode == IDC_RADIO_GESTURE) {
+                        wcscat(errorMessage, L"To build a gesture recognizer you need to to select a range of frames using the 'Mark In' and 'Mark Out' buttons.");
+                    }
+		            MessageBox(errorMessage, L"Error Training Recognizer", MB_OK | MB_ICONERROR);
+                    break;
                 }
-		        MessageBox(errorMessage, L"Error Training Recognizer", MB_OK | MB_ICONERROR);
-                break;
+                EnableControls(FALSE);
+		        classifier->StartTraining(&sampleSet);
+                EnableControls(TRUE);
             }
-            EnableControls(FALSE);
-		    classifier->StartTraining(&sampleSet);
-            EnableControls(TRUE);
             break;
         case IDC_FRAMELEFT:
         case IDC_FRAMERIGHT:
@@ -515,20 +519,26 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETSEL, TRUE, MAKELONG (selStart, selEnd));
             break;
         case IDC_GRABRANGE:
-            selStart = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELSTART, 0, 0);
-            selEnd = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELEND, 0, 0);
-            // TODO: display informative error message if not enough frames are selected
-            if (selEnd - selStart < GESTURE_MIN_TRAJECTORY_LENGTH) break;
+            {
+                selStart = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELSTART, 0, 0);
+                selEnd = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELEND, 0, 0);
+                // TODO: display informative error message if not enough frames are selected
+                if (selEnd - selStart < GESTURE_MIN_TRAJECTORY_LENGTH) break;
+                vector<MotionTrack> trackList;
 
-            m_videoLoader.GetTrajectoriesInRange(&trackList, selStart, selEnd);
-            for (int i=0; i<trackList.size(); i++) {
-                MotionTrack mt = trackList[i];
-                TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, mt, m_sampleListView, m_hImageList, GROUPID_RANGESAMPLES);
-                sampleSet.AddSample(sample);
+                m_videoLoader.GetTrajectoriesInRange(&trackList, selStart, selEnd);
+                for (int i=0; i<trackList.size(); i++) {
+                    MotionTrack mt = trackList[i];
+                    TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, mt, m_sampleListView, m_hImageList, GROUPID_RANGESAMPLES);
+                    sampleSet.AddSample(sample);
+                }
             }
             break;
         case IDC_SHOWBUTTON:
             showGuesses = !showGuesses;
+            break;
+        case IDC_SAVEFILTER:
+            classifier->Save();
             break;
         case IDC_RADIO_COLOR:
             recognizerMode = IDC_RADIO_COLOR;
@@ -669,6 +679,7 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     classifier = newClassifier;
     m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
     m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+    m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
     objGuesses.clear();
     showGuesses = false;
 

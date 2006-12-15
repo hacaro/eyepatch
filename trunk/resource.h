@@ -34,10 +34,10 @@
 #define IDC_FRAMERIGHT                  1015
 #define IDC_VIDEOSLIDER                 1016
 #define IDC_MARKIN                      1017
+#define IDC_SAVEFILTER                  1018
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003
-#define ID_Menu                         40004
 #define ID_FILE_EMPTYTRASH              40005
 #define ID_FILE_OPENSAMPLE              40006
 #define ID_SETTINGS_CAPTURESOURCE       40007
@@ -50,7 +50,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        120
 #define _APS_NEXT_COMMAND_VALUE         40009
-#define _APS_NEXT_CONTROL_VALUE         1015
+#define _APS_NEXT_CONTROL_VALUE         1016
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
