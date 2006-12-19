@@ -64,15 +64,19 @@
 #define FILTERIMAGE_WIDTH 240
 #define FILTERIMAGE_HEIGHT 180
 
-// save recognizer: folder prefixes
-#define FILE_BRIGHTNESS_IDENTIFIER L"brightness"
-#define FILE_BRIGHTNESS_HISTOGRAM L"\\histogram.dat"
-#define FILE_COLOR_IDENTIFIER L"color"
-#define FILE_SHAPE_IDENTIFIER L"shape"
-#define FILE_MOTION_IDENTIFIER L"motion"
-#define FILE_GESTURE_IDENTIFIER L"gesture"
-#define FILE_FEATURES_IDENTIFIER L"features"
-#define FILE_APPEARANCE_IDENTIFIER L"appearance"
+// save recognizer: folder prefixes and file names
+#define FILE_FRIENDLY_NAME L"\\name.dat"
+#define FILE_DATA_NAME L"\\data.dat"
+#define FILE_CLASSIFIER_PREFIX L"epc"
+
+// save recognizer: folder suffixes
+#define FILE_BRIGHTNESS_SUFFIX L"_BRI"
+#define FILE_COLOR_SUFFIX L"_COL"
+#define FILE_GESTURE_SUFFIX L"_GES"
+#define FILE_HAAR_SUFFIX L"_APP"
+#define FILE_MOTION_SUFFIX L"_MOT"
+#define FILE_SHAPE_SUFFIX L"_SHP"
+#define FILE_SIFT_SUFFIX L"_SIF"
 
 #define APP_CLASS L"Eyepatch"
 #define FILTER_CREATE_CLASS L"VideoMarkup"

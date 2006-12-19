@@ -35,6 +35,8 @@
 #define IDC_VIDEOSLIDER                 1016
 #define IDC_MARKIN                      1017
 #define IDC_SAVEFILTER                  1018
+#define IDC_FILTER_LIST                 1019
+#define IDC_FILTERLIST                  1020
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003
@@ -50,7 +52,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        120
 #define _APS_NEXT_COMMAND_VALUE         40009
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1021
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

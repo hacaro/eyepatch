@@ -24,7 +24,7 @@ using namespace Gdiplus;
 #include <list>
 #include <map>
 #include <vector>
-#include <deque>
+#include <algorithm>
 using namespace std;
 
 // ATL includes
@@ -50,9 +50,6 @@ using namespace std;
 #include "SIFT/kdtree.h"
 #include "SIFT/utils.h"
 #include "SIFT/xform.h"
-
-// Resource constants
-#include "resource.h"
 
 // MotionSample and MotionTrack types for gestures
 typedef struct _MotionSample {
