@@ -26,7 +26,14 @@ BrightnessClassifier::BrightnessClassifier() :
 BrightnessClassifier::BrightnessClassifier(LPCWSTR pathname) {
     USES_CONVERSION;
 
-    // store the directory name
+	// allocate histogram
+	hdims = 16;
+	float hranges_arr[2];
+	hranges_arr[0] = 0;	hranges_arr[1] = 255;
+	float* hranges = hranges_arr;
+	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
+
+    // save the directory name for later
     wcscpy(directoryName, pathname);
 
     WCHAR filename[MAX_PATH];
@@ -42,16 +49,17 @@ BrightnessClassifier::BrightnessClassifier(LPCWSTR pathname) {
     }
     fclose(datafile);
 
-    // load the "friendly name"
+    // load the "friendly name" and set the type
     wcscpy(filename, pathname);
     wcscat(filename, FILE_FRIENDLY_NAME);
     FILE *namefile = fopen(W2A(filename), "r");
     fgetws(friendlyName, MAX_PATH, namefile);
     fclose(namefile);
+    classifierType = IDC_RADIO_BRIGHTNESS;
 
     UpdateHistogramImage();
     isTrained = true;
-    isSaved = true;
+    isOnDisk = true;
 }
 
 BrightnessClassifier::~BrightnessClassifier() {
@@ -89,10 +97,13 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
     }
 
     UpdateHistogramImage();
-    
+
+    if (isOnDisk) { // this classifier has been saved so we'll update the files
+        Save();        
+    }
+
     // update member variables
 	isTrained = true;
-    isSaved = false;
 }
 
 void BrightnessClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
@@ -195,5 +206,5 @@ void BrightnessClassifier::Save() {
     fputws(friendlyName, namefile);
     fclose(namefile);
 
-    isSaved = true;
+    isOnDisk = true;
 }

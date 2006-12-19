@@ -91,6 +91,10 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
     cvReleaseImage(&filterImageMotion);
     cvReleaseImage(&filterImageArrows);
 
+    if (isOnDisk) { // this classifier has been saved so we'll update the files
+        Save();        
+    }
+
     // update member variables
 	isTrained = true;
 }
@@ -184,5 +188,5 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void MotionClassifier::Save() {
-    isSaved = true;
+    isOnDisk = true;
 }

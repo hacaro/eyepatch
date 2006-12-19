@@ -540,45 +540,80 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
         case IDC_SAVEFILTER:
             {
                 classifier->Save();
-
                 list<Classifier*>::iterator c_iter = find(savedClassifiers.begin(), savedClassifiers.end(), classifier);
                 if (c_iter == savedClassifiers.end()) {
-                    
                     // current classifier is not in saved list, so we will add it
                     savedClassifiers.push_back(classifier);
-
                     // also add to the listbox of saved classifiers
                     m_filterSelect.AddSavedFilter(classifier);
                 }
+                // disable the "learn" and "save" buttons until we start a new classifier
+                m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
+                m_filterSelect.GetDlgItem(IDC_TRAINBUTTON).EnableWindow(FALSE);
             }
             break;
         case IDC_RADIO_COLOR:
             recognizerMode = IDC_RADIO_COLOR;
-            ReplaceClassifier(new ColorClassifier());
+            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_COLOR)) {
+                ReplaceClassifier((ColorClassifier*)lParam);
+                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_COLOR);
+            } else {
+                ReplaceClassifier(new ColorClassifier());
+            }
             break;
         case IDC_RADIO_SHAPE:
             recognizerMode = IDC_RADIO_SHAPE;
-            ReplaceClassifier(new ShapeClassifier());
+            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_SHAPE)) {
+                ReplaceClassifier((ShapeClassifier*)lParam);
+                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_SHAPE);
+            } else {
+                ReplaceClassifier(new ShapeClassifier());
+            }
             break;
         case IDC_RADIO_FEATURES:
             recognizerMode = IDC_RADIO_FEATURES;
-            ReplaceClassifier(new SiftClassifier());
+            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_FEATURES)) {
+                ReplaceClassifier((SiftClassifier*)lParam);
+                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_FEATURES);
+            } else {
+                ReplaceClassifier(new SiftClassifier());
+            }
             break;
         case IDC_RADIO_BRIGHTNESS:
             recognizerMode = IDC_RADIO_BRIGHTNESS;
-            ReplaceClassifier(new BrightnessClassifier());
+            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_BRIGHTNESS)) {
+                ReplaceClassifier((BrightnessClassifier*)lParam);
+                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_BRIGHTNESS);
+            } else {
+                ReplaceClassifier(new BrightnessClassifier());
+            }
             break;
         case IDC_RADIO_APPEARANCE:
             recognizerMode = IDC_RADIO_APPEARANCE;
-            ReplaceClassifier(new HaarClassifier());
+            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_APPEARANCE)) {
+                ReplaceClassifier((HaarClassifier*)lParam);
+                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_APPEARANCE);
+            } else {
+                ReplaceClassifier(new HaarClassifier());
+            }
             break;
         case IDC_RADIO_MOTION:
             recognizerMode = IDC_RADIO_MOTION;
-            ReplaceClassifier(new MotionClassifier());
+            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_MOTION)) {
+                ReplaceClassifier((MotionClassifier*)lParam);
+                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_MOTION);
+            } else {
+                ReplaceClassifier(new MotionClassifier());
+            } 
             break;
         case IDC_RADIO_GESTURE:
             recognizerMode = IDC_RADIO_GESTURE;
-            ReplaceClassifier(new GestureClassifier());
+            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_GESTURE)) {
+                ReplaceClassifier((GestureClassifier*)lParam);
+                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_GESTURE);
+            } else {
+                ReplaceClassifier(new GestureClassifier());
+            } 
             break;
     }
     if (showGuesses) {
@@ -686,8 +721,34 @@ void CVideoMarkup::RecordVideoFile() {
     }
 }
 
+void CVideoMarkup::LoadClassifier(LPWSTR pathname) {
+
+    Classifier *newclassifier = NULL;
+
+    if (wcsstr(pathname, FILE_BRIGHTNESS_SUFFIX) != NULL) {
+        newclassifier = new BrightnessClassifier(pathname);
+    } else if (wcsstr(pathname, FILE_COLOR_SUFFIX) != NULL) { 
+        newclassifier = new ColorClassifier(pathname);
+    } else if (wcsstr(pathname, FILE_GESTURE_SUFFIX) != NULL) { 
+        newclassifier = new GestureClassifier(  );
+    } else if (wcsstr(pathname, FILE_HAAR_SUFFIX) != NULL) { 
+        newclassifier = new HaarClassifier(  );
+    } else if (wcsstr(pathname, FILE_MOTION_SUFFIX) != NULL) { 
+        newclassifier = new MotionClassifier(  );
+    } else if (wcsstr(pathname, FILE_SHAPE_SUFFIX) != NULL) { 
+        newclassifier = new ShapeClassifier(  );
+    } else if (wcsstr(pathname, FILE_SIFT_SUFFIX) != NULL) { 
+        newclassifier = new SiftClassifier(  );
+    }
+
+    if (newclassifier != NULL) {
+        savedClassifiers.push_back(newclassifier);
+        m_filterSelect.AddSavedFilter(newclassifier);
+    }
+}
+
 void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
-    if (!classifier->isSaved) {
+    if (!classifier->isOnDisk) {
         // TODO: prompt for confirmation? unsaved classifier will be erased
         // we should also prompt if there are unsaved changes
         delete classifier;
@@ -698,7 +759,8 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     }
     classifier = newClassifier;
     m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
-    m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+    m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(classifier->isTrained);
+    m_filterSelect.GetDlgItem(IDC_TRAINBUTTON).EnableWindow(!classifier->isOnDisk);
     m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
     objGuesses.clear();
     showGuesses = false;

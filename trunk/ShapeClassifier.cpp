@@ -70,7 +70,11 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
     }
     IplToBitmap(filterImage, filterBitmap);
 
-	// update member variables
+    if (isOnDisk) { // this classifier has been saved so we'll update the files
+        Save();        
+    }
+
+    // update member variables
 	isTrained = true;
 }
 
@@ -120,5 +124,5 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void ShapeClassifier::Save() {
-    isSaved = true;
+    isOnDisk = true;
 }

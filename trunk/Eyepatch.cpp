@@ -60,6 +60,9 @@ LRESULT CEyepatch::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     hMenu = LoadMenu(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDR_MENU));
     SetMenu(hMenu);
 
+    // Load the classifiers from disk
+    LoadClassifiers();
+
     return 0;
 }
 
@@ -106,6 +109,38 @@ void CEyepatch::LoadSampleFromFile() {
             strPtr += (wcslen(strPtr) + 1);
         }
     }
+}
+
+void CEyepatch::LoadClassifiers() {
+
+    WCHAR rootpath[MAX_PATH];
+    WCHAR searchpath[MAX_PATH];
+    WCHAR fullpath[MAX_PATH];
+
+    SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, rootpath);
+    PathAppend(rootpath, APP_CLASS);
+
+    wcscpy(searchpath,rootpath);
+    PathAppend(searchpath, L"*.*");
+   
+    HANDLE hFind;
+    WIN32_FIND_DATA win32fd;
+
+    if ((hFind = FindFirstFile(searchpath, &win32fd)) == INVALID_HANDLE_VALUE) {
+        return;
+    }
+
+    do {
+        if (win32fd.cFileName[0] != '.' && 
+           (win32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && 
+           !(win32fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)) {
+
+               wcscpy(fullpath, rootpath);
+               PathAppend(fullpath, win32fd.cFileName);
+               m_videoMarkup.LoadClassifier(fullpath);
+        }
+    } while(FindNextFile(hFind, &win32fd) != 0);
+    FindClose(hFind);
 }
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)

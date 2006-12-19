@@ -28,6 +28,9 @@ LRESULT HaarClassifierDialog::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam,
 		parent->cascade = cvLoadHaarClassifierCascade(parent->classifierName, cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y));
 		if (parent->cascade != NULL) {
 			parent->isTrained = true;
+            if (parent->isOnDisk) { // this classifier has been saved so we'll update the files
+                parent->Save();        
+            }
 		}
 	}
 	return 0;
@@ -202,5 +205,5 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void HaarClassifier::Save() {
-    isSaved = true;
+    isOnDisk = true;
 }
