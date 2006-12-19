@@ -10,7 +10,6 @@ public:
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, list<Rect>*);
     void Save();
-    void Load(LPCWSTR);
 
 private:
     CvMemStorage *templateStorage;

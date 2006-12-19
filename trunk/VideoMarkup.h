@@ -76,6 +76,7 @@ private:
     CFilterSelect m_filterSelect;
     CVideoControl m_videoControl;
     Classifier *classifier;
+    list<Classifier*> savedClassifiers;
 
     // currently selected recognizer mode
     int recognizerMode;

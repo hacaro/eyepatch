@@ -56,6 +56,10 @@ HaarClassifier::HaarClassifier() :
 	nPosSamples = 0;
 	nNegSamples = 0;
 	nStagesCompleted = 0;
+
+    // set the default "friendly name" and type
+    wcscpy(friendlyName, L"Appearance Classifier");
+    classifierType = IDC_RADIO_APPEARANCE;        
 }
 
 HaarClassifier::~HaarClassifier() {
@@ -198,9 +202,5 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void HaarClassifier::Save() {
-
-}
-
-void HaarClassifier::Load(LPCWSTR pathname) {
-
+    isSaved = true;
 }

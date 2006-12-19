@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TrajectoryList.h"
+#include "../resource.h"
 
 class BlobTracker;
 

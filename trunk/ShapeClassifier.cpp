@@ -8,6 +8,10 @@
 ShapeClassifier::ShapeClassifier() :
 	Classifier() {
     templateStorage = cvCreateMemStorage(0);
+
+    // set the default "friendly name" and type
+    wcscpy(friendlyName, L"Shape Classifier");
+    classifierType = IDC_RADIO_SHAPE;        
 }
 
 ShapeClassifier::~ShapeClassifier() {
@@ -116,9 +120,5 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void ShapeClassifier::Save() {
-
-}
-
-void ShapeClassifier::Load(LPCWSTR pathname) {
-
+    isSaved = true;
 }

@@ -14,6 +14,44 @@ BrightnessClassifier::BrightnessClassifier() :
 	hranges_arr[0] = 0;	hranges_arr[1] = 255;
 	float* hranges = hranges_arr;
 	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
+
+    // set the default "friendly name" and type
+    wcscpy(friendlyName, L"Brightness Classifier");
+    classifierType = IDC_RADIO_BRIGHTNESS;
+    
+    // append identifier to directory name
+    wcscat(directoryName, FILE_BRIGHTNESS_SUFFIX);
+}
+
+BrightnessClassifier::BrightnessClassifier(LPCWSTR pathname) {
+    USES_CONVERSION;
+
+    // store the directory name
+    wcscpy(directoryName, pathname);
+
+    WCHAR filename[MAX_PATH];
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_DATA_NAME);
+
+    // load the data from the histogram file
+    FILE *datafile = fopen(W2A(filename), "rb");
+    for(int i = 0; i < hdims; i++) {
+        float val;
+        fread(&val, sizeof(float), 1, datafile);
+		cvSetReal1D(hist->bins,i,val);
+    }
+    fclose(datafile);
+
+    // load the "friendly name"
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "r");
+    fgetws(friendlyName, MAX_PATH, namefile);
+    fclose(namefile);
+
+    UpdateHistogramImage();
+    isTrained = true;
+    isSaved = true;
 }
 
 BrightnessClassifier::~BrightnessClassifier() {
@@ -54,6 +92,7 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
     
     // update member variables
 	isTrained = true;
+    isSaved = false;
 }
 
 void BrightnessClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
@@ -136,38 +175,25 @@ void BrightnessClassifier::UpdateHistogramImage() {
 
 void BrightnessClassifier::Save() {
     USES_CONVERSION;
-
-    WCHAR pathname[MAX_PATH];
     WCHAR filename[MAX_PATH];
-    SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathname);
-    int classifiernum = (int)time(0);
-    wsprintf(filename, L"%s\\Eyepatch\\%s%d", pathname, FILE_BRIGHTNESS_IDENTIFIER, classifiernum);
-    SHCreateDirectory(NULL, filename);
 
-    wcscat(filename, FILE_BRIGHTNESS_HISTOGRAM);
+    SHCreateDirectory(NULL, directoryName);
+    // save the histogram data
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_DATA_NAME);
     FILE *datafile = fopen(W2A(filename), "wb");
-	for(int i = 0; i < hdims; i++)
-	{
+	for(int i = 0; i < hdims; i++) {
 		float val = cvGetReal1D(hist->bins,i);
         fwrite(&val, sizeof(float), 1, datafile);
 	}
     fclose(datafile);
-}
 
-void BrightnessClassifier::Load(LPCWSTR pathname) {
-    USES_CONVERSION;
-    WCHAR filename[MAX_PATH];
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_BRIGHTNESS_HISTOGRAM);
-    FILE *datafile = fopen(W2A(filename), "rb");
-	for(int i = 0; i < hdims; i++)
-	{
-        float val;
-        fread(&val, sizeof(float), 1, datafile);
-		cvSetReal1D(hist->bins,i,val);
-    }
-    fclose(datafile);
+    // save the "friendly name"
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "w");
+    fputws(friendlyName, namefile);
+    fclose(namefile);
 
-    UpdateHistogramImage();
-    isTrained = true;
+    isSaved = true;
 }

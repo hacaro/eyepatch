@@ -8,6 +8,10 @@
 MotionClassifier::MotionClassifier() :
 	Classifier() {
     motionAngles.clear();
+
+    // set the default "friendly name" and type
+    wcscpy(friendlyName, L"Motion Classifier");
+    classifierType = IDC_RADIO_MOTION;        
 }
 
 MotionClassifier::~MotionClassifier() {
@@ -180,9 +184,5 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void MotionClassifier::Save() {
-
-}
-
-void MotionClassifier::Load(LPCWSTR pathname) {
-
+    isSaved = true;
 }

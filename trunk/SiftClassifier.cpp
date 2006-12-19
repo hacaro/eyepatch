@@ -12,6 +12,10 @@ SiftClassifier::SiftClassifier() :
     numSampleFeatures = 0;
     sampleCopy = NULL;
     sampleFeatures = NULL;
+
+    // set the default "friendly name" and type
+    wcscpy(friendlyName, L"Features Classifier");
+    classifierType = IDC_RADIO_FEATURES;        
 }
 
 SiftClassifier::~SiftClassifier() {
@@ -159,9 +163,5 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void SiftClassifier::Save() {
-
-}
-
-void SiftClassifier::Load(LPCWSTR pathname) {
-
+    isSaved = true;
 }

@@ -2,8 +2,6 @@
 #include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
-#include "FilterSelect.h"
-#include "VideoControl.h"
 #include "VideoLoader.h"
 #include "VideoRecorder.h"
 #include "BrightnessClassifier.h"
@@ -14,6 +12,8 @@
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
 #include "Gesture/BlobTracker.h"
+#include "FilterSelect.h"
+#include "VideoControl.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -538,7 +538,19 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             showGuesses = !showGuesses;
             break;
         case IDC_SAVEFILTER:
-            classifier->Save();
+            {
+                classifier->Save();
+
+                list<Classifier*>::iterator c_iter = find(savedClassifiers.begin(), savedClassifiers.end(), classifier);
+                if (c_iter == savedClassifiers.end()) {
+                    
+                    // current classifier is not in saved list, so we will add it
+                    savedClassifiers.push_back(classifier);
+
+                    // also add to the listbox of saved classifiers
+                    m_filterSelect.AddSavedFilter(classifier);
+                }
+            }
             break;
         case IDC_RADIO_COLOR:
             recognizerMode = IDC_RADIO_COLOR;
@@ -675,7 +687,15 @@ void CVideoMarkup::RecordVideoFile() {
 }
 
 void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
-    delete classifier;
+    if (!classifier->isSaved) {
+        // TODO: prompt for confirmation? unsaved classifier will be erased
+        // we should also prompt if there are unsaved changes
+        delete classifier;
+    } else {
+        // should already be in the list of saved classifiers (and in the "saved classifiers" list box)
+        list<Classifier*>::iterator c_iter = find(savedClassifiers.begin(), savedClassifiers.end(), classifier);
+        assert(c_iter != savedClassifiers.end()); 
+    }
     classifier = newClassifier;
     m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
     m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);

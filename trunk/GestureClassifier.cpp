@@ -10,6 +10,10 @@ GestureClassifier::GestureClassifier() :
     nModels = 0;
     maxModelLength = 0;
     models = NULL;
+
+    // set the default "friendly name" and type
+    wcscpy(friendlyName, L"Gesture Classifier");
+    classifierType = IDC_RADIO_GESTURE;
 }
 
 GestureClassifier::~GestureClassifier() {
@@ -117,8 +121,5 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
 
 void GestureClassifier::Save() {
 
-}
-
-void GestureClassifier::Load(LPCWSTR pathname) {
-
+    isSaved = true;
 }

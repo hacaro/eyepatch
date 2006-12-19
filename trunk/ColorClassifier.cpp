@@ -21,6 +21,10 @@ ColorClassifier::ColorClassifier() :
 
 	// allocate histogram
 	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
+
+    // set the default "friendly name" and type
+    wcscpy(friendlyName, L"Color Classifier");
+    classifierType = IDC_RADIO_COLOR;        
 }
 
 ColorClassifier::~ColorClassifier() {
@@ -154,8 +158,5 @@ void ColorClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 
 void ColorClassifier::Save() {
 
-}
-
-void ColorClassifier::Load(LPCWSTR pathname) {
-
+    isSaved = true;
 }
