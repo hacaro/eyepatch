@@ -54,7 +54,11 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
 
     IplToBitmap(filterImage, filterBitmap);
 
-	// update member variables
+    if (isOnDisk) { // this classifier has been saved so we'll update the files
+        Save();        
+    }
+
+    // update member variables
 	isTrained = true;
 }
 
@@ -163,5 +167,5 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void SiftClassifier::Save() {
-    isSaved = true;
+    isOnDisk = true;
 }

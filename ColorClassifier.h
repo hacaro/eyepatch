@@ -4,6 +4,7 @@
 class ColorClassifier : public Classifier {
 public:
     ColorClassifier();
+    ColorClassifier(LPCWSTR pathname);
     ~ColorClassifier();
 
     BOOL ContainsSufficientSamples(TrainingSet*);
@@ -12,10 +13,8 @@ public:
     void Save();
 
 private:
-	IplImage *image, *hsv, *hue, *mask, *backproject, *histimg;
-	CvHistogram *hist;
+    void UpdateHistogramImage();
 
+    CvHistogram *hist;
 	int hdims;
-	float hranges_arr[2];
-	float* hranges;
 };

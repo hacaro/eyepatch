@@ -37,8 +37,6 @@ LRESULT CFilterSelect::OnEnable(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 }
 
 LRESULT CFilterSelect::OnTextCallback(int idCtrl, LPNMHDR pnmh, BOOL&) {
-
-    HWND listView = GetDlgItem(IDC_FILTER_LIST);
     NMLVDISPINFO* plvdi = (NMLVDISPINFO*)pnmh;
     LVITEM item = plvdi->item;
     switch (item.iSubItem) {
@@ -49,6 +47,40 @@ LRESULT CFilterSelect::OnTextCallback(int idCtrl, LPNMHDR pnmh, BOOL&) {
             break;
     }
 
+    return 0;
+}
+
+LRESULT CFilterSelect::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
+    NMLVDISPINFO* plvdi = (NMLVDISPINFO*)pnmh;
+    LVITEM item = plvdi->item;
+    switch (item.iSubItem) {
+        case 0:
+            ((Classifier*)item.lParam)->SetName(plvdi->item.pszText);
+            break;
+        default:
+            break;
+    }
+    ((Classifier*)item.lParam)->Save();
+    return 0;
+}
+
+LRESULT CFilterSelect::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
+    HWND listView = GetDlgItem(IDC_FILTER_LIST);
+    LPNMLISTVIEW nmlv = (LPNMLISTVIEW) pnmh;
+
+    LV_ITEM lvi;
+    ZeroMemory(&lvi, sizeof(lvi));
+    lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+    lvi.iItem = nmlv->iItem;
+    lvi.iSubItem = 0;
+    if (ListView_GetItem(listView, &lvi)) {
+
+        // filter was double-clicked, so we will set it as the current filter
+        Classifier *classifier = (Classifier*) lvi.lParam;
+
+        // need to replace current classifier with this one by calling ReplaceClassifier in parent
+        parent->SendMessage(WM_COMMAND, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+    }
     return 0;
 }
 

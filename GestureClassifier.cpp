@@ -59,6 +59,10 @@ void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
     IplToBitmap(filterImage, filterBitmap);
     cvReleaseImage(&resizedGestureImage);
 
+    if (isOnDisk) { // this classifier has been saved so we'll update the files
+        Save();        
+    }
+
     // update member variables
 	isTrained = true;
 }
@@ -121,5 +125,5 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
 
 void GestureClassifier::Save() {
 
-    isSaved = true;
+    isOnDisk = true;
 }

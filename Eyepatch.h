@@ -12,6 +12,7 @@ public:
 	LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
 	LRESULT OnCommand( UINT, WPARAM, LPARAM, BOOL& );
     void LoadSampleFromFile();
+    void LoadClassifiers();
 
 	static CWndClassInfo& GetWndClassInfo()
 	{

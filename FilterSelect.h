@@ -9,6 +9,8 @@ public:
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
         MESSAGE_HANDLER(WM_ENABLE, OnEnable)
         NOTIFY_CODE_HANDLER(LVN_GETDISPINFO, OnTextCallback)
+        NOTIFY_CODE_HANDLER(LVN_ENDLABELEDIT, OnNameChange)
+        NOTIFY_CODE_HANDLER(LVN_ITEMACTIVATE, OnItemActivate)
     END_MSG_MAP()
 
     CFilterSelect(CWindow *parent);
@@ -17,6 +19,8 @@ public:
     LRESULT OnCommand(UINT, WPARAM, LPARAM, BOOL&);
     LRESULT OnEnable(UINT, WPARAM, LPARAM, BOOL&);
     LRESULT OnTextCallback(int, LPNMHDR, BOOL&);
+    LRESULT OnNameChange(int, LPNMHDR, BOOL&);
+    LRESULT OnItemActivate(int, LPNMHDR, BOOL&);
 
     void AddSavedFilter(Classifier* classifier);
 

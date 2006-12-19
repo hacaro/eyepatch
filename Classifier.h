@@ -6,7 +6,7 @@ public:
 
 	Classifier() {
 	    isTrained = false;
-        isSaved = false;
+        isOnDisk = false;
         classifierType = 0;
         filterImage = cvCreateImage(cvSize(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT), IPL_DEPTH_8U, 3);
         applyImage = cvCreateImage(cvSize(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT), IPL_DEPTH_8U, 3);
@@ -20,7 +20,7 @@ public:
         WCHAR rootpath[MAX_PATH];
         SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, rootpath);
         int classifiernum = (int)time(0);
-        wsprintf(directoryName, L"%s\\Eyepatch\\%s%d", rootpath, FILE_CLASSIFIER_PREFIX, classifiernum);
+        wsprintf(directoryName, L"%s\\%s\\%s%d", rootpath, APP_CLASS, FILE_CLASSIFIER_PREFIX, classifiernum);
     }
 	virtual ~Classifier() {
         cvReleaseImage(&filterImage);
@@ -43,9 +43,13 @@ public:
     LPWSTR GetName() {
         return friendlyName;
     }
+    void SetName(LPCWSTR newName) {
+        wcscpy(friendlyName, newName);
+    }
 
 	bool isTrained;
-    bool isSaved;
+    bool isOnDisk;
+    int classifierType;
 
 protected:
     Bitmap *filterBitmap, *applyBitmap;
@@ -53,5 +57,4 @@ protected:
 
     WCHAR friendlyName[MAX_PATH];
     WCHAR directoryName[MAX_PATH];
-    int classifierType;
 };

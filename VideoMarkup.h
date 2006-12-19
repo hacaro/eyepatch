@@ -22,6 +22,7 @@ public:
 	void OpenVideoFile();
 	void RecordVideoFile();
     void OpenSampleFile(char *filename);
+    void LoadClassifier(LPWSTR pathname);
     void ReplaceClassifier(Classifier *newClassifier);
     void EmptyTrash();
 
