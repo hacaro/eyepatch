@@ -4,6 +4,7 @@
 class GestureClassifier : public Classifier {
 public:
     GestureClassifier();
+	GestureClassifier(LPCWSTR pathname);
     ~GestureClassifier();
 
     BOOL ContainsSufficientSamples(TrainingSet*);
@@ -13,6 +14,8 @@ public:
     void Save();
 
 private:
+	void UpdateTrajectoryImage();
+
     int nModels;
     int maxModelLength;
     TrajectoryModel** models;

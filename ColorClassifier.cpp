@@ -23,7 +23,9 @@ ColorClassifier::ColorClassifier() :
     wcscat(directoryName, FILE_COLOR_SUFFIX);   
 }
 
-ColorClassifier::ColorClassifier(LPCWSTR pathname) {
+ColorClassifier::ColorClassifier(LPCWSTR pathname) :
+	Classifier() {
+
     USES_CONVERSION;
 
 	// allocate histogram

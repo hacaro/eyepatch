@@ -61,7 +61,7 @@ private:
     IplImage *currentFrame;
     IplImage *motionHistory;
 
-    BlobTracker m_blobTracker;
+    BlobTracker *m_blobTracker;
 
 	friend class CVideoLoaderDialog;
 	CVideoLoaderDialog m_hVideoLoaderDialog;
