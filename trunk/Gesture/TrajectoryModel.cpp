@@ -1,8 +1,7 @@
 #include "precomp.h"
 #include "TrajectoryModel.h"
 
-TrajectoryModel::TrajectoryModel(MotionTrack track)
-{
+TrajectoryModel::TrajectoryModel(MotionTrack track) {
     length = track.size();
 
     velX = new double[length];
@@ -16,6 +15,23 @@ TrajectoryModel::TrajectoryModel(MotionTrack track)
         sizeX[i] = track[i].sizex;
         sizeY[i] = track[i].sizey;
     }
+}
+
+TrajectoryModel::TrajectoryModel(FILE* src) {
+	
+	// read length from file
+	fread(&length, sizeof(int), 1, src);
+
+    velX = new double[length];
+    velY = new double[length];
+    sizeX = new double[length];
+    sizeY = new double[length];
+
+	// read trajectory data from file
+	fread(velX, sizeof(double), length, src);
+	fread(velY, sizeof(double), length, src);
+	fread(sizeX, sizeof(double), length, src);
+	fread(sizeY, sizeof(double), length, src);
 }
 
 TrajectoryModel::~TrajectoryModel() {
@@ -73,4 +89,12 @@ double TrajectoryModel::LinearInterpolate(double *array, double phase)
     double mod = phase - (double)left;
 
     return leftVal + (mod * slope);
+}
+
+void TrajectoryModel::WriteToFile(FILE* dst) {
+	fwrite(&length, sizeof(int), 1, dst);
+	fwrite(velX, sizeof(double), length, dst);
+	fwrite(velY, sizeof(double), length, dst);
+	fwrite(sizeX, sizeof(double), length, dst);
+	fwrite(sizeY, sizeof(double), length, dst);
 }

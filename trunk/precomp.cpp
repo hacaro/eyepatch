@@ -79,3 +79,23 @@ void DrawTrack(IplImage *img, MotionTrack mt,  CvScalar color, int thickness, in
     cvPolyLine(img, &trackPoints, &nPoints, 1, 0, color, thickness, CV_AA);
     delete[] trackPoints;
 }
+
+void DrawTrack(IplImage *img, TrajectoryModel *mt,  CvScalar color, int thickness, int maxNumPoints) {
+    int startPoint = 0;
+    int nPoints = mt->GetLength();
+    if (maxNumPoints!=0) {
+        startPoint = max(0, mt->GetLength()-maxNumPoints);
+        nPoints = min(maxNumPoints,mt->GetLength());
+    }
+    CvPoint *trackPoints = new CvPoint[nPoints];
+	double posx = img->width/2;
+	double posy = img->height/2;
+	for (int i=startPoint; i<mt->GetLength(); i++) {		
+        trackPoints[i-startPoint].x = posx;
+        trackPoints[i-startPoint].y = posy;
+		posx += mt->InterpolateVelX(i);
+		posy += mt->InterpolateVelY(i);
+    }
+    cvPolyLine(img, &trackPoints, &nPoints, 1, 0, color, thickness, CV_AA);
+    delete[] trackPoints;
+}

@@ -23,7 +23,9 @@ BrightnessClassifier::BrightnessClassifier() :
     wcscat(directoryName, FILE_BRIGHTNESS_SUFFIX);
 }
 
-BrightnessClassifier::BrightnessClassifier(LPCWSTR pathname) {
+BrightnessClassifier::BrightnessClassifier(LPCWSTR pathname) :
+	Classifier() {
+
     USES_CONVERSION;
 
 	// allocate histogram

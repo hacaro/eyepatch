@@ -14,6 +14,51 @@ GestureClassifier::GestureClassifier() :
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Gesture Classifier");
     classifierType = IDC_RADIO_GESTURE;
+
+    // append identifier to directory name
+    wcscat(directoryName, FILE_GESTURE_SUFFIX);
+}
+
+GestureClassifier::GestureClassifier(LPCWSTR pathname) :
+	Classifier() {
+
+	USES_CONVERSION;
+
+    nModels = 0;
+    maxModelLength = 0;
+    models = NULL;
+
+    // save the directory name for later
+    wcscpy(directoryName, pathname);
+
+    WCHAR filename[MAX_PATH];
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_DATA_NAME);
+
+    // load the trajectories from the data file
+    FILE *datafile = fopen(W2A(filename), "rb");
+	fread(&nModels, sizeof(int), 1, datafile); 
+
+    models = new TrajectoryModel*[nModels];
+    int modelNum = 0;
+	for(int i = 0; i < nModels; i++) {
+		models[i] = new TrajectoryModel(datafile);
+		maxModelLength = max(maxModelLength, models[i]->GetLength());
+    }
+    fclose(datafile);
+
+    // load the "friendly name" and set the type
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "r");
+    fgetws(friendlyName, MAX_PATH, namefile);
+    fclose(namefile);
+    classifierType = IDC_RADIO_GESTURE;
+
+    isTrained = true;
+    isOnDisk = true;
+
+	UpdateTrajectoryImage();
 }
 
 GestureClassifier::~GestureClassifier() {
@@ -37,34 +82,25 @@ void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
     nModels = sampleSet->rangeSampleCount;
     models = new TrajectoryModel*[nModels];
     int modelNum = 0;
-    cvZero(filterImage);
-    IplImage *resizedGestureImage = cvCloneImage(filterImage);
 
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == GROUPID_RANGESAMPLES) { // gesture (range) sample
-            IplImage *gestureImage = cvCreateImage(cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height), IPL_DEPTH_8U, 3);
-            cvZero(gestureImage);
-            DrawTrack(gestureImage, sample->motionTrack, colorSwatch[modelNum % COLOR_SWATCH_SIZE], 3);
-            cvResize(gestureImage, resizedGestureImage);
-            cvAdd(filterImage, resizedGestureImage, filterImage);
             models[modelNum] = new TrajectoryModel(sample->motionTrack);
             maxModelLength = max(maxModelLength, sample->motionTrack.size());
             modelNum++;
 		}
     }
-
-    // update demo image
-    IplToBitmap(filterImage, filterBitmap);
-    cvReleaseImage(&resizedGestureImage);
-
     if (isOnDisk) { // this classifier has been saved so we'll update the files
         Save();        
     }
 
     // update member variables
 	isTrained = true;
+
+	// update demo image
+	UpdateTrajectoryImage();
 }
 
 BOOL GestureClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
@@ -123,7 +159,43 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, list<Rect>* objList) {
     IplToBitmap(applyImage, applyBitmap);
 }
 
+void GestureClassifier::UpdateTrajectoryImage() {
+    cvZero(filterImage);
+	if (nModels < 1) return;
+
+	for (int i=0; i<nModels; i++) {
+        DrawTrack(filterImage, models[i], colorSwatch[i % COLOR_SWATCH_SIZE], 3);
+	}
+
+    // update demo image
+    IplToBitmap(filterImage, filterBitmap);
+}
+
 void GestureClassifier::Save() {
+    USES_CONVERSION;
+    WCHAR filename[MAX_PATH];
+
+    SHCreateDirectory(NULL, directoryName);
+    // save the trajectory data
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_DATA_NAME);
+    FILE *datafile = fopen(W2A(filename), "wb");
+
+	// write out the number of models
+	fwrite(&nModels, sizeof(int), 1, datafile); 
+
+	// write out all the trajectory models
+	for(int i = 0; i < nModels; i++) {
+		models[i]->WriteToFile(datafile);
+    }
+    fclose(datafile);
+
+    // save the "friendly name"
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "w");
+    fputws(friendlyName, namefile);
+    fclose(namefile);
 
     isOnDisk = true;
 }

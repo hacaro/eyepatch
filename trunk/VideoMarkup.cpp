@@ -442,7 +442,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 	
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, WS_CHILD | WS_VISIBLE | WS_DISABLED);
-    m_filterSelect.MoveWindow(VIDEO_X+1, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
+    m_filterSelect.MoveWindow(VIDEO_X, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
     m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_COLOR);
     m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);
@@ -694,6 +694,11 @@ void CVideoMarkup::OpenVideoFile() {
         ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, 0);
 		m_videoLoader.LoadFrame(0);
 		InvalidateRgn(activeRgn,FALSE);
+
+	    if (recognizerMode == IDC_RADIO_GESTURE) {
+			// we're in "gesture" mode so we'll need to precompute the trajectories
+			m_videoLoader.LearnTrajectories();
+		}
 	}
     SetCursor(hOld);
 }
@@ -716,6 +721,11 @@ void CVideoMarkup::RecordVideoFile() {
 		    ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, 0);
 		    m_videoLoader.LoadFrame(0);
 		    InvalidateRgn(activeRgn,FALSE);
+
+		    if (recognizerMode == IDC_RADIO_GESTURE) {
+				// we're in "gesture" mode so we'll need to precompute the trajectories
+				m_videoLoader.LearnTrajectories();
+			}
 	    }
         SetCursor(hOld);
     }
@@ -730,7 +740,7 @@ void CVideoMarkup::LoadClassifier(LPWSTR pathname) {
     } else if (wcsstr(pathname, FILE_COLOR_SUFFIX) != NULL) { 
         newclassifier = new ColorClassifier(pathname);
     } else if (wcsstr(pathname, FILE_GESTURE_SUFFIX) != NULL) { 
-        newclassifier = new GestureClassifier(  );
+        newclassifier = new GestureClassifier(pathname);
     } else if (wcsstr(pathname, FILE_HAAR_SUFFIX) != NULL) { 
         newclassifier = new HaarClassifier(  );
     } else if (wcsstr(pathname, FILE_MOTION_SUFFIX) != NULL) { 

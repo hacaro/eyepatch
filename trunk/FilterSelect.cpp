@@ -53,14 +53,16 @@ LRESULT CFilterSelect::OnTextCallback(int idCtrl, LPNMHDR pnmh, BOOL&) {
 LRESULT CFilterSelect::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
     NMLVDISPINFO* plvdi = (NMLVDISPINFO*)pnmh;
     LVITEM item = plvdi->item;
-    switch (item.iSubItem) {
-        case 0:
-            ((Classifier*)item.lParam)->SetName(plvdi->item.pszText);
-            break;
-        default:
-            break;
-    }
-    ((Classifier*)item.lParam)->Save();
+	if (item.pszText != NULL) {
+		switch (item.iSubItem) {
+			case 0:
+				((Classifier*)item.lParam)->SetName(item.pszText);
+				break;
+			default:
+				break;
+		}
+		((Classifier*)item.lParam)->Save();
+	}
     return 0;
 }
 

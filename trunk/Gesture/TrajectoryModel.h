@@ -4,7 +4,10 @@ class TrajectoryModel  {
 public:
 
     TrajectoryModel(MotionTrack track);
+	TrajectoryModel(FILE *src);
     ~TrajectoryModel();
+
+	void WriteToFile(FILE* dst);
 
     int GetLength();
     double InterpolateSizeX(double phase);

@@ -81,6 +81,7 @@ CVideoLoader::CVideoLoader() :
     bmpVideo = NULL;
 	nFrames = 0;
     currentFrameNumber = 0;
+	m_blobTracker = NULL;
 }
 
 CVideoLoader::~CVideoLoader(void) {
@@ -88,6 +89,7 @@ CVideoLoader::~CVideoLoader(void) {
         cvReleaseCapture(&videoCapture);
         cvReleaseImage(&copyFrame);
         cvReleaseImage(&motionHistory);
+		if (m_blobTracker != NULL) delete m_blobTracker;
         delete bmpVideo;
     }
 }
@@ -161,6 +163,10 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner, LPCWSTR filename) {
 
     LoadFrame(0);
 	videoLoaded = TRUE;
+
+	// create a new blob tracker for the new video
+	if (m_blobTracker != NULL) delete m_blobTracker;
+	m_blobTracker = new BlobTracker();
 
 	return TRUE;
 }
@@ -260,15 +266,21 @@ IplImage* CVideoLoader::GetMotionHistory() {
 
 void CVideoLoader::LearnTrajectories() { 
     if (!videoLoaded) return;
-    m_blobTracker.LearnTrajectories(videoCapture);
+	if (!m_blobTracker) return;
+	if (m_blobTracker->isTrained) return;
+    m_blobTracker->LearnTrajectories(videoCapture);
     LoadFrame(currentFrameNumber);
 }
 
 void CVideoLoader::GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
-    m_blobTracker.GetTrajectoriesInRange(trackList, startFrame, endFrame);
+	if (!m_blobTracker) return;
+	if (!m_blobTracker->isTrained) return;
+    m_blobTracker->GetTrajectoriesInRange(trackList, startFrame, endFrame);
 }
 
 void CVideoLoader::GetTrajectoriesAtCurrentFrame(vector<MotionTrack> *trackList) {
+	if (!m_blobTracker) return;
+	if (!m_blobTracker->isTrained) return;
     long startFrame = max(0,currentFrameNumber-GESTURE_MIN_TRAJECTORY_LENGTH);
-    m_blobTracker.GetTrajectoriesAtFrame(trackList, currentFrameNumber);
+    m_blobTracker->GetTrajectoriesAtFrame(trackList, currentFrameNumber);
 }
