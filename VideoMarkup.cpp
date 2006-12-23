@@ -745,7 +745,7 @@ void CVideoMarkup::LoadClassifier(LPWSTR pathname) {
     } else if (wcsstr(pathname, FILE_HAAR_SUFFIX) != NULL) { 
         newclassifier = new HaarClassifier(pathname);
     } else if (wcsstr(pathname, FILE_MOTION_SUFFIX) != NULL) { 
-        newclassifier = new MotionClassifier(  );
+        newclassifier = new MotionClassifier(pathname);
     } else if (wcsstr(pathname, FILE_SHAPE_SUFFIX) != NULL) { 
         newclassifier = new ShapeClassifier(  );
     } else if (wcsstr(pathname, FILE_SIFT_SUFFIX) != NULL) { 

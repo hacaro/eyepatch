@@ -4,6 +4,7 @@
 class MotionClassifier : public Classifier {
 public:
     MotionClassifier();
+    MotionClassifier(LPCWSTR pathname);
     ~MotionClassifier();
 
     BOOL ContainsSufficientSamples(TrainingSet*);

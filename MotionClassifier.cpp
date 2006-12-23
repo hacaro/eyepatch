@@ -12,6 +12,52 @@ MotionClassifier::MotionClassifier() :
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Motion Classifier");
     classifierType = IDC_RADIO_MOTION;        
+
+    // append identifier to directory name
+    wcscat(directoryName, FILE_MOTION_SUFFIX);
+}
+
+MotionClassifier::MotionClassifier(LPCWSTR pathname) :
+    Classifier() {
+
+	USES_CONVERSION;
+
+    // save the directory name for later
+    wcscpy(directoryName, pathname);
+
+    // load the motion directions from the data file
+    WCHAR filename[MAX_PATH];
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_DATA_NAME);
+    FILE *datafile = fopen(W2A(filename), "rb");
+    int numAngles;
+    fread(&numAngles, sizeof(int), 1, datafile);
+    motionAngles.clear();
+    for(int i = 0; i < numAngles; i++) {
+        double angle;
+        fread(&angle, sizeof(double), 1, datafile);
+        motionAngles.push_back(angle);
+    }
+    fclose(datafile);
+
+	// load the filter sample image
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_IMAGE_NAME);
+    IplImage *filterImageCopy = cvLoadImage(W2A(filename));
+    cvCopy(filterImageCopy, filterImage);
+    cvReleaseImage(&filterImageCopy);
+    IplToBitmap(filterImage, filterBitmap);
+
+    // load the "friendly name" and set the type
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "r");
+    fgetws(friendlyName, MAX_PATH, namefile);
+    fclose(namefile);
+
+    classifierType = IDC_RADIO_MOTION;
+    isTrained = true;
+    isOnDisk = true;
 }
 
 MotionClassifier::~MotionClassifier() {
@@ -188,5 +234,36 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void MotionClassifier::Save() {
+    if (!isTrained) return;
+    USES_CONVERSION;
+    WCHAR filename[MAX_PATH];
+
+    SHCreateDirectory(NULL, directoryName);
+
+	// save the motion angle data
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_DATA_NAME);
+    FILE *datafile = fopen(W2A(filename), "wb");
+
+    int numAngles = motionAngles.size();
+    fwrite(&numAngles, sizeof(int), 1, datafile);
+    for(list<double>::iterator i = motionAngles.begin(); i != motionAngles.end(); i++) {
+        double angle = (*i);
+        fwrite(&angle, sizeof(double), 1, datafile);
+    }
+    fclose(datafile);
+
+	// save the filter sample image
+    wcscpy(filename, directoryName);
+    wcscat(filename, FILE_IMAGE_NAME);
+	cvSaveImage(W2A(filename), filterImage);
+
+    // save the "friendly name"
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "w");
+    fputws(friendlyName, namefile);
+    fclose(namefile);
+
     isOnDisk = true;
 }
