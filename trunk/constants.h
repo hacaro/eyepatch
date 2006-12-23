@@ -67,6 +67,7 @@
 // save recognizer: folder prefixes and file names
 #define FILE_FRIENDLY_NAME L"\\name.dat"
 #define FILE_DATA_NAME L"\\data.dat"
+#define FILE_CONTOUR_NAME L"\\data.xml"
 #define FILE_CASCADE_NAME L"\\classifier.xml"
 #define FILE_IMAGE_NAME L"\\image.jpg"
 #define FILE_CLASSIFIER_PREFIX L"epc"
