@@ -693,6 +693,7 @@ void CVideoMarkup::OpenVideoFile() {
         ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
         ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, 0);
 		m_videoLoader.LoadFrame(0);
+        objGuesses.clear();
 		InvalidateRgn(activeRgn,FALSE);
 
 	    if (recognizerMode == IDC_RADIO_GESTURE) {
@@ -742,7 +743,7 @@ void CVideoMarkup::LoadClassifier(LPWSTR pathname) {
     } else if (wcsstr(pathname, FILE_GESTURE_SUFFIX) != NULL) { 
         newclassifier = new GestureClassifier(pathname);
     } else if (wcsstr(pathname, FILE_HAAR_SUFFIX) != NULL) { 
-        newclassifier = new HaarClassifier(  );
+        newclassifier = new HaarClassifier(pathname);
     } else if (wcsstr(pathname, FILE_MOTION_SUFFIX) != NULL) { 
         newclassifier = new MotionClassifier(  );
     } else if (wcsstr(pathname, FILE_SHAPE_SUFFIX) != NULL) { 

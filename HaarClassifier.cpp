@@ -63,6 +63,52 @@ HaarClassifier::HaarClassifier() :
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Appearance Classifier");
     classifierType = IDC_RADIO_APPEARANCE;        
+
+    // append identifier to directory name
+    wcscat(directoryName, FILE_HAAR_SUFFIX);
+}
+
+HaarClassifier::HaarClassifier(LPCWSTR pathname) :
+	Classifier(),
+	m_progressDlg(this) {
+
+	USES_CONVERSION;
+    cascade = NULL;
+    nStages = START_HAAR_STAGES;
+    storage = cvCreateMemStorage(0);
+	nPosSamples = 0;
+	nNegSamples = 0;
+	nStagesCompleted = 0;
+
+    // save the directory name for later
+    wcscpy(directoryName, pathname);
+
+    WCHAR filename[MAX_PATH];
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_CASCADE_NAME);
+
+    // load the cascade from the data file
+	cascade = cvLoadHaarClassifierCascade(W2A(filename), cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y));
+	if (cascade != NULL) {
+		isTrained = true;
+		isOnDisk = true;
+	}
+
+	// load the filter sample image
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_IMAGE_NAME);
+    IplImage *filterImageCopy = cvLoadImage(W2A(filename));
+    cvCopy(filterImageCopy, filterImage);
+    cvReleaseImage(&filterImageCopy);
+    IplToBitmap(filterImage, filterBitmap);
+
+    // load the "friendly name" and set the type
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "r");
+    fgetws(friendlyName, MAX_PATH, namefile);
+    fclose(namefile);
+    classifierType = IDC_RADIO_APPEARANCE;
 }
 
 HaarClassifier::~HaarClassifier() {
@@ -205,5 +251,28 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 }
 
 void HaarClassifier::Save() {
+    if (!isTrained) return;
+    USES_CONVERSION;
+    WCHAR filename[MAX_PATH];
+
+    SHCreateDirectory(NULL, directoryName);
+
+	// save the cascade data
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_CASCADE_NAME);
+	cvSave(W2A(filename), cascade, 0, 0, cvAttrList(0,0));
+
+	// save the filter sample image
+    wcscpy(filename, directoryName);
+    wcscat(filename, FILE_IMAGE_NAME);
+	cvSaveImage(W2A(filename), filterImage);
+
+    // save the "friendly name"
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "w");
+    fputws(friendlyName, namefile);
+    fclose(namefile);
+
     isOnDisk = true;
 }
