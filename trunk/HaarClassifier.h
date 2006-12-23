@@ -29,7 +29,8 @@ private:
 class HaarClassifier : public Classifier {
 public:
     HaarClassifier();
-    ~HaarClassifier();
+	HaarClassifier(LPCWSTR pathname);
+	~HaarClassifier();
 
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
