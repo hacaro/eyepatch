@@ -4,6 +4,7 @@
 class ShapeClassifier : public Classifier {
 public:
     ShapeClassifier();
+    ShapeClassifier(LPCWSTR pathname);
     ~ShapeClassifier();
 
     BOOL ContainsSufficientSamples(TrainingSet*);
@@ -12,6 +13,8 @@ public:
     void Save();
 
 private:
+    void UpdateContourImage();
+
     CvMemStorage *templateStorage;
     CvSeq *templateContours;
 };

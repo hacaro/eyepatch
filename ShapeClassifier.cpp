@@ -12,6 +12,39 @@ ShapeClassifier::ShapeClassifier() :
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Shape Classifier");
     classifierType = IDC_RADIO_SHAPE;        
+
+    // append identifier to directory name
+    wcscat(directoryName, FILE_SHAPE_SUFFIX);
+}
+
+ShapeClassifier::ShapeClassifier(LPCWSTR pathname) :
+	Classifier() {
+
+	USES_CONVERSION;
+    templateStorage = cvCreateMemStorage(0);
+
+    // save the directory name for later
+    wcscpy(directoryName, pathname);
+
+    WCHAR filename[MAX_PATH];
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_CONTOUR_NAME);
+
+    // load the contours from the data file
+    templateContours = (CvSeq*)cvLoad(W2A(filename), templateStorage, 0, 0);
+
+    // load the "friendly name" and set the type
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "r");
+    fgetws(friendlyName, MAX_PATH, namefile);
+    fclose(namefile);
+    classifierType = IDC_RADIO_SHAPE;
+
+    isTrained = true;
+    isOnDisk = true;
+
+    UpdateContourImage();
 }
 
 ShapeClassifier::~ShapeClassifier() {
@@ -25,7 +58,6 @@ BOOL ShapeClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
 void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
     cvClearMemStorage(templateStorage);
     templateContours = NULL;
-    cvZero(filterImage);
 
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
@@ -62,13 +94,7 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
         }
     }
 
-    int contourNum = 0;
-    for (CvSeq *contour = templateContours; contour != NULL; contour = contour->h_next) {
-        // TODO: draw contours scaled in different places in image so they don't overlap
-        cvDrawContours(filterImage, contour, colorSwatch[contourNum], CV_RGB(0,0,0), 0, 1, 8, cvPoint(0,0));
-        contourNum = (contourNum+1) % COLOR_SWATCH_SIZE;
-    }
-    IplToBitmap(filterImage, filterBitmap);
+    UpdateContourImage();
 
     if (isOnDisk) { // this classifier has been saved so we'll update the files
         Save();        
@@ -123,6 +149,40 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvReleaseImage(&grayscale);
 }
 
+void ShapeClassifier::UpdateContourImage() {
+    cvZero(filterImage);
+    int contourNum = 0;
+    for (CvSeq *contour = templateContours; contour != NULL; contour = contour->h_next) {
+        // TODO: draw contours scaled in different places in image so they don't overlap
+        cvDrawContours(filterImage, contour, colorSwatch[contourNum], CV_RGB(0,0,0), 0, 1, 8, cvPoint(0,0));
+        contourNum = (contourNum+1) % COLOR_SWATCH_SIZE;
+    }
+    IplToBitmap(filterImage, filterBitmap);
+}
+
 void ShapeClassifier::Save() {
+    if (!isTrained) return;
+    USES_CONVERSION;
+    WCHAR filename[MAX_PATH];
+
+    SHCreateDirectory(NULL, directoryName);
+
+	// save the contour data
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_CONTOUR_NAME);
+
+    const char* contour_attrs[] = {
+        "recursive", "1",
+        0
+    };
+    cvSave(W2A(filename), templateContours, 0, 0, cvAttrList(contour_attrs,0));
+
+    // save the "friendly name"
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "w");
+    fputws(friendlyName, namefile);
+    fclose(namefile);
+
     isOnDisk = true;
 }
