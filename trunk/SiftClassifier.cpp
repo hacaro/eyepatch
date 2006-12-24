@@ -16,6 +16,47 @@ SiftClassifier::SiftClassifier() :
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Features Classifier");
     classifierType = IDC_RADIO_FEATURES;        
+
+    // append identifier to directory name
+    wcscat(directoryName, FILE_SIFT_SUFFIX);
+}
+
+SiftClassifier::SiftClassifier(LPCWSTR pathname) :
+	Classifier() {
+	USES_CONVERSION;
+    numSampleFeatures = 0;
+    sampleCopy = NULL;
+    sampleFeatures = NULL;
+
+    // save the directory name for later
+    wcscpy(directoryName, pathname);
+
+    WCHAR filename[MAX_PATH];
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_DATA_NAME);
+
+    // load the features from the data file
+    numSampleFeatures = import_features(W2A(filename), FEATURE_LOWE, &sampleFeatures);
+
+	// load the filter sample image
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_IMAGE_NAME);
+    sampleCopy = cvLoadImage(W2A(filename));
+    sampleWidth = sampleCopy->width;
+    sampleHeight = sampleCopy->height;
+
+    // load the "friendly name" and set the type
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "r");
+    fgetws(friendlyName, MAX_PATH, namefile);
+    fclose(namefile);
+    classifierType = IDC_RADIO_FEATURES;
+
+    isTrained = true;
+    isOnDisk = true;
+
+    UpdateSiftImage();
 }
 
 SiftClassifier::~SiftClassifier() {
@@ -42,8 +83,6 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
             sampleWidth = sampleCopy->width;
             sampleHeight = sampleCopy->height;
             numSampleFeatures = sift_features(sample->fullImageCopy, &sampleFeatures);
-            draw_features(sampleCopy, sampleFeatures, numSampleFeatures);
-            cvResize(sampleCopy, filterImage);
 
             // for now just get features from first sample
             // TODO: collect feature sets from each sample?
@@ -52,14 +91,14 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
         }
     }
 
-    IplToBitmap(filterImage, filterBitmap);
-
     if (isOnDisk) { // this classifier has been saved so we'll update the files
         Save();        
     }
 
     // update member variables
 	isTrained = true;
+
+    UpdateSiftImage();
 }
 
 void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
@@ -166,6 +205,37 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 
 }
 
+void SiftClassifier::UpdateSiftImage() {
+    IplImage *featureImage = cvCloneImage(sampleCopy);
+    draw_features(featureImage, sampleFeatures, numSampleFeatures);
+    cvResize(featureImage, filterImage);
+    cvReleaseImage(&featureImage);
+    IplToBitmap(filterImage, filterBitmap);
+}
+
 void SiftClassifier::Save() {
+    if (!isTrained) return;
+    USES_CONVERSION;
+    WCHAR filename[MAX_PATH];
+
+    SHCreateDirectory(NULL, directoryName);
+
+	// save the feature data
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_DATA_NAME);
+    export_features(W2A(filename), sampleFeatures, numSampleFeatures);
+
+	// save the SIFT source sample image
+    wcscpy(filename, directoryName);
+    wcscat(filename, FILE_IMAGE_NAME);
+	cvSaveImage(W2A(filename), sampleCopy);
+
+    // save the "friendly name"
+    wcscpy(filename,directoryName);
+    wcscat(filename, FILE_FRIENDLY_NAME);
+    FILE *namefile = fopen(W2A(filename), "w");
+    fputws(friendlyName, namefile);
+    fclose(namefile);
+
     isOnDisk = true;
 }
