@@ -4,6 +4,7 @@
 class SiftClassifier : public Classifier {
 public:
     SiftClassifier();
+    SiftClassifier(LPCWSTR pathname);
     ~SiftClassifier();
 
     BOOL ContainsSufficientSamples(TrainingSet*);
@@ -12,6 +13,7 @@ public:
     void Save();
 
 private:
+    void UpdateSiftImage();
     IplImage *sampleCopy;
     int numSampleFeatures, numFeatureMatches;
     int sampleWidth, sampleHeight;
