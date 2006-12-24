@@ -86,6 +86,35 @@ LRESULT CFilterSelect::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
     return 0;
 }
 
+LRESULT CFilterSelect::OnItemKeyDown(int idCtrl, LPNMHDR pnmh, BOOL&) {
+    HWND listView = GetDlgItem(IDC_FILTER_LIST);
+    LPNMLVKEYDOWN nmlv = (LPNMLVKEYDOWN) pnmh;
+
+    if (nmlv->wVKey == VK_DELETE) {
+        int numSelected = ListView_GetSelectedCount(listView);
+        int iSelection = -1;
+        for (int iIndex=0; iIndex<numSelected; iIndex++) {
+
+            // find index of next selected item
+            iSelection = ListView_GetNextItem(listView, iSelection, LVNI_SELECTED);
+
+            // delete the selected item
+            LV_ITEM lvi;
+            ZeroMemory(&lvi, sizeof(lvi));
+            lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+            lvi.iItem = iSelection;
+            lvi.iSubItem = 0;
+            if (ListView_GetItem(listView, &lvi)) {
+                Classifier *toDelete = (Classifier*) lvi.lParam;
+                ListView_DeleteItem(listView, iSelection);
+                toDelete->DeleteFromDisk();
+                iSelection = -1;
+            }
+        }
+    }
+    return 0;
+}
+
 void CFilterSelect::AddSavedFilter(Classifier* classifier) {
     HWND listView = GetDlgItem(IDC_FILTER_LIST);
 

@@ -11,6 +11,7 @@ public:
         NOTIFY_CODE_HANDLER(LVN_GETDISPINFO, OnTextCallback)
         NOTIFY_CODE_HANDLER(LVN_ENDLABELEDIT, OnNameChange)
         NOTIFY_CODE_HANDLER(LVN_ITEMACTIVATE, OnItemActivate)
+        NOTIFY_CODE_HANDLER(LVN_KEYDOWN, OnItemKeyDown)
     END_MSG_MAP()
 
     CFilterSelect(CWindow *parent);
@@ -21,6 +22,7 @@ public:
     LRESULT OnTextCallback(int, LPNMHDR, BOOL&);
     LRESULT OnNameChange(int, LPNMHDR, BOOL&);
     LRESULT OnItemActivate(int, LPNMHDR, BOOL&);
+    LRESULT OnItemKeyDown(int, LPNMHDR, BOOL&);
 
     void AddSavedFilter(Classifier* classifier);
 
