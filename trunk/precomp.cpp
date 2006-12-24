@@ -99,3 +99,30 @@ void DrawTrack(IplImage *img, TrajectoryModel *mt,  CvScalar color, int thicknes
     cvPolyLine(img, &trackPoints, &nPoints, 1, 0, color, thickness, CV_AA);
     delete[] trackPoints;
 }
+
+bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin = true) {
+    int len = _tcslen(lpszDir);
+    TCHAR *pszFrom = new TCHAR[len+2];
+    _tcscpy(pszFrom, lpszDir);
+    pszFrom[len] = 0;
+    pszFrom[len+1] = 0;
+
+    SHFILEOPSTRUCT fileop;
+    fileop.hwnd   = NULL;    // no status display
+    fileop.wFunc  = FO_DELETE;  // delete operation
+    fileop.pFrom  = pszFrom;  // source file name as double null terminated string
+    fileop.pTo    = NULL;    // no destination needed
+    fileop.fFlags = FOF_NOCONFIRMATION|FOF_SILENT;  // do not prompt the user
+
+    if (useRecycleBin) {
+        fileop.fFlags |= FOF_ALLOWUNDO;
+    }
+
+    fileop.fAnyOperationsAborted = FALSE;
+    fileop.lpszProgressTitle     = NULL;
+    fileop.hNameMappings         = NULL;
+
+    int ret = SHFileOperation(&fileop);
+    delete [] pszFrom;  
+    return (ret == 0);
+}

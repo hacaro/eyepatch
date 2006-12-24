@@ -70,6 +70,7 @@ CvScalar hsv2rgb(float hue);
 void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness=1);
 void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness, int maxNumPoints=0);
 void DrawTrack(IplImage *img, TrajectoryModel *mt, CvScalar color, int thickness, int maxNumPoints=0);
+bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin);
 
 // swatch of "nice" colors
 #define COLOR_SWATCH_SIZE 16

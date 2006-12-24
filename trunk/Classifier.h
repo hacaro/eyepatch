@@ -34,6 +34,12 @@ public:
 	virtual void ClassifyFrame(IplImage*, list<Rect>*) = 0;
     virtual void Save() = 0;
 
+    void DeleteFromDisk() {
+        if (!isOnDisk) return;
+        DeleteDirectory(directoryName, true);
+        isOnDisk = false;
+    }
+
     Bitmap* GetFilterImage() {
         return filterBitmap;
     }
