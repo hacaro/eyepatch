@@ -213,9 +213,12 @@ void HaarClassifier::StartTraining(TrainingSet* sampleSet) {
 	m_progressDlg.DoModal();
 }
 
-void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
+void HaarClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     if (!isTrained) return;
     if (!cascade) return;
+
+    IplImage *newMask = cvCloneImage(guessMask);
+    cvZero(newMask);
 
     // Clear the memory storage we used before
     cvClearMemStorage( storage );
@@ -230,24 +233,24 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvCopy(frame, frameCopy);
 
     int objNum = 0;
-    objList->clear();
     // Loop over the found objects
     for(int i = 0; i < (objects ? objects->total : 0); i++ )
     {
-        Rect objRect;
         CvRect* r = (CvRect*)cvGetSeqElem(objects, i);
         cvRectangle(frameCopy, cvPoint(r->x,r->y), cvPoint(r->x+r->width,r->y+r->height), colorSwatch[objNum], 2, 8);
         objNum = (objNum + 1) % COLOR_SWATCH_SIZE;
 
-        objRect.X = r->x;
-        objRect.Y = r->y;
-        objRect.Width = r->width;
-        objRect.Height = r->height;
-        objList->push_back(objRect);
+        // draw rectangle in mask image
+        cvRectangle(newMask, cvPoint(r->x, r->y), cvPoint(r->x+r->width, r->y+r->height), cvScalar(0xFF), CV_FILLED, 8);
     }
+
+    // Combine old and new mask
+    // TODO: support OR operation as well
+    cvAnd(guessMask, newMask, guessMask);
 
     cvResize(frameCopy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
+	cvReleaseImage(&newMask);
 }
 
 void HaarClassifier::Save() {

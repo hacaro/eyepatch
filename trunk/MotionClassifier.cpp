@@ -145,12 +145,9 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
 	isTrained = true;
 }
 
-void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
+void MotionClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     if (!isTrained) return;
     if(!frame) return;
-
-    // clear the list of guesses
-	objList->clear();
 
     // check to make sure that the frame passed in is a motion history image (not a normal frame image)
     if (frame->depth != IPL_DEPTH_32F) return;
@@ -162,6 +159,8 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     IplImage *segmask = cvCreateImage(size, IPL_DEPTH_32F, 1);
     IplImage *mask = cvCreateImage(size, IPL_DEPTH_8U, 1);
     IplImage *dst = cvCreateImage(size, IPL_DEPTH_8U, 3);
+    IplImage *newMask = cvCloneImage(guessMask);
+    cvZero(newMask);
     CvMemStorage *storage = cvCreateMemStorage(0);
 
     // convert MHI to blue 8U image
@@ -207,12 +206,11 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 
             if (angleDiff < MOTION_ANGLE_DIFF_THRESHOLD) { // add to list of guesses
                 color = CV_RGB(255,255,255);
-                Rect objRect;
-                objRect.X = comp_rect.x;
-                objRect.Y = comp_rect.y;
-                objRect.Width = comp_rect.width;
-                objRect.Height = comp_rect.height;
-                objList->push_back(objRect);
+
+                // draw rectangle in mask image
+                cvRectangle(newMask, cvPoint(comp_rect.x, comp_rect.y),
+                    cvPoint(comp_rect.x+comp_rect.width, comp_rect.y+comp_rect.height),
+                    cvScalar(0xFF), CV_FILLED, 8);
             }
 
             // draw a clock with arrow indicating the direction
@@ -226,10 +224,15 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvResize(dst, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 
+    // Combine old and new mask
+    // TODO: support OR operation as well
+    cvAnd(guessMask, newMask, guessMask);
+
     cvReleaseImage(&orient);
     cvReleaseImage(&segmask);
     cvReleaseImage(&mask);
     cvReleaseImage(&dst);
+	cvReleaseImage(&newMask);
     cvReleaseMemStorage(&storage);
 }
 

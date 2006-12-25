@@ -101,16 +101,15 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
     UpdateSiftImage();
 }
 
-void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
+void SiftClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     if (!isTrained) return;
     if(!frame) return;
-
-    // clear current guesses
-    objList->clear();
 
     // copy current frame and sample image for demo image
     IplImage *frameCopy = cvCloneImage(frame);
     IplImage *featureImage = cvCloneImage(sampleCopy);
+    IplImage *newMask = cvCloneImage(guessMask);
+    cvZero(newMask);
 
     // get features in current frame
     struct feature *frameFeatures;
@@ -187,8 +186,13 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
             }
         }
 
-        // add object location guess to list
-        objList->push_back(objRect);
+        if (numFeatureMatches > 1) { // we had at least 2 feature matches
+
+            // draw object location guess in mask image
+            cvRectangle(newMask, cvPoint(objRect.X, objRect.Y),
+                cvPoint(objRect.X+objRect.Width, objRect.Y+objRect.Height),
+                cvScalar(0xFF), CV_FILLED, 8); 
+        }
 
         kdtree_release( &kd_root );
         free(frameFeatures);
@@ -200,9 +204,13 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvResize(frameCopy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 
+    // Combine old and new mask
+    // TODO: support OR operation as well
+    cvAnd(guessMask, newMask, guessMask);
+
     cvReleaseImage(&frameCopy);
     cvReleaseImage(&featureImage);
-
+	cvReleaseImage(&newMask);
 }
 
 void SiftClassifier::UpdateSiftImage() {

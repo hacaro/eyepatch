@@ -82,6 +82,9 @@ CVideoLoader::CVideoLoader() :
 	nFrames = 0;
     currentFrameNumber = 0;
 	m_blobTracker = NULL;
+    guessMask = NULL;
+    maskedFrame = NULL;
+    bmpMasked = NULL;
 }
 
 CVideoLoader::~CVideoLoader(void) {
@@ -89,8 +92,11 @@ CVideoLoader::~CVideoLoader(void) {
         cvReleaseCapture(&videoCapture);
         cvReleaseImage(&copyFrame);
         cvReleaseImage(&motionHistory);
+        cvReleaseImage(&guessMask);
+        cvReleaseImage(&maskedFrame);
 		if (m_blobTracker != NULL) delete m_blobTracker;
         delete bmpVideo;
+        delete bmpMasked;
     }
 }
 
@@ -151,6 +157,12 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner, LPCWSTR filename) {
     // Create a bitmap to display video
     bmpVideo = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
 
+    // Create images to store masked version of frame
+    guessMask = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,1);
+    maskedFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
+    bmpMasked = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
+    cvSet(guessMask, cvScalar(0xFF));
+
 	if (nFrames == 0) {
 		// this is not a seekable format, so we will convert it and save to a file
 		wcscat(szFileName,L".seekable.avi");
@@ -187,7 +199,23 @@ void CVideoLoader::LoadFrame(long framenum) {
     currentFrameNumber = framenum;
 
     IplToBitmap(copyFrame, bmpVideo);
-    Rect videoBounds(0, 0, videoX, videoY);
+}
+
+Bitmap* CVideoLoader::GetMaskedBitmap() {
+    // create masked version of current frame
+    cvZero(maskedFrame);
+    cvCopy(copyFrame, maskedFrame, guessMask);
+    cvAddWeighted(copyFrame, 0.15, maskedFrame, 0.85, 0.0, maskedFrame);
+
+    // draw mask outlines in green using cvFindContours
+    CvMemStorage* storage = cvCreateMemStorage(0);
+	CvSeq* contours = NULL;
+    cvFindContours(guessMask, storage, &contours, sizeof(CvContour),
+                    CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0) );
+    cvDrawContours(maskedFrame, contours, CV_RGB(100,255,100), CV_RGB(0,0,0), 1, 1, 8);
+
+    IplToBitmap(maskedFrame, bmpMasked);
+    return bmpMasked;
 }
 
 void CVideoLoader::ConvertFrame() {

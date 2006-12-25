@@ -44,6 +44,7 @@ public:
     IplImage* GetMotionHistory();
     void LearnTrajectories();
 	void ConvertFrame();
+    Bitmap* GetMaskedBitmap();
     void GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame);
     void GetTrajectoriesAtCurrentFrame(vector<MotionTrack> *trackList);
 
@@ -54,7 +55,15 @@ public:
     IplImage *copyFrame;
     Bitmap *bmpVideo;
 
+    // stores the current mask associated with the filter chain
+    IplImage *guessMask;
+
 private:
+
+    // for producing masked image frame
+    IplImage *maskedFrame;
+    Bitmap *bmpMasked;
+
     CvCapture *videoCapture;
 	CvVideoWriter *videoWriter;
 	

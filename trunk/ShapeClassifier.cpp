@@ -104,12 +104,14 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
 	isTrained = true;
 }
 
-void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
+void ShapeClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     if (!isTrained) return;
     if(!frame) return;
 
     IplImage *copy = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
     IplImage *grayscale = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
+    IplImage *newMask = cvCloneImage(guessMask);
+    cvZero(newMask);
 
     cvCvtColor(frame, grayscale, CV_BGR2GRAY);
     cvCanny(grayscale, grayscale, 50, 200, 5);
@@ -120,7 +122,6 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     CvMemStorage *storage = cvCreateMemStorage(0);
     cvFindContours(grayscale, storage, &frameContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_KCOS);
 
-	objList->clear();
     for (CvSeq *contour = frameContours; contour != NULL; contour = contour->h_next) {
         if (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) {
 
@@ -129,13 +130,10 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
                 double similarity = cvMatchShapes(contour, matchContour, CV_CONTOURS_MATCH_I1, 0);
                 if (similarity < SHAPE_SIMILARITY_THRESHOLD) {
                     cvDrawContours(copy, contour, colorSwatch[contourNum], CV_RGB(0,0,0), 0, 3, 8, cvPoint(0,0));
-		            Rect objRect;
 		            CvRect rect = cvBoundingRect(contour, 1);
-		            objRect.X = rect.x;
-		            objRect.Y = rect.y;
-		            objRect.Width = rect.width;
-		            objRect.Height = rect.height;
-		            objList->push_back(objRect);
+
+                    // draw rectangle in mask image
+                    cvRectangle(newMask, cvPoint(rect.x, rect.y), cvPoint(rect.x+rect.width, rect.y+rect.height), cvScalar(0xFF), CV_FILLED, 8);
                 }
                 contourNum = (contourNum+1) % COLOR_SWATCH_SIZE;
             }
@@ -144,9 +142,14 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     cvResize(copy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 
+    // Combine old and new mask
+    // TODO: support OR operation as well
+    cvAnd(guessMask, newMask, guessMask);
+
     cvReleaseMemStorage(&storage);
     cvReleaseImage(&copy);
     cvReleaseImage(&grayscale);
+	cvReleaseImage(&newMask);
 }
 
 void ShapeClassifier::UpdateContourImage() {

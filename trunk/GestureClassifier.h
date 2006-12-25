@@ -9,8 +9,8 @@ public:
 
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
-	void ClassifyFrame(IplImage*, list<Rect>*);
-    void ClassifyTrack(MotionTrack mt, list<Rect>*);
+	void ClassifyFrame(IplImage*, IplImage*);
+    void ClassifyTrack(MotionTrack mt, IplImage*);
     void Save();
 
 private:
