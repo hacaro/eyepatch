@@ -31,7 +31,7 @@ public:
 
 	virtual void StartTraining(TrainingSet*) = 0;
     virtual BOOL ContainsSufficientSamples(TrainingSet*) = 0;
-	virtual void ClassifyFrame(IplImage*, list<Rect>*) = 0;
+	virtual void ClassifyFrame(IplImage*, IplImage*) = 0;
     virtual void Save() = 0;
 
     void DeleteFromDisk() {

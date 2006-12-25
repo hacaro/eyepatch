@@ -108,13 +108,15 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
 	isTrained = true;
 }
 
-void BrightnessClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
+void BrightnessClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     if (!isTrained) return;
     if(!frame) return;
 
     IplImage *image = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 3 );
     IplImage *brightness = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 1 );
 	IplImage *backproject = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 1 );
+    IplImage *newMask = cvCloneImage(guessMask);
+    cvZero(newMask);
 
     cvCopy(frame, image, 0);
     cvCvtColor(image, brightness, CV_BGR2GRAY);
@@ -125,30 +127,35 @@ void BrightnessClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
     // copy back projection into demo image
     cvCvtColor(backproject, image, CV_GRAY2BGR);
 
-	// find contours in backprojection image
+    // create contour storage
     CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contours = NULL;
+
+    // close the backprojection image
+    IplConvKernel *circElem = cvCreateStructuringElementEx(3,3,1,1,CV_SHAPE_ELLIPSE);        
+    cvMorphologyEx(backproject, backproject, 0, circElem, CV_MOP_CLOSE, 1);  
+
+    // find contours in backprojection image
     cvFindContours( backproject, storage, &contours, sizeof(CvContour),
                     CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0) );
 
 	// Loop over the found contours
-	objList->clear();
 	for (; contours != NULL; contours = contours->h_next)
 	{
         double contourArea = fabs(cvContourArea(contours));
 		if ((contourArea > COLOR_MIN_AREA) && (contourArea < COLOR_MAX_AREA)) {
-			Rect objRect;
-			CvRect rect = cvBoundingRect(contours);
-			objRect.X = rect.x;
-			objRect.Y = rect.y;
-			objRect.Width = rect.width;
-			objRect.Height = rect.height;
-			objList->push_back(objRect);
+
+            // draw contour in new mask image
+            cvDrawContours(newMask, contours, cvScalar(0xFF), cvScalar(0xFF), 0, CV_FILLED, 8);
 
             // draw contour in demo image
             cvDrawContours(image, contours, CV_RGB(0,255,255), CV_RGB(0,255,255), 0, 2, 8);
         }
 	}
+
+    // Combine old and new mask
+    // TODO: support OR operation as well
+    cvAnd(guessMask, newMask, guessMask);
 
     // update bitmap demo image
     cvResize(image, applyImage);
@@ -159,6 +166,7 @@ void BrightnessClassifier::ClassifyFrame(IplImage *frame, list<Rect>* objList) {
 	cvReleaseImage(&image);
 	cvReleaseImage(&brightness);
 	cvReleaseImage(&backproject);
+	cvReleaseImage(&newMask);
 }
 
 void BrightnessClassifier::UpdateHistogramImage() {

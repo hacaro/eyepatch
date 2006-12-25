@@ -86,31 +86,13 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 
     if (m_videoLoader.videoLoaded) {
         graphics->SetClip(drawBounds);
-        if (m_videoLoader.bmpVideo != NULL) graphics->DrawImage(m_videoLoader.bmpVideo,drawBounds);
 
-        if (showGuesses && !scrubbingVideo) { // highlight computer's guesses
-			REAL scaleX = ((REAL)VIDEO_X) / ((REAL)m_videoLoader.videoX);
-			REAL scaleY = ((REAL)VIDEO_Y) / ((REAL)m_videoLoader.videoY);
-			graphics->ScaleTransform(scaleX, scaleY);
-			Region guessRegion;
-			GraphicsPath guessPath;
-			guessRegion.MakeEmpty();
-            for (list<Rect>::iterator i = objGuesses.begin(); i != objGuesses.end(); i++) {
-				guessPath.AddRectangle(*i);
-				guessRegion.Union(*i);
+        if (m_videoLoader.bmpVideo != NULL) {
+            if (showGuesses && !scrubbingVideo) { // highlight computer's guesses
+                graphics->DrawImage(m_videoLoader.GetMaskedBitmap(),drawBounds);
+            } else {
+                graphics->DrawImage(m_videoLoader.bmpVideo,drawBounds);
             }
-			guessRegion.Complement(videoBounds);
-			graphics->FillRegion(&grayBrush, &guessRegion);
-
-            // add the outer ring of pixels for guesses that fill the whole video rectangle
-            Region borderRegion(videoBoundsExt);
-            borderRegion.Complement(videoBounds);
-            guessRegion.Union(&borderRegion);
-
-			graphics->SetClip(&guessRegion, CombineModeReplace);
-			graphics->DrawPath(&guessPen, &guessPath);
-			graphics->ResetTransform();
-			graphics->SetClip(drawBounds, CombineModeReplace);
         }
 
         Rect selectRect;
@@ -358,19 +340,23 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     m_videoLoader.LoadFrame(sliderPosition);
     if (showGuesses && !scrubbingVideo) {
         HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
+
+        // reset the mask of guesses
+		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
+
         if (recognizerMode == IDC_RADIO_MOTION) {
-            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), &objGuesses);
+            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), m_videoLoader.guessMask);
         } else if (recognizerMode == IDC_RADIO_GESTURE) {
             vector<MotionTrack> trackList;
             m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-			objGuesses.clear();
+
             for (int i=0; i<trackList.size(); i++) {
                 // TODO: figure out how to visualize multiple tracks in demo image
                 MotionTrack mt = trackList[i];
-                ((GestureClassifier*)classifier)->ClassifyTrack(mt, &objGuesses);
+                ((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
             }
         } else {
-            classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+            classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);
         }
         SetCursor(hOld);
     }
@@ -618,19 +604,22 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
     }
     if (showGuesses) {
         HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
+
+        // reset the mask of guesses
+		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
+
         if (recognizerMode == IDC_RADIO_MOTION) {
-            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), &objGuesses);
+            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), m_videoLoader.guessMask);
         } else if (recognizerMode == IDC_RADIO_GESTURE) {
             vector<MotionTrack> trackList;
             m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-			objGuesses.clear();
             for (int i=0; i<trackList.size(); i++) {
                 // TODO: figure out how to visualize multiple tracks in demo image
                 MotionTrack mt = trackList[i];
-                ((GestureClassifier*)classifier)->ClassifyTrack(mt, &objGuesses);
+                ((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
             }
         } else {
-            classifier->ClassifyFrame(m_videoLoader.copyFrame, &objGuesses);
+            classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);
         }
         SetCursor(hOld);
     }
@@ -693,7 +682,10 @@ void CVideoMarkup::OpenVideoFile() {
         ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETRANGEMAX, FALSE, m_videoLoader.nFrames-1);
         ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, 0);
 		m_videoLoader.LoadFrame(0);
-        objGuesses.clear();
+
+        // reset the mask of guesses
+		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
+
 		InvalidateRgn(activeRgn,FALSE);
 
 	    if (recognizerMode == IDC_RADIO_GESTURE) {
@@ -773,7 +765,10 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(classifier->isTrained);
     m_filterSelect.GetDlgItem(IDC_TRAINBUTTON).EnableWindow(!classifier->isOnDisk);
     m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
-    objGuesses.clear();
+
+    // reset the mask of guesses
+	cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
+
     showGuesses = false;
 
     // change slider attributes to select either a range or just a single frame, depending on classifier type

@@ -90,7 +90,6 @@ private:
     bool draggingIcon;
     HIMAGELIST m_hImageList;
 
-    // list of detected objects
-    list <Rect> objGuesses;
+    // display mask of detected regions
     bool showGuesses;
 };
