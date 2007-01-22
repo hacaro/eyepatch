@@ -195,6 +195,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FilterComposer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FilterLibrary.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FilterSelect.cpp"
 				>
 			</File>
@@ -233,6 +241,10 @@
 			</File>
 			<File
 				RelativePath=".\VideoRecorder.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoRunner.cpp"
 				>
 			</File>
 			<Filter
@@ -357,6 +369,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FilterComposer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FilterLibrary.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FilterSelect.h"
 				>
 			</File>
@@ -390,6 +410,10 @@
 			</File>
 			<File
 				RelativePath=".\VideoRecorder.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoRunner.h"
 				>
 			</File>
 			<Filter

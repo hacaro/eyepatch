@@ -9,9 +9,13 @@
 #include "FilterSelect.h"
 #include "VideoControl.h"
 #include "VideoMarkup.h"
+#include "VideoRunner.h"
+#include "FilterLibrary.h"
+#include "FilterComposer.h"
 #include "Eyepatch.h"
 
 CEyepatch::CEyepatch() {
+    m_mode = EYEPATCHMODE_CREATEFILTERS;
 }
 
 
@@ -47,6 +51,36 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
             case ID_FILE_EXIT:
                 PostMessage(WM_CLOSE, 0, 0);
                 break;
+            case ID_MODE_RUNRECOGNIZERS:
+                // Reload the custom classifiers, in case they have changed on disk
+                LoadComposeModeClassifiers();
+
+                // Update menu for filter composer mode
+                CheckMenuItem(hMenu, ID_MODE_RUNRECOGNIZERS, MF_CHECKED);
+                CheckMenuItem(hMenu, ID_MODE_CREATERECOGNIZERS, MF_UNCHECKED);
+                EnableMenuItem(hMenu, ID_FILE_OPENVIDEO, MF_GRAYED);
+                EnableMenuItem(hMenu, ID_FILE_OPENSAMPLE, MF_GRAYED);
+                EnableMenuItem(hMenu, ID_FILE_RECORDVIDEO, MF_GRAYED);
+                EnableMenuItem(hMenu, ID_FILE_EMPTYTRASH, MF_GRAYED);
+                m_videoMarkup.EnableWindow(FALSE);
+                m_videoMarkup.SetWindowPos(HWND_BOTTOM, 0, 0, WINDOW_X, WINDOW_Y, SWP_HIDEWINDOW);
+                m_filterComposer.SetWindowPos(HWND_TOP, 0, 0, WINDOW_X, WINDOW_Y, SWP_SHOWWINDOW);
+                m_filterComposer.EnableWindow(TRUE);
+                m_mode = EYEPATCHMODE_RUNFILTERS;
+                break;
+            case ID_MODE_CREATERECOGNIZERS:
+                CheckMenuItem(hMenu, ID_MODE_RUNRECOGNIZERS, MF_UNCHECKED);
+                CheckMenuItem(hMenu, ID_MODE_CREATERECOGNIZERS, MF_CHECKED);
+                EnableMenuItem(hMenu, ID_FILE_OPENVIDEO, MF_ENABLED);
+                EnableMenuItem(hMenu, ID_FILE_OPENSAMPLE, MF_ENABLED);
+                EnableMenuItem(hMenu, ID_FILE_RECORDVIDEO, MF_ENABLED);
+                EnableMenuItem(hMenu, ID_FILE_EMPTYTRASH, MF_ENABLED);
+                m_filterComposer.EnableWindow(FALSE);
+                m_filterComposer.SetWindowPos(HWND_BOTTOM, 0, 0, WINDOW_X, WINDOW_Y, SWP_HIDEWINDOW);
+                m_videoMarkup.SetWindowPos(HWND_TOP, 0, 0, WINDOW_X, WINDOW_Y, SWP_SHOWWINDOW);
+                m_videoMarkup.EnableWindow(TRUE);
+                m_mode = EYEPATCHMODE_CREATEFILTERS;
+                break;
         }
     }
     return 0;
@@ -55,13 +89,14 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
 LRESULT CEyepatch::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 {
     m_videoMarkup.Create(m_hWnd, CRect(0,0,WINDOW_X,WINDOW_Y), FILTER_CREATE_CLASS, WS_CHILD | WS_VISIBLE);
+    m_filterComposer.Create(m_hWnd, CRect(0,0,WINDOW_X,WINDOW_Y), FILTER_COMPOSE_CLASS, WS_CHILD);
 
     // Create the menu
     hMenu = LoadMenu(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDR_MENU));
     SetMenu(hMenu);
 
     // Load the classifiers from disk
-    LoadClassifiers();
+    LoadCreateModeClassifiers();
 
     return 0;
 }
@@ -111,7 +146,7 @@ void CEyepatch::LoadSampleFromFile() {
     }
 }
 
-void CEyepatch::LoadClassifiers() {
+void CEyepatch::LoadCreateModeClassifiers() {
 
     WCHAR rootpath[MAX_PATH];
     WCHAR searchpath[MAX_PATH];
@@ -138,6 +173,40 @@ void CEyepatch::LoadClassifiers() {
                wcscpy(fullpath, rootpath);
                PathAppend(fullpath, win32fd.cFileName);
                m_videoMarkup.LoadClassifier(fullpath);
+        }
+    } while(FindNextFile(hFind, &win32fd) != 0);
+    FindClose(hFind);
+}
+
+void CEyepatch::LoadComposeModeClassifiers() {
+
+    WCHAR rootpath[MAX_PATH];
+    WCHAR searchpath[MAX_PATH];
+    WCHAR fullpath[MAX_PATH];
+
+    m_filterComposer.ClearCustomClassifiers();
+
+    SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, rootpath);
+    PathAppend(rootpath, APP_CLASS);
+
+    wcscpy(searchpath,rootpath);
+    PathAppend(searchpath, L"*.*");
+   
+    HANDLE hFind;
+    WIN32_FIND_DATA win32fd;
+
+    if ((hFind = FindFirstFile(searchpath, &win32fd)) == INVALID_HANDLE_VALUE) {
+        return;
+    }
+
+    do {
+        if (win32fd.cFileName[0] != '.' && 
+           (win32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && 
+           !(win32fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)) {
+
+               wcscpy(fullpath, rootpath);
+               PathAppend(fullpath, win32fd.cFileName);
+               m_filterComposer.LoadCustomClassifier(fullpath);
         }
     } while(FindNextFile(hFind, &win32fd) != 0);
     FindClose(hFind);

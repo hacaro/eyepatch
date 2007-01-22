@@ -63,6 +63,7 @@
 #define EXAMPLEWINDOW_HEIGHT 185
 #define FILTERIMAGE_WIDTH 240
 #define FILTERIMAGE_HEIGHT 180
+#define FILTERLIBRARY_WIDTH 380
 
 // save recognizer: folder prefixes and file names
 #define FILE_FRIENDLY_NAME L"\\name.dat"
@@ -83,6 +84,7 @@
 
 #define APP_CLASS L"Eyepatch"
 #define FILTER_CREATE_CLASS L"VideoMarkup"
+#define FILTER_COMPOSE_CLASS L"FilterComposer"
 
 // listview group IDs
 typedef enum {
@@ -91,3 +93,9 @@ typedef enum {
     GROUPID_RANGESAMPLES,
     GROUPID_TRASH
 } ListviewGroupId;
+
+// eyepatch modes
+typedef enum {
+    EYEPATCHMODE_CREATEFILTERS = 0,
+    EYEPATCHMODE_RUNFILTERS
+} EyepatchMode;

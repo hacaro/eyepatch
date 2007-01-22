@@ -59,7 +59,15 @@ CVideoMarkup::CVideoMarkup() :
 
 
 CVideoMarkup::~CVideoMarkup() {
-    delete classifier;
+    bool currentClassifierInList = false;
+    // free memory used to store classifiers loaded from disk
+    for (list<Classifier*>::iterator i = savedClassifiers.begin(); i!= savedClassifiers.end(); i++) {
+        if ((*i) == classifier) currentClassifierInList = true;
+        delete (*i);
+    }
+    if (!currentClassifierInList) {
+        delete classifier;
+    }
 }
 
 void CVideoMarkup::EnableControls(BOOL enabled) {
