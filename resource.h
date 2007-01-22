@@ -18,6 +18,8 @@
 #define IDI_FRAMERIGHT                  116
 #define IDI_MARKIN                      117
 #define IDI_MARKOUT                     118
+#define IDD_FILTERRUN_DIALOG            121
+#define IDD_FILTERLIBRARY_DIALOG        121
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004
@@ -36,7 +38,13 @@
 #define IDC_MARKIN                      1017
 #define IDC_SAVEFILTER                  1018
 #define IDC_FILTER_LIST                 1019
-#define IDC_FILTERLIST                  1020
+#define IDC_STD_FILTER_LIST             1020
+#define IDC_RUNLIVE                     1021
+#define IDC_RUNRECORDED                 1022
+#define IDC_CUSTOM_FILTER_LIST          1023
+#define IDC_MY_FILTER_LIST              1023
+#define IDC_REDUCER_LIST                1024
+#define IDC_OUTPUT_LIST                 1025
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003
@@ -44,15 +52,17 @@
 #define ID_FILE_OPENSAMPLE              40006
 #define ID_SETTINGS_CAPTURESOURCE       40007
 #define ID_SETTINGS_CAPTUREFORMAT       40008
+#define ID_MODE_CREATERECOGNIZERS       40009
+#define ID_MODE_RUNRECOGNIZERS          40010
 #define IDC_PROGRESS_LABEL              -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        120
-#define _APS_NEXT_COMMAND_VALUE         40009
-#define _APS_NEXT_CONTROL_VALUE         1021
+#define _APS_NEXT_RESOURCE_VALUE        121
+#define _APS_NEXT_COMMAND_VALUE         40011
+#define _APS_NEXT_CONTROL_VALUE         1025
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

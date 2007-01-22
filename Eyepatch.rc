@@ -91,6 +91,11 @@ BEGIN
         MENUITEM "Capture &Source...",          ID_SETTINGS_CAPTURESOURCE
         MENUITEM "Capture &Format...",          ID_SETTINGS_CAPTUREFORMAT
     END
+    POPUP "&Mode"
+    BEGIN
+        MENUITEM "&Create Recognizers",         ID_MODE_CREATERECOGNIZERS, CHECKED
+        MENUITEM "&Run Recognizers",            ID_MODE_RUNRECOGNIZERS
+    END
 END
 
 
@@ -167,6 +172,22 @@ BEGIN
     LTEXT           "Identifying the gestures in this video...",IDC_PROGRESS_LABEL,7,7,213,12
 END
 
+IDD_FILTERLIBRARY_DIALOG DIALOGEX 0, 0, 253, 452
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Run on Live Video!",IDC_RUNLIVE,6,402,114,36
+    PUSHBUTTON      "Run on Recorded Video...",IDC_RUNRECORDED,132,402,114,36
+    LTEXT           "My Recognizers:",IDC_STATIC,6,6,114,8
+    CONTROL         "",IDC_MY_FILTER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,6,18,240,78
+    LTEXT           "Standard Filters:",IDC_STATIC,6,102,114,8
+    CONTROL         "",IDC_STD_FILTER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,6,114,240,78
+    LTEXT           "Data Reducers:",IDC_STATIC,6,198,114,8
+    CONTROL         "",IDC_REDUCER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,6,210,240,78
+    LTEXT           "Outputs:",IDC_STATIC,6,294,114,8
+    CONTROL         "",IDC_OUTPUT_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,6,306,240,78
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -221,6 +242,13 @@ BEGIN
         RIGHTMARGIN, 220
         TOPMARGIN, 7
         BOTTOMMARGIN, 188
+    END
+
+    IDD_FILTERLIBRARY_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 246
+        BOTTOMMARGIN, 441
     END
 END
 #endif    // APSTUDIO_INVOKED

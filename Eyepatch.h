@@ -12,7 +12,8 @@ public:
 	LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
 	LRESULT OnCommand( UINT, WPARAM, LPARAM, BOOL& );
     void LoadSampleFromFile();
-    void LoadClassifiers();
+    void LoadCreateModeClassifiers();
+    void LoadComposeModeClassifiers();
 
 	static CWndClassInfo& GetWndClassInfo()
 	{
@@ -36,5 +37,7 @@ public:
 
 private:
     CVideoMarkup m_videoMarkup;
+    CFilterComposer m_filterComposer;
+    EyepatchMode m_mode;
     HMENU hMenu;
 };
