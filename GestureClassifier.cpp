@@ -12,7 +12,7 @@ GestureClassifier::GestureClassifier() :
     models = NULL;
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Gesture Classifier");
+    wcscpy(friendlyName, L"Gesture Filter");
     classifierType = IDC_RADIO_GESTURE;
 
     // append identifier to directory name

@@ -61,7 +61,7 @@ HaarClassifier::HaarClassifier() :
 	nStagesCompleted = 0;
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Appearance Classifier");
+    wcscpy(friendlyName, L"Appearance Filter");
     classifierType = IDC_RADIO_APPEARANCE;        
 
     // append identifier to directory name

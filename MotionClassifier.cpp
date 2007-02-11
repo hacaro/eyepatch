@@ -10,7 +10,7 @@ MotionClassifier::MotionClassifier() :
     motionAngles.clear();
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Motion Classifier");
+    wcscpy(friendlyName, L"Motion Filter");
     classifierType = IDC_RADIO_MOTION;        
 
     // append identifier to directory name
