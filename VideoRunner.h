@@ -15,7 +15,7 @@ public:
 
 	int videoX, videoY;
     int fps;
-    int nFrames;
+    long nFrames;
     bool processingVideo;
     IplImage *copyFrame, *outputFrame;
     Bitmap *bmpInput, *bmpOutput;
@@ -24,7 +24,11 @@ public:
 
 private:
     CvCapture *videoCapture;
-    IplImage *currentFrame, *guessMask;
+    IplImage *currentFrame, *guessMask, *motionHistory;
+    IplImage* motionBuf[MOTION_NUM_IMAGES];
+
+    // for keeping track of position within circular motion history buffer
+    int last;
 
 	DWORD threadID;
 	HANDLE m_hMutex;

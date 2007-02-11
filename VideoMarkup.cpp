@@ -353,7 +353,7 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
 		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
 
         if (recognizerMode == IDC_RADIO_MOTION) {
-            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), m_videoLoader.guessMask);
+            ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES, m_videoLoader.guessMask);
         } else if (recognizerMode == IDC_RADIO_GESTURE) {
             vector<MotionTrack> trackList;
             m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
@@ -617,7 +617,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
 		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
 
         if (recognizerMode == IDC_RADIO_MOTION) {
-            classifier->ClassifyFrame(m_videoLoader.GetMotionHistory(), m_videoLoader.guessMask);
+            ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES, m_videoLoader.guessMask);
         } else if (recognizerMode == IDC_RADIO_GESTURE) {
             vector<MotionTrack> trackList;
             m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);

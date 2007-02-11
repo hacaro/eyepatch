@@ -10,6 +10,7 @@ public:
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, IplImage*);
+    void ClassifyMotion(IplImage*, double, IplImage*);
     void Save();
 
 private:

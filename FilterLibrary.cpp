@@ -24,6 +24,7 @@ LRESULT CFilterLibrary::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 LRESULT CFilterLibrary::OnEnable(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     GetDlgItem(IDC_RUNLIVE).EnableWindow(wParam);
     GetDlgItem(IDC_RUNRECORDED).EnableWindow(wParam);
+    GetDlgItem(IDC_RESET).EnableWindow(wParam);
     return 1;
 }
 
@@ -58,36 +59,46 @@ LRESULT CFilterLibrary::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
 }
 
 LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
-    HWND listView = GetDlgItem(IDC_MY_FILTER_LIST);
+    
     LPNMLISTVIEW nmlv = (LPNMLISTVIEW) pnmh;
+    if (idCtrl == IDC_MY_FILTER_LIST) {
 
-    LV_ITEM lvi;
-    ZeroMemory(&lvi, sizeof(lvi));
-    lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
-    lvi.iItem = nmlv->iItem;
-    lvi.iSubItem = 0;
-    if (ListView_GetItem(listView, &lvi)) {
+        // we activated an item from the list of custom filters
+        HWND listView = GetDlgItem(IDC_MY_FILTER_LIST);
 
-        // filter was double-clicked, so we will add it to the list of filters
-        Classifier *classifier = (Classifier*) lvi.lParam;
+        LV_ITEM lvi;
+        ZeroMemory(&lvi, sizeof(lvi));
+        lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+        lvi.iItem = nmlv->iItem;
+        lvi.iSubItem = 0;
+        if (ListView_GetItem(listView, &lvi)) {
 
-        parent->SendMessage(WM_COMMAND, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+            // filter was double-clicked, so we will add it to the list of filters
+            Classifier *classifier = (Classifier*) lvi.lParam;
+            parent->SendMessage(WM_COMMAND, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+        }
     }
     return 0;
 }
 
 LRESULT CFilterLibrary::OnItemKeyDown(int idCtrl, LPNMHDR pnmh, BOOL&) {
-    HWND listView = GetDlgItem(IDC_MY_FILTER_LIST);
-    LPNMLVKEYDOWN nmlv = (LPNMLVKEYDOWN) pnmh;
 
-    if (nmlv->wVKey == VK_DELETE) {
+    LPNMLVKEYDOWN nmlv = (LPNMLVKEYDOWN) pnmh;
+    HWND listView = GetDlgItem(idCtrl);
+
+    if (idCtrl == IDC_ACTIVE_FILTER_LIST) {
+
+        // keypress was on an item in the list of active filters
+        if (nmlv->wVKey == VK_DELETE) {
+
+            // TODO: define a custom message to notify the parent of removal of
+            // filter from active list (so it can be removed from VideoRunner)
+        }
     }
     return 0;
 }
 
-void CFilterLibrary::AddCustomFilter(Classifier* classifier) {
-
-    HWND listView = GetDlgItem(IDC_MY_FILTER_LIST);
+void CFilterLibrary::AddCustomFilter(HWND listView, Classifier* classifier) {
 
     LVITEM lvi;
     lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
@@ -100,8 +111,7 @@ void CFilterLibrary::AddCustomFilter(Classifier* classifier) {
     ListView_InsertItem(listView, &lvi);
 }
 
-void CFilterLibrary::RemoveCustomFilter(Classifier* classifier) {
-    HWND listView = GetDlgItem(IDC_MY_FILTER_LIST);
+void CFilterLibrary::RemoveCustomFilter(HWND listView, Classifier* classifier) {
     int numItems = ListView_GetItemCount(listView);
     int iSelection = -1;
     for (int iIndex=0; iIndex<numItems; iIndex++) {
@@ -125,7 +135,6 @@ void CFilterLibrary::RemoveCustomFilter(Classifier* classifier) {
     }
 }
 
-void CFilterLibrary::ClearCustomFilters() {
-    HWND listView = GetDlgItem(IDC_MY_FILTER_LIST);
+void CFilterLibrary::ClearCustomFilters(HWND listView) {
     ListView_DeleteAllItems(listView);
 }

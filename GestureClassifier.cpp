@@ -108,8 +108,8 @@ BOOL GestureClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
 }
 
 void GestureClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
-    if (!isTrained) return;
-    if(!frame) return;
+    // not implemented: this class uses ClassifyTrack instead
+    assert(false);
 }    
 
 void GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {

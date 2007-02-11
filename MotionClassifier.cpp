@@ -146,6 +146,11 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
 }
 
 void MotionClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
+    // not implemented: this classifier uses ClassifyMotion instead
+    assert(false);
+}
+
+void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImage* guessMask) {
     if (!isTrained) return;
     if(!frame) return;
 
@@ -169,11 +174,11 @@ void MotionClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     cvCvtPlaneToPix( mask, 0, 0, 0, dst );
 
     // calculate motion gradient orientation and valid orientation mask
-    cvCalcMotionGradient(frame, mask, orient, MOTION_MAX_TIME_DELTA, MOTION_MIN_TIME_DELTA, 3 );
+    cvCalcMotionGradient(frame, mask, orient, MOTION_MAX_TIME_DELTA, MOTION_MIN_TIME_DELTA, 3);
     
     // segment motion: get sequence of motion components
     // Segmask is marked motion components map.  It is not used further.
-    CvSeq *seq = cvSegmentMotion(frame, segmask, storage, MOTION_NUM_HISTORY_FRAMES, MOTION_MAX_TIME_DELTA );
+    CvSeq *seq = cvSegmentMotion(frame, segmask, storage, timestamp, MOTION_MAX_TIME_DELTA);
 
     // iterate through the motion components
     for(int i = 0; i < seq->total; i++) {
