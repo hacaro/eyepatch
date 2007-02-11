@@ -16,7 +16,7 @@ BrightnessClassifier::BrightnessClassifier() :
 	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Brightness Classifier");
+    wcscpy(friendlyName, L"Brightness Filter");
     classifierType = IDC_RADIO_BRIGHTNESS;
     
     // append identifier to directory name

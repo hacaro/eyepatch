@@ -14,7 +14,7 @@ SiftClassifier::SiftClassifier() :
     sampleFeatures = NULL;
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Features Classifier");
+    wcscpy(friendlyName, L"Feature Filter");
     classifierType = IDC_RADIO_FEATURES;        
 
     // append identifier to directory name

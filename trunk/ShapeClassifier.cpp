@@ -10,7 +10,7 @@ ShapeClassifier::ShapeClassifier() :
     templateStorage = cvCreateMemStorage(0);
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Shape Classifier");
+    wcscpy(friendlyName, L"Shape Filter");
     classifierType = IDC_RADIO_SHAPE;        
 
     // append identifier to directory name
