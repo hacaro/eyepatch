@@ -3,11 +3,14 @@
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
+#include "MotionClassifier.h"
+#include "GestureClassifier.h"
 #include "VideoRunner.h"
 
 CVideoRunner::CVideoRunner(CWindow *caller) {
     videoCapture = NULL;
     copyFrame = NULL;
+    motionHistory = NULL;
     bmpInput = NULL;
     bmpOutput = NULL;
     processingVideo = false;
@@ -36,13 +39,39 @@ void CVideoRunner::ProcessFrame() {
 		cvFlip(currentFrame,copyFrame);
 	}
 
+    // convert frame to grayscale for motion history computation
+    cvCvtColor(copyFrame, motionBuf[last], CV_BGR2GRAY);
+    int idx1 = last;
+    int idx2 = (last + 1) % MOTION_NUM_IMAGES;
+    last = idx2;
+
+    // get difference between frames
+    IplImage* silh = motionBuf[idx2];
+    cvAbsDiff(motionBuf[idx1], motionBuf[idx2], silh);
+    
+    // threshold difference image and use it to update motion history image
+    cvThreshold(silh, silh, MOTION_DIFF_THRESHOLD, 1, CV_THRESH_BINARY); 
+    cvUpdateMotionHistory(silh, motionHistory, nFrames, MOTION_MHI_DURATION); // update MHI
+
     // start with a full mask (all on)
-    cvSet(guessMask, cvScalar(255), 0);
+    cvSet(guessMask, cvScalar(0xFF));
 
     // apply filter chain to frame
-    for (list<Classifier*>::iterator i = customClassifiers.begin();
-        i != customClassifiers.end(); i++) {
-        (*i)->ClassifyFrame(copyFrame, guessMask);
+    for (list<Classifier*>::iterator i=customClassifiers.begin(); i!=customClassifiers.end(); i++) {
+        if ((*i)->classifierType == IDC_RADIO_MOTION) {
+            ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames, guessMask);
+        } else if ((*i)->classifierType == IDC_RADIO_GESTURE) {
+            // TODO: trackList is a list of MotionTrack objects storing
+            // all the trajectories at current frame
+//            vector<MotionTrack> trackList;
+//            m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
+//            for (int i=0; i<trackList.size(); i++) {
+//                MotionTrack mt = trackList[i];
+//                ((GestureClassifier*)(*i))->ClassifyTrack(mt, guessMask);
+//            }
+        } else {
+            (*i)->ClassifyFrame(copyFrame, guessMask);
+        } 
     }
 
     cvZero(outputFrame);
@@ -53,7 +82,7 @@ void CVideoRunner::ProcessFrame() {
     IplToBitmap(outputFrame, bmpOutput);
 
     // invalidate parent rectangle for redraw
-    CRect videoRect(400, 0, 800, 700);
+    CRect videoRect(FILTERLIBRARY_WIDTH, 0, WINDOW_X, WINDOW_Y);
     if (parent->IsWindow()) {
         parent->InvalidateRect(&videoRect, FALSE);
     }
@@ -99,6 +128,18 @@ void CVideoRunner::StartProcessing() {
     copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
     outputFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
 
+    // create image to store motion history
+    motionHistory = cvCreateImage(cvSize(videoX,videoY), IPL_DEPTH_32F, 1);
+    cvZero(motionHistory);
+
+    // Allocate an image history ring buffer
+    memset(motionBuf, 0, MOTION_NUM_IMAGES*sizeof(IplImage*));
+    for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
+        motionBuf[i] = cvCreateImage(cvSize(copyFrame->width,copyFrame->height), IPL_DEPTH_8U, 1);
+        cvZero(motionBuf[i]);
+    }
+    last = 0;
+
     // create a mask to store the results of the processing
     guessMask = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,1);
 
@@ -126,6 +167,10 @@ void CVideoRunner::StopProcessing() {
     cvReleaseCapture(&videoCapture);
     cvReleaseImage(&copyFrame);
     cvReleaseImage(&outputFrame);
-	delete bmpInput;
+    cvReleaseImage(&motionHistory);
+    for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
+        cvReleaseImage(&motionBuf[i]);
+    }
+    delete bmpInput;
     delete bmpOutput;
 }

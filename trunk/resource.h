@@ -20,6 +20,7 @@
 #define IDI_MARKOUT                     118
 #define IDD_FILTERRUN_DIALOG            121
 #define IDD_FILTERLIBRARY_DIALOG        121
+#define IDB_ARROW                       122
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004
@@ -45,6 +46,11 @@
 #define IDC_MY_FILTER_LIST              1023
 #define IDC_REDUCER_LIST                1024
 #define IDC_OUTPUT_LIST                 1025
+#define IDC_ACTIVE_FILTER_LIST          1026
+#define IDC_ACTIVE_REDUCER_LIST         1027
+#define IDC_RESET                       1028
+#define IDC_ACTIVE_OUTPUTS              1029
+#define IDC_ACTIVE_OUTPUT_LIST          1029
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003
@@ -60,7 +66,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        121
+#define _APS_NEXT_RESOURCE_VALUE        123
 #define _APS_NEXT_COMMAND_VALUE         40011
 #define _APS_NEXT_CONTROL_VALUE         1025
 #define _APS_NEXT_SYMED_VALUE           101

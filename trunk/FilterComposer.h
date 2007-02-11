@@ -17,6 +17,7 @@ public:
 
     void LoadCustomClassifier(LPWSTR pathname);
     void ClearCustomClassifiers();
+    void ClearActiveClassifiers();
 
     static CWndClassInfo& GetWndClassInfo()
     {

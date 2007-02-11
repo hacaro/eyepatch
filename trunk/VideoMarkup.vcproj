@@ -534,6 +534,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Resources\arrow.bmp"
+				>
+			</File>
+			<File
 				RelativePath=".\Resources\Drop.cur"
 				>
 			</File>

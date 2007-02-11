@@ -63,7 +63,7 @@
 #define EXAMPLEWINDOW_HEIGHT 185
 #define FILTERIMAGE_WIDTH 240
 #define FILTERIMAGE_HEIGHT 180
-#define FILTERLIBRARY_WIDTH 380
+#define FILTERLIBRARY_WIDTH 670
 
 // save recognizer: folder prefixes and file names
 #define FILE_FRIENDLY_NAME L"\\name.dat"

@@ -184,7 +184,11 @@ void CEyepatch::LoadComposeModeClassifiers() {
     WCHAR searchpath[MAX_PATH];
     WCHAR fullpath[MAX_PATH];
 
+    // Clear the old list of custom classifiers
     m_filterComposer.ClearCustomClassifiers();
+
+    // Clear the old list of active classifiers
+    m_filterComposer.ClearActiveClassifiers();
 
     SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, rootpath);
     PathAppend(rootpath, APP_CLASS);

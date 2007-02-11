@@ -36,37 +36,21 @@ LRESULT CFilterComposer::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 
     graphics->Clear(Color(240,240,240));
 
-    graphics->FillRectangle(&whiteBrush, 20, 10, 160, 120);
-    graphics->DrawRectangle(&blackPen, 20, 10, 160, 120);
-    graphics->DrawString(L"INPUT VIDEO", 11, &labelFont, PointF(25,15), &blackBrush);
-    graphics->DrawLine(&arrowPen, 100, 140, 100, 170); 
+    graphics->FillRectangle(&whiteBrush, 10, 40, 320, 240);
+    graphics->DrawRectangle(&blackPen, 10, 40, 320, 240);
+    graphics->DrawString(L"INPUT VIDEO", 11, &labelFont, PointF(15,45), &blackBrush);
+
     if (m_videoRunner.processingVideo) {
-        graphics->DrawImage(m_videoRunner.bmpInput, 230, 10, 160, 120);
+        graphics->DrawImage(m_videoRunner.bmpInput, 10, 40, 320, 240);
     }
 
-    graphics->FillRectangle(&whiteBrush, 20, 180, 160, 120);
-    graphics->DrawRectangle(&blackPen, 20, 180, 160, 120);
-    graphics->DrawString(L"FILTERS", 7, &labelFont, PointF(25,185), &blackBrush);
-    graphics->DrawLine(&arrowPen, 100, 310, 100, 340); 
-    int nClassifiers = 0;
-    for (list<Classifier*>::iterator i = m_videoRunner.customClassifiers.begin();
-        i != m_videoRunner.customClassifiers.end(); i++) {
-        graphics->DrawString((*i)->GetName(), wcslen((*i)->GetName()),
-            &labelFont, PointF(25, 200 + 12*nClassifiers), &blackBrush);
-        nClassifiers++;
-    }
+    graphics->FillRectangle(&whiteBrush, 10, 420, 320, 240);
+    graphics->DrawRectangle(&blackPen, 10, 420, 320, 240);
+    graphics->DrawString(L"FILTERED VIDEO", 14, &labelFont, PointF(15,425), &blackBrush);
+
     if (m_videoRunner.processingVideo) {
-        graphics->DrawImage(m_videoRunner.bmpOutput, 230, 180, 160, 120);
+        graphics->DrawImage(m_videoRunner.bmpOutput, 10, 420, 320, 240);
     }
-
-    graphics->FillRectangle(&whiteBrush, 20, 350, 360, 120);
-    graphics->DrawRectangle(&blackPen, 20, 350, 360, 120);
-    graphics->DrawString(L"REDUCERS", 8, &labelFont, PointF(25,355), &blackBrush);
-    graphics->DrawLine(&arrowPen, 100, 480, 100, 510); 
-
-    graphics->FillRectangle(&whiteBrush, 20, 520, 360, 120);
-    graphics->DrawRectangle(&blackPen, 20, 520, 360, 120);
-    graphics->DrawString(L"OUTPUTS", 7, &labelFont, PointF(25,525), &blackBrush);
 
     BitBlt(hdc,FILTERLIBRARY_WIDTH,0,WINDOW_X-FILTERLIBRARY_WIDTH,WINDOW_Y,hdcmem,0,0,SRCCOPY);
     EndPaint(&ps);
@@ -133,6 +117,7 @@ LRESULT CFilterComposer::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 }
 
 LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    HWND listView;
     switch(wParam) {
         case IDC_RADIO_COLOR:
         case IDC_RADIO_SHAPE:
@@ -142,18 +127,25 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
         case IDC_RADIO_MOTION:
         case IDC_RADIO_GESTURE:
             m_videoRunner.customClassifiers.push_back((Classifier*)lParam);
+            listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
+            m_filterLibrary.AddCustomFilter(listView, (Classifier*)lParam);
             InvalidateRect(NULL, FALSE);
             break;
         case IDC_RUNLIVE:
             if (!m_videoRunner.processingVideo) {
-                m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).EnableWindow(FALSE);
-                m_filterLibrary.GetDlgItem(IDC_RUNLIVE).SetWindowText(L"Stop Running");
                 m_videoRunner.StartProcessing();
+                if (m_videoRunner.processingVideo) {
+                    m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).EnableWindow(FALSE);
+                    m_filterLibrary.GetDlgItem(IDC_RUNLIVE).SetWindowText(L"Stop Running");
+                }
             } else {
+                m_videoRunner.StopProcessing();
                 m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).EnableWindow(TRUE);
                 m_filterLibrary.GetDlgItem(IDC_RUNLIVE).SetWindowText(L"Run on Live Video!");
-                m_videoRunner.StopProcessing();
             }
+            break;
+        case IDC_RESET:
+            ClearActiveClassifiers();
             break;
         default:
             break;
@@ -183,7 +175,8 @@ void CFilterComposer::LoadCustomClassifier(LPWSTR pathname) {
 
     if (newclassifier != NULL) {
         customClassifiers.push_back(newclassifier);
-        m_filterLibrary.AddCustomFilter(newclassifier);
+        HWND listView = m_filterLibrary.GetDlgItem(IDC_MY_FILTER_LIST);
+        m_filterLibrary.AddCustomFilter(listView, newclassifier);
     }
 }
 
@@ -191,6 +184,13 @@ void CFilterComposer::ClearCustomClassifiers() {
     for (list<Classifier*>::iterator i = customClassifiers.begin(); i!= customClassifiers.end(); i++) {
         delete (*i);
     }
-    m_filterLibrary.ClearCustomFilters();
+    HWND listView = m_filterLibrary.GetDlgItem(IDC_MY_FILTER_LIST);
+    m_filterLibrary.ClearCustomFilters(listView);
     customClassifiers.clear();
+}
+
+void CFilterComposer::ClearActiveClassifiers() {
+    HWND listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
+    m_filterLibrary.ClearCustomFilters(listView);
+    m_videoRunner.customClassifiers.clear();
 }
