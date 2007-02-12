@@ -106,7 +106,12 @@ LRESULT CFilterComposer::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 
 
 LRESULT CFilterComposer::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
-	delete graphics;
+
+    if (m_videoRunner.processingVideo) {
+        m_videoRunner.StopProcessing();
+    }
+    
+    delete graphics;
 	DeleteDC(hdcmem);
 	DeleteObject(hbm);
 
@@ -118,6 +123,7 @@ LRESULT CFilterComposer::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 
 LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     HWND listView;
+    HMENU hMenu;
     switch(wParam) {
         case IDC_RADIO_COLOR:
         case IDC_RADIO_SHAPE:
@@ -126,22 +132,35 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
         case IDC_RADIO_APPEARANCE:
         case IDC_RADIO_MOTION:
         case IDC_RADIO_GESTURE:
-            m_videoRunner.customClassifiers.push_back((Classifier*)lParam);
+            m_videoRunner.AddActiveFilter((Classifier*)lParam);
             listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
             m_filterLibrary.AddCustomFilter(listView, (Classifier*)lParam);
             InvalidateRect(NULL, FALSE);
             break;
         case IDC_RUNLIVE:
+            hMenu = ::GetMenu(this->GetParent());
             if (!m_videoRunner.processingVideo) {
                 m_videoRunner.StartProcessing();
                 if (m_videoRunner.processingVideo) {
                     m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).EnableWindow(FALSE);
                     m_filterLibrary.GetDlgItem(IDC_RUNLIVE).SetWindowText(L"Stop Running");
+
+                    // disable the menu
+                    EnableMenuItem(hMenu, 0, MF_BYPOSITION | MF_GRAYED);
+                    EnableMenuItem(hMenu, 1, MF_BYPOSITION | MF_GRAYED);
+                    EnableMenuItem(hMenu, 2, MF_BYPOSITION | MF_GRAYED);
+                    ::DrawMenuBar(GetParent());
                 }
             } else {
                 m_videoRunner.StopProcessing();
                 m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).EnableWindow(TRUE);
                 m_filterLibrary.GetDlgItem(IDC_RUNLIVE).SetWindowText(L"Run on Live Video!");
+
+                // reenable the menu
+                EnableMenuItem(hMenu, 0, MF_BYPOSITION | MF_ENABLED);
+                EnableMenuItem(hMenu, 1, MF_BYPOSITION | MF_ENABLED);
+                EnableMenuItem(hMenu, 2, MF_BYPOSITION | MF_ENABLED);
+                ::DrawMenuBar(GetParent());
             }
             break;
         case IDC_RESET:
@@ -192,5 +211,5 @@ void CFilterComposer::ClearCustomClassifiers() {
 void CFilterComposer::ClearActiveClassifiers() {
     HWND listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
     m_filterLibrary.ClearCustomFilters(listView);
-    m_videoRunner.customClassifiers.clear();
+    m_videoRunner.ClearActiveFilters();
 }

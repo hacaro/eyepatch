@@ -113,7 +113,7 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
 
     // get features in current frame
     struct feature *frameFeatures;
-    int nFeatures = sift_features(frame, &frameFeatures);
+    int nFeatures = sift_features(frameCopy, &frameFeatures);
 
     if (nFeatures > 0) {
 
@@ -121,8 +121,8 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
         CvPoint ptMin, ptMax;
         ptMax.x = 0;            
         ptMax.y = 0;
-        ptMin.x = frame->width;
-        ptMin.y = frame->height;
+        ptMin.x = frameCopy->width;
+        ptMin.y = frameCopy->height;
 
         struct kd_root* kd_root = kdtree_build(frameFeatures, nFeatures);
         struct feature** nbrs;

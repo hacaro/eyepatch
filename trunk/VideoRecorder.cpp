@@ -44,8 +44,7 @@ LRESULT CVideoRecorderDialog::OnPaint( UINT, WPARAM, LPARAM, BOOL& )
 }
 
 LRESULT CVideoRecorderDialog::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
-    // TODO: figure out why this wait never returns (mutex somehow was not released?)
-//	WaitForSingleObject(m_hMutex,INFINITE);
+	WaitForSingleObject(m_hMutex,INFINITE);
 	TerminateThread(m_hThread, 0);
 	return 0;
 }
@@ -60,9 +59,13 @@ void CVideoRecorderDialog::ConvertFrames() {
 		WaitForSingleObject(m_hMutex,INFINITE);
 		if (parent->currentFrame != NULL) {
 			parent->ConvertFrame();
-	        ReleaseMutex(m_hMutex);
-			// Redraw dialog window
+
+            // Redraw dialog window
 			InvalidateRect(&videoRect,FALSE);
+
+            // Release the mutex before trying to grab the next frame
+            ReleaseMutex(m_hMutex);
+            parent->GrabNextFrame();
 		} else {
 			ReleaseMutex(m_hMutex);
 			EndDialog(0);
@@ -160,7 +163,9 @@ void CVideoRecorder::ConvertFrame() {
 	nFrames++;
 
     IplToBitmap(copyFrame, bmpVideo);
+}
 
+void CVideoRecorder::GrabNextFrame() {
     // Grab next frame
 	currentFrame = cvQueryFrame(videoCapture);
 }

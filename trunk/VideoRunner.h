@@ -13,14 +13,15 @@ public:
     void StopProcessing();
 	void ProcessFrame();
 
+    void AddActiveFilter(Classifier*);
+    void ClearActiveFilters();
+
 	int videoX, videoY;
     int fps;
     long nFrames;
     bool processingVideo;
     IplImage *copyFrame, *outputFrame;
     Bitmap *bmpInput, *bmpOutput;
-
-    list<Classifier*> customClassifiers;
 
 private:
     CvCapture *videoCapture;
@@ -29,6 +30,9 @@ private:
 
     // for keeping track of position within circular motion history buffer
     int last;
+
+    // list of classifiers to apply to live video stream
+    list<Classifier*> activeClassifiers;
 
 	DWORD threadID;
 	HANDLE m_hMutex;
