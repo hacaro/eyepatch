@@ -66,16 +66,17 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
 
             IplImage *grayscale = cvCreateImage( cvSize(sample->fullImageCopy->width, sample->fullImageCopy->height), IPL_DEPTH_8U, 1);
             cvCvtColor(sample->fullImageCopy, grayscale, CV_BGR2GRAY);
-            cvCanny(grayscale, grayscale, 50, 200, 5);
+            cvCanny(grayscale, grayscale, SHAPE_CANNY_EDGE_LINK, SHAPE_CANNY_EDGE_FIND, SHAPE_CANNY_APERTURE);
 
             CvMemStorage *storage = cvCreateMemStorage(0);
             CvSeq *sampleContours = NULL;
 
-            cvFindContours(grayscale, storage, &sampleContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_KCOS);
+            cvFindContours(grayscale, storage, &sampleContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
             for (CvSeq *contour = sampleContours; contour != NULL; contour = contour->h_next)
 	        {
-		        if (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) {
+		        if ( (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) &&
+                     (fabs(cvContourArea(contour)) > SHAPE_MIN_AREA) ) {
                     if (!templateContours) {
                         templateContours = cvCloneSeq(contour, templateStorage);
                     } else {
@@ -114,16 +115,17 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     cvZero(newMask);
 
     cvCvtColor(frame, grayscale, CV_BGR2GRAY);
-    cvCanny(grayscale, grayscale, 50, 200, 5);
+    cvCanny(grayscale, grayscale, SHAPE_CANNY_EDGE_LINK, SHAPE_CANNY_EDGE_FIND, SHAPE_CANNY_APERTURE);
 
     cvCvtColor(grayscale, copy, CV_GRAY2BGR);
 
     CvSeq *frameContours;
     CvMemStorage *storage = cvCreateMemStorage(0);
-    cvFindContours(grayscale, storage, &frameContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_KCOS);
+    cvFindContours(grayscale, storage, &frameContours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
     for (CvSeq *contour = frameContours; contour != NULL; contour = contour->h_next) {
-        if (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) {
+        if ( (fabs(cvArcLength(contour)) > SHAPE_MIN_LENGTH) &&
+             (fabs(cvContourArea(contour)) > SHAPE_MIN_AREA) ) {
 
             int contourNum = 0;
             for (CvSeq *matchContour = templateContours; matchContour != NULL; matchContour = matchContour->h_next) {

@@ -57,7 +57,7 @@ void CVideoRunner::ProcessFrame() {
     cvSet(guessMask, cvScalar(0xFF));
 
     // apply filter chain to frame
-    for (list<Classifier*>::iterator i=customClassifiers.begin(); i!=customClassifiers.end(); i++) {
+    for (list<Classifier*>::iterator i=activeClassifiers.begin(); i!=activeClassifiers.end(); i++) {
         if ((*i)->classifierType == IDC_RADIO_MOTION) {
             ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames, guessMask);
         } else if ((*i)->classifierType == IDC_RADIO_GESTURE) {
@@ -87,16 +87,18 @@ void CVideoRunner::ProcessFrame() {
         parent->InvalidateRect(&videoRect, FALSE);
     }
 
-    // Grab next frame
+    // update frame count and release the mutex
     nFrames++;
+    ReleaseMutex(m_hMutex);
+
+    // Grab next frame (do this AFTER releasing mutex)
 	currentFrame = cvQueryFrame(videoCapture);
 
-    ReleaseMutex(m_hMutex);
 }
 
 DWORD WINAPI CVideoRunner::ThreadCallback(CVideoRunner* instance) {
     while (1) {
-        if (instance->currentFrame != NULL) {
+        if (instance->processingVideo && (instance->currentFrame != NULL)) {
 	        instance->ProcessFrame();
         } else {
 	        return 1L;
@@ -158,9 +160,9 @@ void CVideoRunner::StopProcessing() {
     if (!processingVideo) return;
 
     processingVideo = false;
-
     // End processing thread
-//	WaitForSingleObject(m_hMutex,INFINITE);
+	WaitForSingleObject(m_hMutex,INFINITE);
+
 	if (m_hMutex) CloseHandle(m_hMutex);
 	TerminateThread(m_hThread, 0);
 
@@ -171,6 +173,20 @@ void CVideoRunner::StopProcessing() {
     for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
         cvReleaseImage(&motionBuf[i]);
     }
+    cvReleaseImage(&guessMask);
+
     delete bmpInput;
     delete bmpOutput;
+}
+
+void CVideoRunner::AddActiveFilter(Classifier *c) {
+    WaitForSingleObject(m_hMutex,INFINITE);
+    activeClassifiers.push_back(c);
+    ReleaseMutex(m_hMutex);
+}
+
+void CVideoRunner::ClearActiveFilters() {
+    WaitForSingleObject(m_hMutex,INFINITE);
+    activeClassifiers.clear();
+    ReleaseMutex(m_hMutex);
 }

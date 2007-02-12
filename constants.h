@@ -17,9 +17,12 @@
 #define COLOR_SMIN 30
 
 // shape matching parameters
-// todo: add canny thresholds
 #define SHAPE_MIN_LENGTH 100
-#define SHAPE_SIMILARITY_THRESHOLD 0.2
+#define SHAPE_MIN_AREA 10
+#define SHAPE_CANNY_EDGE_FIND 250
+#define SHAPE_CANNY_EDGE_LINK 100
+#define SHAPE_CANNY_APERTURE 5
+#define SHAPE_SIMILARITY_THRESHOLD 0.5
 
 // SIFT matching parameters
 /* the maximum number of keypoint NN candidates to check during BBF search */

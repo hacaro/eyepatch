@@ -40,6 +40,7 @@ public:
 	~CVideoRecorder();
 	BOOL RecordVideoFile(HWND);
 	void ConvertFrame();
+    void GrabNextFrame();
 
     WCHAR szFileName[MAX_PATH];
 	int videoX, videoY;
