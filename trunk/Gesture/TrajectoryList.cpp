@@ -104,6 +104,23 @@ int TrajectoryList::GetTracksAtFrame(vector<MotionTrack> *trackList, long frameN
     return nFullTracks;
 }
 
+int TrajectoryList::GetCurrentTracks(vector<MotionTrack> *trackList) {
+    return GetTracksAtFrame(trackList, m_Frame-1);
+}
+
+void TrajectoryList::DeleteOldTracks() {
+    int nTracks = m_TrackList.GetBlobNum();
+    for(int i=nTracks-1; i>=0; i--) {
+        DefBlobTrack* pTrack = (DefBlobTrack*)m_TrackList.GetBlob(i);
+        // if this trajectory is older than current frame, delete it
+        if (pTrack->FrameLast + 1 < m_Frame) {
+            delete pTrack->pSeq;
+            pTrack->pSeq = NULL;
+            m_TrackList.DelBlob(i);
+        }
+    }
+}
+
 void TrajectoryList::SetFileName(char*) { }
 
 void TrajectoryList::AddBlob(CvBlob* pBlob) {

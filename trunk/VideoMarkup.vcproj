@@ -130,7 +130,7 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="precomp.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
