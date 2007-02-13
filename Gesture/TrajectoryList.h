@@ -7,10 +7,12 @@ public:
     void SetFileName(char* pFileName);
     void AddBlob(CvBlob* pBlob);
     void Process(IplImage* pImg = NULL, IplImage* pFG = NULL);
+    void DeleteOldTracks();
     void Release();
 
     int GetTracksInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame);
     int GetTracksAtFrame(vector<MotionTrack> *trackList, long frameNum);
+    int GetCurrentTracks(vector<MotionTrack> *trackList);
 
 protected:
     int         m_Frame;

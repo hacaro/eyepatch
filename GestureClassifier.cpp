@@ -17,6 +17,11 @@ GestureClassifier::GestureClassifier() :
 
     // append identifier to directory name
     wcscat(directoryName, FILE_GESTURE_SUFFIX);
+
+    // ConDens structures for running live model    
+    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
+        activeCondens[i] = NULL;
+    }
 }
 
 GestureClassifier::GestureClassifier(LPCWSTR pathname) :
@@ -59,6 +64,11 @@ GestureClassifier::GestureClassifier(LPCWSTR pathname) :
     isOnDisk = true;
 
 	UpdateTrajectoryImage();
+
+    // ConDens structures for running live model
+    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
+        activeCondens[i] = new CondensationSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
+    }
 }
 
 GestureClassifier::~GestureClassifier() {
@@ -67,6 +77,11 @@ GestureClassifier::~GestureClassifier() {
             delete models[i];
         }
         delete[] models;
+
+        for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
+            if (activeCondens[i] != NULL) delete activeCondens[i];
+            activeCondens[i] = NULL;
+        }
     }
 }
 
@@ -101,6 +116,11 @@ void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
 
 	// update demo image
 	UpdateTrajectoryImage();
+
+    // ConDens structures for running live model
+    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
+        activeCondens[i] = new CondensationSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
+    }
 }
 
 BOOL GestureClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
@@ -111,6 +131,45 @@ void GestureClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     // not implemented: this class uses ClassifyTrack instead
     assert(false);
 }    
+
+void GestureClassifier::UpdateRunningModel(vector<MotionTrack> *trackList) {
+    int numTracks = trackList->size();
+    if (numTracks > GESTURE_MAX_SIMULTANEOUS_TRACKS) {
+        numTracks = GESTURE_MAX_SIMULTANEOUS_TRACKS;
+    }
+    for (int i=0; i<numTracks; i++) {
+        MotionTrack mt = (*trackList)[i];
+        MotionSample ms = mt[mt.size()-1];
+        activeCondens[i]->Update(ms.vx, ms.vy, ms.sizex, ms.sizey);
+        lastSample[i] = ms;
+    }
+}
+
+void GestureClassifier::ResetRunningModel() {
+    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
+        if (activeCondens[i] != NULL) delete activeCondens[i];
+        activeCondens[i] = new CondensationSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
+    }
+}
+
+void GestureClassifier::GetMaskFromRunningModel(IplImage *guessMask) {
+    IplImage *newMask = cvCloneImage(guessMask);
+    cvZero(newMask);
+    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
+        for (int modelNum=0; modelNum<nModels; modelNum++) {
+            double probability = activeCondens[i]->GetModelProbability(modelNum);
+            double completionProb = activeCondens[i]->GetModelCompletionProbability(modelNum);
+            if (completionProb>0.1) {
+                MotionSample ms = lastSample[i];
+                // draw a rectangle in the new mask image
+                CvPoint topLeft = cvPoint(ms.x - ms.sizex/2, ms.y - ms.sizey/2);
+                CvPoint bottomRight = cvPoint(ms.x + ms.sizex/2, ms.y + ms.sizey/2);
+                cvRectangle(newMask, topLeft, bottomRight, cvScalar(0xFF), CV_FILLED, 8); 
+            }
+        }
+    }
+    cvAnd(guessMask, newMask, guessMask);
+}
 
 void GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
     IplImage *newMask = cvCloneImage(guessMask);

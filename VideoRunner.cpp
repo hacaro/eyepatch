@@ -17,14 +17,61 @@ CVideoRunner::CVideoRunner(CWindow *caller) {
     nFrames = 0;
     parent = caller;
 
+    trackingMotion = 0;
+    trackingBlobs = 0;
+
 	m_hMutex = NULL;
     m_hThread = NULL;
+
+    CreateBlobTracker();
 }
 
 CVideoRunner::~CVideoRunner(void) {
     if (processingVideo) {
         StopProcessing();
     }
+}
+
+void CVideoRunner::CreateBlobTracker() {
+        // Set number of foreground training frames
+    param.FGTrainFrames = GESTURE_NUM_FGTRAINING_FRAMES;
+
+    // Create FG Detection module
+    param.pFG = cvCreateFGDetectorBase(CV_BG_MODEL_FGD, NULL);
+
+    // Create Blob Entrance Detection module
+    param.pBD = cvCreateBlobDetectorCC();
+    param.pBD->SetParam("MinDistToBorder",1.0);
+    param.pBD->SetParam("Latency",5);
+    param.pBD->SetParam("HMin",0.08);
+    param.pBD->SetParam("WMin",0.08);
+
+    // Create blob tracker module
+    param.pBT = cvCreateBlobTrackerCCMSPF();
+
+    // create blob trajectory generation module (currently not needed)
+    param.pBTGen = (CvBlobTrackGen*) &trajectories;
+
+    // create blob trajectory post processing module
+    param.pBTPP = cvCreateModuleBlobTrackPostProcKalman();
+
+    // create blob trajectory analysis module (currently not needed)
+    param.UsePPData = 0;
+    param.pBTA = NULL;
+
+    // create a pipeline using these components
+    pTracker = cvCreateBlobTrackerAuto1(&param);
+}
+
+void CVideoRunner::DestroyBlobTracker() {
+    
+    // Release all the modules
+    if(param.pBT)cvReleaseBlobTracker(&param.pBT);
+    if(param.pBD)cvReleaseBlobDetector(&param.pBD);
+    if(param.pBTGen)cvReleaseBlobTrackGen(&param.pBTGen);
+    if(param.pBTA)cvReleaseBlobTrackAnalysis(&param.pBTA);
+    if(param.pFG)cvReleaseFGDetector(&param.pFG);
+    if(pTracker)cvReleaseBlobTrackerAuto(&pTracker);
 }
 
 void CVideoRunner::ProcessFrame() {
@@ -39,19 +86,13 @@ void CVideoRunner::ProcessFrame() {
 		cvFlip(currentFrame,copyFrame);
 	}
 
-    // convert frame to grayscale for motion history computation
-    cvCvtColor(copyFrame, motionBuf[last], CV_BGR2GRAY);
-    int idx1 = last;
-    int idx2 = (last + 1) % MOTION_NUM_IMAGES;
-    last = idx2;
+    if (trackingMotion) { // we have a motion filter in the chain, so compute motion
+        ProcessMotionFrame();
+    }
 
-    // get difference between frames
-    IplImage* silh = motionBuf[idx2];
-    cvAbsDiff(motionBuf[idx1], motionBuf[idx2], silh);
-    
-    // threshold difference image and use it to update motion history image
-    cvThreshold(silh, silh, MOTION_DIFF_THRESHOLD, 1, CV_THRESH_BINARY); 
-    cvUpdateMotionHistory(silh, motionHistory, nFrames, MOTION_MHI_DURATION); // update MHI
+    if (trackingBlobs) { // we have a gesture filter in the chain, so grab trajectories
+        ProcessBlobFrame();
+    }
 
     // start with a full mask (all on)
     cvSet(guessMask, cvScalar(0xFF));
@@ -61,14 +102,14 @@ void CVideoRunner::ProcessFrame() {
         if ((*i)->classifierType == IDC_RADIO_MOTION) {
             ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames, guessMask);
         } else if ((*i)->classifierType == IDC_RADIO_GESTURE) {
-            // TODO: trackList is a list of MotionTrack objects storing
-            // all the trajectories at current frame
-//            vector<MotionTrack> trackList;
-//            m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-//            for (int i=0; i<trackList.size(); i++) {
-//                MotionTrack mt = trackList[i];
-//                ((GestureClassifier*)(*i))->ClassifyTrack(mt, guessMask);
-//            }
+            vector<MotionTrack> trackList;
+            trajectories.GetCurrentTracks(&trackList);
+            if (trackList.size() == 0) {
+                cvZero(guessMask);
+            } else {
+                ((GestureClassifier*)(*i))->UpdateRunningModel(&trackList);
+                ((GestureClassifier*)(*i))->GetMaskFromRunningModel(guessMask);
+            }
         } else {
             (*i)->ClassifyFrame(copyFrame, guessMask);
         } 
@@ -93,7 +134,62 @@ void CVideoRunner::ProcessFrame() {
 
     // Grab next frame (do this AFTER releasing mutex)
 	currentFrame = cvQueryFrame(videoCapture);
+}
 
+void CVideoRunner::ProcessMotionFrame() {
+    // convert frame to grayscale for motion history computation
+    cvCvtColor(copyFrame, motionBuf[last], CV_BGR2GRAY);
+    int idx1 = last;
+    int idx2 = (last + 1) % MOTION_NUM_IMAGES;
+    last = idx2;
+
+    // get difference between frames
+    IplImage* silh = motionBuf[idx2];
+    cvAbsDiff(motionBuf[idx1], motionBuf[idx2], silh);
+
+    // threshold difference image and use it to update motion history image
+    cvThreshold(silh, silh, MOTION_DIFF_THRESHOLD, 1, CV_THRESH_BINARY); 
+    cvUpdateMotionHistory(silh, motionHistory, nFrames, MOTION_MHI_DURATION); // update MHI
+}
+
+void CVideoRunner::ProcessBlobFrame() {
+    // Process the new frame with the blob tracker
+    // the second parameter is an optional mask
+    pTracker->Process(copyFrame, NULL);
+
+    // we don't need to keep the old trajectories around
+    trajectories.DeleteOldTracks();
+/*
+    // make a color copy of the grayscale foreground mask
+    IplImage* fgImage = pTracker->GetFGMask();
+    IplImage *fgImageCopy = cvCloneImage(copyFrame);
+    IplImage *maskedCopyFrame = cvCloneImage(copyFrame);
+    cvCvtColor(fgImage, fgImageCopy, CV_GRAY2BGR );
+
+    // mask the current frame with the foreground mask
+    cvAnd(copyFrame, fgImageCopy, maskedCopyFrame);
+
+    // overlay masked image on original image
+    cvAddWeighted(copyFrame, 0.3, maskedCopyFrame, 0.7, 0.0, maskedCopyFrame);
+
+    int nBlobs = pTracker->GetBlobNum();
+    if (nBlobs>0) { // some blobs were detected in the current frame
+        for(int i=0; i<nBlobs; i++) {
+            CvSize  TextSize;
+            CvBlob* pB = pTracker->GetBlob(i-1);
+            CvPoint center = cvPoint(cvRound(pB->x*256),cvRound(pB->y*256));
+            CvSize  size = cvSize(MAX(1,cvRound(CV_BLOB_RX(pB)*256)), MAX(1,cvRound(CV_BLOB_RY(pB)*256)));
+
+            cvEllipse(maskedCopyFrame, center, size, 0, 0, 360, CV_RGB(0,255,0), 1, CV_AA, 8);
+
+        }
+    }
+    cvNamedWindow("BlobWindow");
+    cvShowImage("BlobWindow", maskedCopyFrame);
+    cvWaitKey(5);
+    cvReleaseImage(&maskedCopyFrame);
+    cvReleaseImage(&fgImageCopy);
+*/
 }
 
 DWORD WINAPI CVideoRunner::ThreadCallback(CVideoRunner* instance) {
@@ -181,12 +277,19 @@ void CVideoRunner::StopProcessing() {
 
 void CVideoRunner::AddActiveFilter(Classifier *c) {
     WaitForSingleObject(m_hMutex,INFINITE);
+    if (c->classifierType == IDC_RADIO_MOTION) {
+        trackingMotion++;
+    } else if (c->classifierType == IDC_RADIO_GESTURE) {
+        trackingBlobs++;
+    }
     activeClassifiers.push_back(c);
     ReleaseMutex(m_hMutex);
 }
 
 void CVideoRunner::ClearActiveFilters() {
     WaitForSingleObject(m_hMutex,INFINITE);
+    trackingMotion = 0;
+    trackingBlobs = 0;
     activeClassifiers.clear();
     ReleaseMutex(m_hMutex);
 }

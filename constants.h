@@ -52,7 +52,10 @@
 #define GESTURE_MIN_TRAJECTORY_LENGTH 20
 // number of samples away from the end we need to be to consider the gesture finished
 #define GESTURE_PHASE_CUTOFF 10
-#define GESTURE_NUM_CONDENSATION_SAMPLES 2000
+#define GESTURE_NUM_CONDENSATION_SAMPLES 1000
+// maximum number of tracks we can look at simultaneously
+#define GESTURE_MAX_SIMULTANEOUS_TRACKS 1
+
 
 // control placement
 #define WINDOW_X 1024
