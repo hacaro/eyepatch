@@ -8,11 +8,10 @@ class TCPOutput : public OutputSink {
 public:
     TCPOutput();
     ~TCPOutput();
-    void OutputData(IplImage* image, IplImage* mask, char* filterName);
+    void OutputData(IplImage* image, IplImage* mask, CvSeq* contours, char* filterName);
 
 private:
     SocketServer server;
-    CvMemStorage *contourStorage;
     HANDLE m_hThread;
 	DWORD threadID;
 	static DWORD WINAPI ServerListenThread(SocketServer*);
