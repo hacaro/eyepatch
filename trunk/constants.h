@@ -56,6 +56,11 @@
 // maximum number of tracks we can look at simultaneously
 #define GESTURE_MAX_SIMULTANEOUS_TRACKS 1
 
+// minimum number of background subtraction frames to "spin up" background model
+#define BACKGROUND_SUBTRACTION_MIN_FRAMES 10
+// number of frames to discard at beginning before starting to build background model
+#define BACKGROUND_SUBTRACTION_DISCARD_FRAMES 5
+
 // OSC parameters
 #define OSC_OUTPUT_BUFFER_SIZE 1024
 #define OSC_ADDRESS "127.0.0.1"
@@ -102,10 +107,13 @@
 
 // Custom window messages
 #define WM_ADD_CUSTOM_FILTER   (WM_APP+1)
-#define WM_ADD_STANDARD_FILTER (WM_APP+2)
+#define WM_ADD_STD_FILTER      (WM_APP+2)
 #define WM_ADD_DATA_REDUCER    (WM_APP+3)
 #define WM_ADD_OUTPUT_SINK     (WM_APP+4)
 #define WM_LOAD_FILTER         (WM_APP+5)
+
+// Classifier type for standard built-in classifiers
+#define IDC_STANDARD_CLASSIFIER 10001
 
 // listview group IDs
 typedef enum {

@@ -11,6 +11,7 @@
 #include "HaarClassifier.h"
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
+#include "BackgroundSubtraction.h"
 #include "Gesture/BlobTracker.h"
 #include "OutputSink.h"
 #include "OSCOutput.h"
@@ -136,10 +137,19 @@ LRESULT CFilterComposer::OnAddCustomFilter( UINT, WPARAM wParam, LPARAM lParam, 
         case IDC_RADIO_GESTURE:
             m_videoRunner.AddActiveFilter((Classifier*)lParam);
             listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
-            m_filterLibrary.AddCustomFilter(listView, (Classifier*)lParam);
-            InvalidateRect(NULL, FALSE);
+            m_filterLibrary.AddFilter(listView, (Classifier*)lParam);
+            ::InvalidateRect(listView, NULL, FALSE);
             break;
     }
+    return 0;
+}
+
+LRESULT CFilterComposer::OnAddStandardFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    HWND listView;
+    m_videoRunner.AddActiveFilter((Classifier*)lParam);
+    listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
+    m_filterLibrary.AddFilter(listView, (Classifier*)lParam);
+    ::InvalidateRect(listView, NULL, FALSE);
     return 0;
 }
 
@@ -148,7 +158,7 @@ LRESULT CFilterComposer::OnAddOutputSink( UINT, WPARAM wParam, LPARAM lParam, BO
     m_videoRunner.AddActiveOutput((OutputSink*)lParam);
     listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_OUTPUT_LIST);
     m_filterLibrary.AddOutput(listView, (OutputSink*)lParam);
-    InvalidateRect(NULL, FALSE);
+    ::InvalidateRect(listView, NULL, FALSE);
     return 0;
 }
 
@@ -216,7 +226,7 @@ void CFilterComposer::LoadCustomClassifier(LPWSTR pathname) {
     if (newclassifier != NULL) {
         customClassifiers.push_back(newclassifier);
         HWND listView = m_filterLibrary.GetDlgItem(IDC_MY_FILTER_LIST);
-        m_filterLibrary.AddCustomFilter(listView, newclassifier);
+        m_filterLibrary.AddFilter(listView, newclassifier);
     }
 }
 
@@ -225,14 +235,32 @@ void CFilterComposer::ClearCustomClassifiers() {
         delete (*i);
     }
     HWND listView = m_filterLibrary.GetDlgItem(IDC_MY_FILTER_LIST);
-    m_filterLibrary.ClearCustomFilters(listView);
+    m_filterLibrary.ClearFilters(listView);
     customClassifiers.clear();
 }
 
 void CFilterComposer::ClearActiveClassifiers() {
     HWND listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
-    m_filterLibrary.ClearCustomFilters(listView);
+    m_filterLibrary.ClearFilters(listView);
     m_videoRunner.ClearActiveFilters();
+}
+
+void CFilterComposer::LoadStandardClassifiers() {
+    HWND listView = m_filterLibrary.GetDlgItem(IDC_STD_FILTER_LIST);
+
+    // Background subtraction
+    Classifier *c = new BackgroundSubtraction();
+    standardClassifiers.push_back(c);
+    m_filterLibrary.AddFilter(listView, c);
+}
+
+void CFilterComposer::ClearStandardClassifiers() {
+    for (list<Classifier*>::iterator i = standardClassifiers.begin(); i!= standardClassifiers.end(); i++) {
+        delete (*i);
+    }
+    HWND listView = m_filterLibrary.GetDlgItem(IDC_STD_FILTER_LIST);
+    m_filterLibrary.ClearFilters(listView);
+    standardClassifiers.clear();
 }
 
 void CFilterComposer::LoadOutputs() {
@@ -255,7 +283,7 @@ void CFilterComposer::ClearOutputs() {
         delete (*i);
     }
     HWND listView = m_filterLibrary.GetDlgItem(IDC_MY_FILTER_LIST);
-    m_filterLibrary.ClearCustomFilters(listView);
+    m_filterLibrary.ClearFilters(listView);
     customClassifiers.clear();
 }
 
@@ -264,3 +292,4 @@ void CFilterComposer::ClearActiveOutputs() {
     m_filterLibrary.ClearOutputs(listView);
     m_videoRunner.ClearActiveOutputs();
 }
+

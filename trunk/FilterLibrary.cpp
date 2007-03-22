@@ -80,6 +80,22 @@ LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
             Classifier *classifier = (Classifier*) lvi.lParam;
             parent->SendMessage(WM_ADD_CUSTOM_FILTER, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
         }
+    } else if (idCtrl == IDC_STD_FILTER_LIST) {
+    
+        // we activated an item from the list of standard filters
+        HWND listView = GetDlgItem(IDC_STD_FILTER_LIST);
+
+        LV_ITEM lvi;
+        ZeroMemory(&lvi, sizeof(lvi));
+        lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+        lvi.iItem = nmlv->iItem;
+        lvi.iSubItem = 0;
+        if (ListView_GetItem(listView, &lvi)) {
+
+            // filter was double-clicked, so we will add it to the list of filters
+            Classifier *classifier = (Classifier*) lvi.lParam;
+            parent->SendMessage(WM_ADD_STD_FILTER, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+        }
     } else if (idCtrl == IDC_OUTPUT_LIST) {
 
         // we activated an item from the list of outputs
@@ -117,7 +133,7 @@ LRESULT CFilterLibrary::OnItemKeyDown(int idCtrl, LPNMHDR pnmh, BOOL&) {
     return 0;
 }
 
-void CFilterLibrary::AddCustomFilter(HWND listView, Classifier* classifier) {
+void CFilterLibrary::AddFilter(HWND listView, Classifier* classifier) {
 
     LVITEM lvi;
     lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
@@ -130,7 +146,7 @@ void CFilterLibrary::AddCustomFilter(HWND listView, Classifier* classifier) {
     ListView_InsertItem(listView, &lvi);
 }
 
-void CFilterLibrary::RemoveCustomFilter(HWND listView, Classifier* classifier) {
+void CFilterLibrary::RemoveFilter(HWND listView, Classifier* classifier) {
     int numItems = ListView_GetItemCount(listView);
     int iSelection = -1;
     for (int iIndex=0; iIndex<numItems; iIndex++) {
@@ -154,7 +170,7 @@ void CFilterLibrary::RemoveCustomFilter(HWND listView, Classifier* classifier) {
     }
 }
 
-void CFilterLibrary::ClearCustomFilters(HWND listView) {
+void CFilterLibrary::ClearFilters(HWND listView) {
     ListView_DeleteAllItems(listView);
 }
 
