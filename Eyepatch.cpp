@@ -102,6 +102,9 @@ LRESULT CEyepatch::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Load the outputs (these never change, so we don't need to reload when switching modes
     m_filterComposer.LoadOutputs();
 
+    // Load the standard filters (these don't change either)
+    m_filterComposer.LoadStandardClassifiers();
+
     return 0;
 }
 
@@ -110,6 +113,7 @@ LRESULT CEyepatch::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 
     // Free the loaded classifiers and outputsinks
     m_filterComposer.ClearCustomClassifiers();
+    m_filterComposer.ClearStandardClassifiers();
     m_filterComposer.ClearOutputs();
 
     m_videoMarkup.DestroyWindow();

@@ -24,9 +24,9 @@ public:
     LRESULT OnItemActivate(int, LPNMHDR, BOOL&);
     LRESULT OnItemKeyDown(int, LPNMHDR, BOOL&);
 
-    void AddCustomFilter(HWND listView, Classifier* classifier);
-    void RemoveCustomFilter(HWND listView, Classifier* classifier);
-    void ClearCustomFilters(HWND listView);
+    void AddFilter(HWND listView, Classifier* classifier);
+    void RemoveFilter(HWND listView, Classifier* classifier);
+    void ClearFilters(HWND listView);
 
     void AddOutput(HWND listView, OutputSink* output);
     void RemoveOutput(HWND listView, OutputSink* output);

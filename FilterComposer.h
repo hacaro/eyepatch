@@ -16,10 +16,15 @@ public:
     LRESULT OnCommand(UINT, WPARAM, LPARAM, BOOL& );
 
     LRESULT OnAddCustomFilter(UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnAddStandardFilter(UINT, WPARAM, LPARAM, BOOL& );
     LRESULT OnAddOutputSink(UINT, WPARAM, LPARAM, BOOL& );
 
     void LoadCustomClassifier(LPWSTR pathname);
     void ClearCustomClassifiers();
+
+    void LoadStandardClassifiers();
+    void ClearStandardClassifiers();
+
     void ClearActiveClassifiers();
 
     void LoadOutputs();
@@ -50,6 +55,7 @@ public:
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
         MESSAGE_HANDLER(WM_ADD_CUSTOM_FILTER, OnAddCustomFilter)
+        MESSAGE_HANDLER(WM_ADD_STD_FILTER, OnAddStandardFilter)
         MESSAGE_HANDLER(WM_ADD_OUTPUT_SINK, OnAddOutputSink)
     END_MSG_MAP()
 
@@ -65,5 +71,6 @@ private:
     CVideoRunner m_videoRunner;
     CFilterLibrary m_filterLibrary;
     list<Classifier*> customClassifiers;
+    list<Classifier*> standardClassifiers;
     list<OutputSink*> outputSinks;
 };
