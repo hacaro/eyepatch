@@ -6,7 +6,6 @@
 
 TCPOutput::TCPOutput() :
     OutputSink() {
-    contourStorage = cvCreateMemStorage(0);
 
     SetName(L"XML over TCP");
 
@@ -15,7 +14,6 @@ TCPOutput::TCPOutput() :
 }
 
 TCPOutput::~TCPOutput() {
-    cvReleaseMemStorage(&contourStorage);
 
     // End server listen thread
 	TerminateThread(m_hThread, 0);
@@ -31,18 +29,15 @@ DWORD WINAPI TCPOutput::ServerListenThread(SocketServer* server) {
     return 1L;
 }
 
-void TCPOutput::OutputData(IplImage *image, IplImage *mask, char *filterName) {
+void TCPOutput::OutputData(IplImage *image, IplImage *mask, CvSeq* contours, char *filterName) {
     char buffer[TCP_OUTPUT_BUFFER_SIZE];
     char message[TCP_OUTPUT_BUFFER_SIZE];
 
     // If nobody is connected to the server, don't bother doing anything
     if (!server.IsConnected()) return;
 
-    sprintf(buffer,"<FRAME>\r\n");
-    CvSeq* contours = NULL;
-    cvFindContours(mask, contourStorage, &contours, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+    sprintf(buffer,"<FRAME ID=\"%s\">\r\n", filterName);
     if (contours != NULL) {
-        contours = cvApproxPoly(contours, sizeof(CvContour), contourStorage, CV_POLY_APPROX_DP, 3, 1 );
         for (CvSeq *contour = contours; contour != NULL; contour = contour->h_next) {
             CvRect r = cvBoundingRect(contour, 1);
             CvPoint center;
@@ -51,13 +46,11 @@ void TCPOutput::OutputData(IplImage *image, IplImage *mask, char *filterName) {
             center.y = cvRound((r.y + r.height*0.5));
             radius = cvRound((r.width + r.height)*0.25);
 
-			sprintf(message,"<FILTER ID=\"%s\" X=\"%d\" Y=\"%d\" size=\"%d\" />\r\n", filterName, center.x, center.y, radius);
+			sprintf(message,"<REGION X=\"%d\" Y=\"%d\" size=\"%d\" />\r\n", center.x, center.y, radius);
             strcat(buffer, message);
 
         }
     }
     strcat(buffer,"</FRAME>\r\n\0");
     server.SendData(buffer);
-
-    cvClearMemStorage(contourStorage);
 }

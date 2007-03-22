@@ -10,8 +10,7 @@ public:
     OSCOutput();
     ~OSCOutput();
 
-    void OutputData(IplImage* image, IplImage* mask, char* filterName);
+    void OutputData(IplImage* image, IplImage* mask, CvSeq* contours, char* filterName);
 private:
     UdpTransmitSocket *transmitSocket;
-    CvMemStorage *contourStorage;
 };

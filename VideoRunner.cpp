@@ -11,6 +11,7 @@
 CVideoRunner::CVideoRunner(CWindow *caller) {
     videoCapture = NULL;
     copyFrame = NULL;
+    outputAccImage = NULL;
     motionHistory = NULL;
     bmpInput = NULL;
     bmpOutput = NULL;
@@ -96,6 +97,11 @@ void CVideoRunner::ProcessFrame() {
         ProcessBlobFrame();
     }
 
+    // First black out the output frame
+    cvZero(outputFrame);
+    int nFiltersInChain = activeClassifiers.size();
+    int nCurrentFilter = 0;
+
     // apply filter chain to frame
     for (list<Classifier*>::iterator i=activeClassifiers.begin(); i!=activeClassifiers.end(); i++) {
 
@@ -118,14 +124,30 @@ void CVideoRunner::ProcessFrame() {
             (*i)->ClassifyFrame(copyFrame, guessMask);
         } 
 
+        // Copy the masked output of this filter to accumulator frame
+        cvZero(outputAccImage);
+        cvCopy(copyFrame, outputAccImage, guessMask);
+
+        // Find contours in mask image and trace in accumulator frame
+        CvSeq* contours = NULL;
+        cvFindContours(guessMask, contourStorage, &contours, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+        if (contours != NULL) {
+            contours = cvApproxPoly(contours, sizeof(CvContour), contourStorage, CV_POLY_APPROX_DP, 3, 1 );
+            cvDrawContours(outputAccImage, contours, colorSwatch[nCurrentFilter%COLOR_SWATCH_SIZE], CV_RGB(0,0,0), 1, 2, CV_AA);
+        }
+        nCurrentFilter++;
+
+        // Add masked accumulator frame to output frame
+        cvAddWeighted(outputAccImage, (1.0/nFiltersInChain), outputFrame, 1.0, 0, outputFrame);
+
         // apply output chain to filtered frame
         for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
-            (*j)->OutputData(copyFrame, guessMask, W2A((*i)->GetName()));
+            (*j)->OutputData(copyFrame, guessMask, contours, W2A((*i)->GetName()));
         }
-    }
 
-    cvZero(outputFrame);
-    cvCopy(copyFrame, outputFrame, guessMask);
+        // reset the contour storage
+        cvClearMemStorage(contourStorage);
+    }
 
     // convert to bitmap
     IplToBitmap(copyFrame, bmpInput);
@@ -231,13 +253,17 @@ void CVideoRunner::StartProcessing() {
     videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
     fps = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FPS);
 
-	// create images to store a copy of the current frame input and output
+	// create images to store a copy of the current frame input and output, and an accumulator for filter data
     copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
     outputFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
+    outputAccImage =  cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
 
     // create image to store motion history
     motionHistory = cvCreateImage(cvSize(videoX,videoY), IPL_DEPTH_32F, 1);
     cvZero(motionHistory);
+
+    // allocate contour storage
+    contourStorage = cvCreateMemStorage(0);
 
     // Allocate an image history ring buffer
     memset(motionBuf, 0, MOTION_NUM_IMAGES*sizeof(IplImage*));
@@ -274,11 +300,13 @@ void CVideoRunner::StopProcessing() {
     cvReleaseCapture(&videoCapture);
     cvReleaseImage(&copyFrame);
     cvReleaseImage(&outputFrame);
+    cvReleaseImage(&outputAccImage);
     cvReleaseImage(&motionHistory);
     for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
         cvReleaseImage(&motionBuf[i]);
     }
     cvReleaseImage(&guessMask);
+    cvReleaseMemStorage(&contourStorage);
 
     delete bmpInput;
     delete bmpOutput;

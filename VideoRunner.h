@@ -23,13 +23,14 @@ public:
     int fps;
     long nFrames;
     bool processingVideo;
-    IplImage *copyFrame, *outputFrame;
+    IplImage *copyFrame, *outputFrame, *outputAccImage;
     Bitmap *bmpInput, *bmpOutput;
 
 private:
     CvCapture *videoCapture;
     IplImage *currentFrame, *guessMask, *motionHistory;
     IplImage* motionBuf[MOTION_NUM_IMAGES];
+    CvMemStorage *contourStorage;
 
     // functions that may be called by ProcessFrame (if motion/gesture filters are active)
     void ProcessMotionFrame();

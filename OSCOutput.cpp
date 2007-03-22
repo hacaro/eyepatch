@@ -7,17 +7,15 @@
 OSCOutput::OSCOutput() :
     OutputSink() {
     transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_ADDRESS, OSC_PORT));
-    contourStorage = cvCreateMemStorage(0);
-
+ 
     SetName(L"OSC over UDP");
 }
 
 OSCOutput::~OSCOutput() {
-    cvReleaseMemStorage(&contourStorage);
     delete transmitSocket;
 }
 
-void OSCOutput::OutputData(IplImage *image, IplImage *mask, char *filterName) {
+void OSCOutput::OutputData(IplImage *image, IplImage *mask, CvSeq* contours, char *filterName) {
     char buffer[OSC_OUTPUT_BUFFER_SIZE];
     char messageType[OSC_OUTPUT_BUFFER_SIZE];
     sprintf(messageType, "%s/", filterName);
@@ -25,10 +23,7 @@ void OSCOutput::OutputData(IplImage *image, IplImage *mask, char *filterName) {
 
     p << osc::BeginBundleImmediate;
 
-    CvSeq* contours = NULL;
-    cvFindContours(mask, contourStorage, &contours, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
     if (contours != NULL) {
-        contours = cvApproxPoly(contours, sizeof(CvContour), contourStorage, CV_POLY_APPROX_DP, 3, 1 );
         for (CvSeq *contour = contours; contour != NULL; contour = contour->h_next) {
             CvRect r = cvBoundingRect(contour, 1);
             CvPoint center;
@@ -41,7 +36,6 @@ void OSCOutput::OutputData(IplImage *image, IplImage *mask, char *filterName) {
                 << center.x << center.y << radius << osc::EndMessage;
         }
     }
-    cvClearMemStorage(contourStorage);
     p << osc::EndBundle;
    
     transmitSocket->Send( p.Data(), p.Size() );
