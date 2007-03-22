@@ -9,7 +9,7 @@ public:
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
         MESSAGE_HANDLER(WM_ENABLE, OnEnable)
         NOTIFY_CODE_HANDLER(LVN_GETDISPINFO, OnTextCallback)
-        NOTIFY_CODE_HANDLER(LVN_ENDLABELEDIT, OnNameChange)
+//        NOTIFY_CODE_HANDLER(LVN_ENDLABELEDIT, OnNameChange)
         NOTIFY_CODE_HANDLER(LVN_ITEMACTIVATE, OnItemActivate)
         NOTIFY_CODE_HANDLER(LVN_KEYDOWN, OnItemKeyDown)
     END_MSG_MAP()
@@ -27,6 +27,10 @@ public:
     void AddCustomFilter(HWND listView, Classifier* classifier);
     void RemoveCustomFilter(HWND listView, Classifier* classifier);
     void ClearCustomFilters(HWND listView);
+
+    void AddOutput(HWND listView, OutputSink* output);
+    void RemoveOutput(HWND listView, OutputSink* output);
+    void ClearOutputs(HWND listView);
 
 private:
     CWindow *parent;

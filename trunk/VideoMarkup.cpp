@@ -465,6 +465,47 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 	return 0;
 }
 
+LRESULT CVideoMarkup::OnLoadFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    switch(wParam) {
+        case IDC_RADIO_COLOR:
+            recognizerMode = IDC_RADIO_COLOR;
+            ReplaceClassifier((ColorClassifier*)lParam);
+            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_COLOR);
+            break;
+        case IDC_RADIO_SHAPE:
+            recognizerMode = IDC_RADIO_SHAPE;
+            ReplaceClassifier((ShapeClassifier*)lParam);
+            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_SHAPE);
+            break;
+        case IDC_RADIO_FEATURES:
+            recognizerMode = IDC_RADIO_FEATURES;
+            ReplaceClassifier((SiftClassifier*)lParam);
+            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_FEATURES);
+            break;
+        case IDC_RADIO_BRIGHTNESS:
+            recognizerMode = IDC_RADIO_BRIGHTNESS;
+            ReplaceClassifier((BrightnessClassifier*)lParam);
+            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_BRIGHTNESS);
+            break;
+        case IDC_RADIO_APPEARANCE:
+            recognizerMode = IDC_RADIO_APPEARANCE;
+            ReplaceClassifier((HaarClassifier*)lParam);
+            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_APPEARANCE);
+            break;
+        case IDC_RADIO_MOTION:
+            recognizerMode = IDC_RADIO_MOTION;
+            ReplaceClassifier((MotionClassifier*)lParam);
+            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_MOTION);
+            break;
+        case IDC_RADIO_GESTURE:
+            recognizerMode = IDC_RADIO_GESTURE;
+            ReplaceClassifier((GestureClassifier*)lParam);
+            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_GESTURE);
+            break;
+    }
+    return 0;
+}
+
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     USES_CONVERSION;
     long sliderPosition, sliderRange, selStart, selEnd;
@@ -548,66 +589,31 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             break;
         case IDC_RADIO_COLOR:
             recognizerMode = IDC_RADIO_COLOR;
-            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_COLOR)) {
-                ReplaceClassifier((ColorClassifier*)lParam);
-                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_COLOR);
-            } else {
-                ReplaceClassifier(new ColorClassifier());
-            }
+            ReplaceClassifier(new ColorClassifier());
             break;
         case IDC_RADIO_SHAPE:
             recognizerMode = IDC_RADIO_SHAPE;
-            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_SHAPE)) {
-                ReplaceClassifier((ShapeClassifier*)lParam);
-                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_SHAPE);
-            } else {
-                ReplaceClassifier(new ShapeClassifier());
-            }
+            ReplaceClassifier(new ShapeClassifier());
             break;
         case IDC_RADIO_FEATURES:
             recognizerMode = IDC_RADIO_FEATURES;
-            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_FEATURES)) {
-                ReplaceClassifier((SiftClassifier*)lParam);
-                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_FEATURES);
-            } else {
-                ReplaceClassifier(new SiftClassifier());
-            }
+            ReplaceClassifier(new SiftClassifier());
             break;
         case IDC_RADIO_BRIGHTNESS:
             recognizerMode = IDC_RADIO_BRIGHTNESS;
-            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_BRIGHTNESS)) {
-                ReplaceClassifier((BrightnessClassifier*)lParam);
-                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_BRIGHTNESS);
-            } else {
-                ReplaceClassifier(new BrightnessClassifier());
-            }
+            ReplaceClassifier(new BrightnessClassifier());
             break;
         case IDC_RADIO_APPEARANCE:
             recognizerMode = IDC_RADIO_APPEARANCE;
-            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_APPEARANCE)) {
-                ReplaceClassifier((HaarClassifier*)lParam);
-                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_APPEARANCE);
-            } else {
-                ReplaceClassifier(new HaarClassifier());
-            }
+            ReplaceClassifier(new HaarClassifier());
             break;
         case IDC_RADIO_MOTION:
             recognizerMode = IDC_RADIO_MOTION;
-            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_MOTION)) {
-                ReplaceClassifier((MotionClassifier*)lParam);
-                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_MOTION);
-            } else {
-                ReplaceClassifier(new MotionClassifier());
-            } 
+            ReplaceClassifier(new MotionClassifier());
             break;
         case IDC_RADIO_GESTURE:
             recognizerMode = IDC_RADIO_GESTURE;
-            if (((HWND)lParam) != m_filterSelect.GetDlgItem(IDC_RADIO_GESTURE)) {
-                ReplaceClassifier((GestureClassifier*)lParam);
-                m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_GESTURE);
-            } else {
-                ReplaceClassifier(new GestureClassifier());
-            } 
+            ReplaceClassifier(new GestureClassifier());
             break;
     }
     if (showGuesses) {

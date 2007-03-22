@@ -3,6 +3,7 @@
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
+#include "OutputSink.h"
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
 #include "VideoRunner.h"
@@ -75,6 +76,7 @@ void CVideoRunner::DestroyBlobTracker() {
 }
 
 void CVideoRunner::ProcessFrame() {
+    USES_CONVERSION;
 	if (currentFrame == NULL) return;
 
     WaitForSingleObject(m_hMutex,INFINITE);
@@ -94,11 +96,13 @@ void CVideoRunner::ProcessFrame() {
         ProcessBlobFrame();
     }
 
-    // start with a full mask (all on)
-    cvSet(guessMask, cvScalar(0xFF));
-
     // apply filter chain to frame
     for (list<Classifier*>::iterator i=activeClassifiers.begin(); i!=activeClassifiers.end(); i++) {
+
+        // start with a full mask (all on)
+        // TODO: support AND operation as well
+        cvSet(guessMask, cvScalar(0xFF));
+
         if ((*i)->classifierType == IDC_RADIO_MOTION) {
             ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames, guessMask);
         } else if ((*i)->classifierType == IDC_RADIO_GESTURE) {
@@ -113,6 +117,11 @@ void CVideoRunner::ProcessFrame() {
         } else {
             (*i)->ClassifyFrame(copyFrame, guessMask);
         } 
+
+        // apply output chain to filtered frame
+        for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
+            (*j)->OutputData(copyFrame, guessMask, W2A((*i)->GetName()));
+        }
     }
 
     cvZero(outputFrame);
@@ -291,5 +300,17 @@ void CVideoRunner::ClearActiveFilters() {
     trackingMotion = 0;
     trackingBlobs = 0;
     activeClassifiers.clear();
+    ReleaseMutex(m_hMutex);
+}
+
+void CVideoRunner::AddActiveOutput(OutputSink *o) {
+    WaitForSingleObject(m_hMutex,INFINITE);
+    activeOutputs.push_back(o);
+    ReleaseMutex(m_hMutex);
+}
+
+void CVideoRunner::ClearActiveOutputs() {
+    WaitForSingleObject(m_hMutex,INFINITE);
+    activeOutputs.clear();
     ReleaseMutex(m_hMutex);
 }

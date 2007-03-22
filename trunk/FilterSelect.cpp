@@ -81,7 +81,7 @@ LRESULT CFilterSelect::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
         Classifier *classifier = (Classifier*) lvi.lParam;
 
         // need to replace current classifier with this one by calling ReplaceClassifier in parent
-        parent->SendMessage(WM_COMMAND, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+        parent->SendMessage(WM_LOAD_FILTER, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
     }
     return 0;
 }

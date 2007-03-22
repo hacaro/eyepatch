@@ -6,9 +6,15 @@
 #define UNICODE
 
 // Windows includes
+#include <winsock2.h>   // this must come first to prevent errors with MSVC7
 #include <windows.h>
 #include <shfolder.h>
 #include <shlobj.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
 
 // standard includes
 #define _USE_MATH_DEFINES

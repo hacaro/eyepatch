@@ -18,6 +18,8 @@ public:
     LRESULT OnBeginDrag(int, LPNMHDR, BOOL&);
     LRESULT OnCustomDraw(int, LPNMHDR, BOOL&);
 
+    LRESULT OnLoadFilter(UINT, WPARAM, LPARAM, BOOL& );
+
     void EnableControls(BOOL);
 	void OpenVideoFile();
 	void RecordVideoFile();
@@ -50,6 +52,7 @@ public:
         MESSAGE_HANDLER(WM_PAINT, OnPaint)
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
+        MESSAGE_HANDLER(WM_LOAD_FILTER, OnLoadFilter)
         NOTIFY_CODE_HANDLER(LVN_BEGINDRAG, OnBeginDrag)
         NOTIFY_CODE_HANDLER(NM_CUSTOMDRAW, OnCustomDraw)
 	ALT_MSG_MAP(1)  // sample listview

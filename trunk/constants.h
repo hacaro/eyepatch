@@ -56,6 +56,14 @@
 // maximum number of tracks we can look at simultaneously
 #define GESTURE_MAX_SIMULTANEOUS_TRACKS 1
 
+// OSC parameters
+#define OSC_OUTPUT_BUFFER_SIZE 1024
+#define OSC_ADDRESS "127.0.0.1"
+#define OSC_PORT 7000
+
+// TCP parameters
+#define TCP_LISTEN_PORT 8000
+#define TCP_OUTPUT_BUFFER_SIZE 8192
 
 // control placement
 #define WINDOW_X 1024
@@ -91,6 +99,13 @@
 #define APP_CLASS L"Eyepatch"
 #define FILTER_CREATE_CLASS L"VideoMarkup"
 #define FILTER_COMPOSE_CLASS L"FilterComposer"
+
+// Custom window messages
+#define WM_ADD_CUSTOM_FILTER   (WM_APP+1)
+#define WM_ADD_STANDARD_FILTER (WM_APP+2)
+#define WM_ADD_DATA_REDUCER    (WM_APP+3)
+#define WM_ADD_OUTPUT_SINK     (WM_APP+4)
+#define WM_LOAD_FILTER         (WM_APP+5)
 
 // listview group IDs
 typedef enum {

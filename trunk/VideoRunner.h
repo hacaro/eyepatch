@@ -16,6 +16,9 @@ public:
     void AddActiveFilter(Classifier*);
     void ClearActiveFilters();
 
+    void AddActiveOutput(OutputSink *o);
+    void ClearActiveOutputs();
+
 	int videoX, videoY;
     int fps;
     long nFrames;
@@ -49,6 +52,9 @@ private:
 
     // list of classifiers to apply to live video stream
     list<Classifier*> activeClassifiers;
+
+    // list of outputs to which we will send video data
+    list<OutputSink*> activeOutputs;
 
 	DWORD threadID;
 	HANDLE m_hMutex;

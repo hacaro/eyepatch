@@ -3,6 +3,7 @@
 #include "TrainingSample.h"
 #include "TrainingSet.h"
 #include "Classifier.h"
+#include "OutputSink.h"
 #include "FilterLibrary.h"
 
 CFilterLibrary::CFilterLibrary(CWindow *caller) {
@@ -41,7 +42,8 @@ LRESULT CFilterLibrary::OnTextCallback(int idCtrl, LPNMHDR pnmh, BOOL&) {
 
     return 0;
 }
-
+/*
+// TODO: disallow label editing
 LRESULT CFilterLibrary::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
     NMLVDISPINFO* plvdi = (NMLVDISPINFO*)pnmh;
     LVITEM item = plvdi->item;
@@ -57,6 +59,7 @@ LRESULT CFilterLibrary::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
 	}
     return 0;
 }
+*/
 
 LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
     
@@ -75,7 +78,23 @@ LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
 
             // filter was double-clicked, so we will add it to the list of filters
             Classifier *classifier = (Classifier*) lvi.lParam;
-            parent->SendMessage(WM_COMMAND, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+            parent->SendMessage(WM_ADD_CUSTOM_FILTER, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+        }
+    } else if (idCtrl == IDC_OUTPUT_LIST) {
+
+        // we activated an item from the list of outputs
+        HWND listView = GetDlgItem(IDC_OUTPUT_LIST);
+
+        LV_ITEM lvi;
+        ZeroMemory(&lvi, sizeof(lvi));
+        lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+        lvi.iItem = nmlv->iItem;
+        lvi.iSubItem = 0;
+        if (ListView_GetItem(listView, &lvi)) {
+
+            // output was double-clicked, so we will add it to the list of outputs
+            OutputSink *output = (OutputSink*) lvi.lParam;
+            parent->SendMessage(WM_ADD_OUTPUT_SINK, NULL, ((LPARAM)output));
         }
     }
     return 0;
@@ -136,5 +155,45 @@ void CFilterLibrary::RemoveCustomFilter(HWND listView, Classifier* classifier) {
 }
 
 void CFilterLibrary::ClearCustomFilters(HWND listView) {
+    ListView_DeleteAllItems(listView);
+}
+
+void CFilterLibrary::AddOutput(HWND listView, OutputSink* output) {
+    LVITEM lvi;
+    lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+    lvi.state = 0;
+    lvi.stateMask = 0;
+    lvi.iItem = 0;
+    lvi.iSubItem = 0;
+    lvi.lParam = (LPARAM) output;
+    lvi.pszText = output->GetName();
+    ListView_InsertItem(listView, &lvi);
+}
+
+void CFilterLibrary::RemoveOutput(HWND listView, OutputSink* output) {
+    int numItems = ListView_GetItemCount(listView);
+    int iSelection = -1;
+    for (int iIndex=0; iIndex<numItems; iIndex++) {
+
+        // find index of next item
+        iSelection = ListView_GetNextItem(listView, iSelection, LVNI_ALL);
+
+        // delete the selected item if it matches the output passed in
+        LV_ITEM lvi;
+        ZeroMemory(&lvi, sizeof(lvi));
+        lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+        lvi.iItem = iSelection;
+        lvi.iSubItem = 0;
+        if (ListView_GetItem(listView, &lvi)) {
+            OutputSink *current = (OutputSink*) lvi.lParam;
+            if (current == output) {
+                ListView_DeleteItem(listView, iSelection);
+                break;
+            }
+        }
+    }
+}
+
+void CFilterLibrary::ClearOutputs(HWND listView) {
     ListView_DeleteAllItems(listView);
 }

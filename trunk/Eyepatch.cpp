@@ -6,6 +6,7 @@
 #include "VideoLoader.h"
 #include "VideoRecorder.h"
 #include "Classifier.h"
+#include "OutputSink.h"
 #include "FilterSelect.h"
 #include "VideoControl.h"
 #include "VideoMarkup.h"
@@ -98,12 +99,19 @@ LRESULT CEyepatch::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Load the classifiers from disk
     LoadCreateModeClassifiers();
 
+    // Load the outputs (these never change, so we don't need to reload when switching modes
+    m_filterComposer.LoadOutputs();
+
     return 0;
 }
 
 
-LRESULT CEyepatch::OnDestroy( UINT, WPARAM, LPARAM, BOOL& )
-{
+LRESULT CEyepatch::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
+
+    // Free the loaded classifiers and outputsinks
+    m_filterComposer.ClearCustomClassifiers();
+    m_filterComposer.ClearOutputs();
+
     m_videoMarkup.DestroyWindow();
     DestroyMenu(hMenu);
     PostQuitMessage( 0 );
