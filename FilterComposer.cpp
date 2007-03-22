@@ -12,6 +12,9 @@
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
 #include "Gesture/BlobTracker.h"
+#include "OutputSink.h"
+#include "OSCOutput.h"
+#include "TCPOutput.h"
 #include "FilterLibrary.h"
 #include "VideoRunner.h"
 #include "FilterComposer.h"
@@ -121,9 +124,8 @@ LRESULT CFilterComposer::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 	return 0;
 }
 
-LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+LRESULT CFilterComposer::OnAddCustomFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     HWND listView;
-    HMENU hMenu;
     switch(wParam) {
         case IDC_RADIO_COLOR:
         case IDC_RADIO_SHAPE:
@@ -137,6 +139,24 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
             m_filterLibrary.AddCustomFilter(listView, (Classifier*)lParam);
             InvalidateRect(NULL, FALSE);
             break;
+    }
+    return 0;
+}
+
+LRESULT CFilterComposer::OnAddOutputSink( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    HWND listView;
+    m_videoRunner.AddActiveOutput((OutputSink*)lParam);
+    listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_OUTPUT_LIST);
+    m_filterLibrary.AddOutput(listView, (OutputSink*)lParam);
+    InvalidateRect(NULL, FALSE);
+    return 0;
+}
+
+
+LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+    HWND listView;
+    HMENU hMenu;
+    switch(wParam) {
         case IDC_RUNLIVE:
             hMenu = ::GetMenu(this->GetParent());
             if (!m_videoRunner.processingVideo) {
@@ -165,6 +185,7 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
             break;
         case IDC_RESET:
             ClearActiveClassifiers();
+            ClearActiveOutputs();
             break;
         default:
             break;
@@ -212,4 +233,34 @@ void CFilterComposer::ClearActiveClassifiers() {
     HWND listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
     m_filterLibrary.ClearCustomFilters(listView);
     m_videoRunner.ClearActiveFilters();
+}
+
+void CFilterComposer::LoadOutputs() {
+    HWND listView = m_filterLibrary.GetDlgItem(IDC_OUTPUT_LIST);
+
+    // OSC over UDP output
+    OutputSink *osc = new OSCOutput();
+    outputSinks.push_back(osc);
+    m_filterLibrary.AddOutput(listView, osc);
+
+    // XML over TCP output
+    OutputSink *tcp = new TCPOutput();
+    outputSinks.push_back(tcp);
+    m_filterLibrary.AddOutput(listView, tcp);
+
+}
+
+void CFilterComposer::ClearOutputs() {
+    for (list<OutputSink*>::iterator i = outputSinks.begin(); i!= outputSinks.end(); i++) {
+        delete (*i);
+    }
+    HWND listView = m_filterLibrary.GetDlgItem(IDC_MY_FILTER_LIST);
+    m_filterLibrary.ClearCustomFilters(listView);
+    customClassifiers.clear();
+}
+
+void CFilterComposer::ClearActiveOutputs() {
+    HWND listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_OUTPUT_LIST);
+    m_filterLibrary.ClearOutputs(listView);
+    m_videoRunner.ClearActiveOutputs();
 }

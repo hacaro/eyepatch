@@ -15,9 +15,16 @@ public:
     LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
     LRESULT OnCommand(UINT, WPARAM, LPARAM, BOOL& );
 
+    LRESULT OnAddCustomFilter(UINT, WPARAM, LPARAM, BOOL& );
+    LRESULT OnAddOutputSink(UINT, WPARAM, LPARAM, BOOL& );
+
     void LoadCustomClassifier(LPWSTR pathname);
     void ClearCustomClassifiers();
     void ClearActiveClassifiers();
+
+    void LoadOutputs();
+    void ClearOutputs();
+    void ClearActiveOutputs();
 
     static CWndClassInfo& GetWndClassInfo()
     {
@@ -42,6 +49,8 @@ public:
         MESSAGE_HANDLER(WM_CREATE, OnCreate)
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
+        MESSAGE_HANDLER(WM_ADD_CUSTOM_FILTER, OnAddCustomFilter)
+        MESSAGE_HANDLER(WM_ADD_OUTPUT_SINK, OnAddOutputSink)
     END_MSG_MAP()
 
 private:
@@ -56,4 +65,5 @@ private:
     CVideoRunner m_videoRunner;
     CFilterLibrary m_filterLibrary;
     list<Classifier*> customClassifiers;
+    list<OutputSink*> outputSinks;
 };
