@@ -87,6 +87,7 @@
 // save recognizer: folder prefixes and file names
 #define FILE_FRIENDLY_NAME L"\\name.dat"
 #define FILE_DATA_NAME L"\\data.dat"
+#define FILE_THRESHOLD_NAME L"\\threshold.dat"
 #define FILE_CONTOUR_NAME L"\\data.xml"
 #define FILE_CASCADE_NAME L"\\classifier.xml"
 #define FILE_IMAGE_NAME L"\\image.jpg"
@@ -101,6 +102,15 @@
 #define FILE_SHAPE_SUFFIX L"_SHP"
 #define FILE_SIFT_SUFFIX L"_SIF"
 
+// filter IDs (also used as combo box indices)
+#define COLOR_FILTER		0
+#define SHAPE_FILTER		1
+#define BRIGHTNESS_FILTER	2
+#define SIFT_FILTER			3
+#define ADABOOST_FILTER		4
+#define MOTION_FILTER		5
+#define GESTURE_FILTER		6
+
 #define APP_CLASS L"Eyepatch"
 #define FILTER_CREATE_CLASS L"VideoMarkup"
 #define FILTER_COMPOSE_CLASS L"FilterComposer"
@@ -111,9 +121,13 @@
 #define WM_ADD_DATA_REDUCER    (WM_APP+3)
 #define WM_ADD_OUTPUT_SINK     (WM_APP+4)
 #define WM_LOAD_FILTER         (WM_APP+5)
+#define WM_SET_THRESHOLD       (WM_APP+6)
 
 // Classifier type for standard built-in classifiers
 #define IDC_STANDARD_CLASSIFIER 10001
+
+// Number of classifier types in the system
+#define NUM_FILTERS 7
 
 // listview group IDs
 typedef enum {

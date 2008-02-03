@@ -8,6 +8,7 @@
 // Windows includes
 #include <winsock2.h>   // this must come first to prevent errors with MSVC7
 #include <windows.h>
+#include <windowsx.h>
 #include <shfolder.h>
 #include <shlobj.h>
 #include <stdlib.h>
@@ -81,4 +82,5 @@ bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin);
 // swatch of "nice" colors
 #define COLOR_SWATCH_SIZE 16
 extern CvScalar colorSwatch[];
+extern WCHAR *filterNames[];
 

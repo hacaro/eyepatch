@@ -17,4 +17,5 @@ private:
 
 	CvHistogram *hist;
     int hdims;
+	float avg_level;  // the average brightness value (we threshold on this)
 };

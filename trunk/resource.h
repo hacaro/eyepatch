@@ -24,13 +24,6 @@
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004
-#define IDC_RADIO_COLOR                 1005
-#define IDC_RADIO_SHAPE                 1006
-#define IDC_RADIO_FEATURES              1007
-#define IDC_RADIO_BRIGHTNESS            1008
-#define IDC_RADIO_APPEARANCE            1009
-#define IDC_RADIO_MOTION                1010
-#define IDC_RADIO_GESTURE               1011
 #define IDC_MARKOUT                     1012
 #define IDC_GRABRANGE                   1013
 #define IDC_FRAMELEFT                   1014
@@ -47,7 +40,11 @@
 #define IDC_REDUCER_LIST                1024
 #define IDC_OUTPUT_LIST                 1025
 #define IDC_ACTIVE_FILTER_LIST          1026
+#define IDC_COMBO1                      1026
+#define IDC_FILTER_COMBO                 1026
 #define IDC_ACTIVE_REDUCER_LIST         1027
+#define IDC_SLIDER1                     1027
+#define IDC_FILTER_THRESHOLD            1027
 #define IDC_RESET                       1028
 #define IDC_ACTIVE_OUTPUTS              1029
 #define IDC_ACTIVE_OUTPUT_LIST          1029
@@ -68,7 +65,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        123
 #define _APS_NEXT_COMMAND_VALUE         40011
-#define _APS_NEXT_CONTROL_VALUE         1025
+#define _APS_NEXT_CONTROL_VALUE         1028
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

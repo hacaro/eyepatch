@@ -128,13 +128,13 @@ LRESULT CFilterComposer::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 LRESULT CFilterComposer::OnAddCustomFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     HWND listView;
     switch(wParam) {
-        case IDC_RADIO_COLOR:
-        case IDC_RADIO_SHAPE:
-        case IDC_RADIO_FEATURES:
-        case IDC_RADIO_BRIGHTNESS:
-        case IDC_RADIO_APPEARANCE:
-        case IDC_RADIO_MOTION:
-        case IDC_RADIO_GESTURE:
+        case COLOR_FILTER:
+        case SHAPE_FILTER:
+        case SIFT_FILTER:
+        case BRIGHTNESS_FILTER:
+        case ADABOOST_FILTER:
+        case MOTION_FILTER:
+        case GESTURE_FILTER:
             m_videoRunner.AddActiveFilter((Classifier*)lParam);
             listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
             m_filterLibrary.AddFilter(listView, (Classifier*)lParam);

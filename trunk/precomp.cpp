@@ -47,6 +47,9 @@ CvScalar colorSwatch[COLOR_SWATCH_SIZE] = {
     CV_RGB(0x44,0x44,0xBF)
 };
 
+WCHAR *filterNames[] = { L"Color", L"Shape", L"Brightness", L"SIFT",
+							 L"Adaboost", L"Motion", L"Gesture" };
+
 void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness) {
 	CvPoint endpoint, arrowpoint;
     double angle = angleDegrees*CV_PI/180.0;

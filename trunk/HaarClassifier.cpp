@@ -62,14 +62,14 @@ HaarClassifier::HaarClassifier() :
 
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Appearance Filter");
-    classifierType = IDC_RADIO_APPEARANCE;        
+    classifierType = ADABOOST_FILTER;        
 
     // append identifier to directory name
     wcscat(directoryName, FILE_HAAR_SUFFIX);
 }
 
 HaarClassifier::HaarClassifier(LPCWSTR pathname) :
-	Classifier(),
+	Classifier(pathname),
 	m_progressDlg(this) {
 
 	USES_CONVERSION;
@@ -79,9 +79,6 @@ HaarClassifier::HaarClassifier(LPCWSTR pathname) :
 	nPosSamples = 0;
 	nNegSamples = 0;
 	nStagesCompleted = 0;
-
-    // save the directory name for later
-    wcscpy(directoryName, pathname);
 
     WCHAR filename[MAX_PATH];
     wcscpy(filename, pathname);
@@ -102,13 +99,8 @@ HaarClassifier::HaarClassifier(LPCWSTR pathname) :
     cvReleaseImage(&filterImageCopy);
     IplToBitmap(filterImage, filterBitmap);
 
-    // load the "friendly name" and set the type
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "r");
-    fgetws(friendlyName, MAX_PATH, namefile);
-    fclose(namefile);
-    classifierType = IDC_RADIO_APPEARANCE;
+	// set the type
+    classifierType = ADABOOST_FILTER;
 }
 
 HaarClassifier::~HaarClassifier() {
@@ -226,7 +218,7 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     // There can be more than one object in an image, so we create a growable sequence of objects
     // Detect the objects and store them in the sequence
     CvSeq* objects = cvHaarDetectObjects(frame, cascade, storage,
-                                         1.1, 2, CV_HAAR_DO_CANNY_PRUNING,
+                                         1.1, (int)(1+threshold*4), CV_HAAR_DO_CANNY_PRUNING,
                                          cvSize(HAAR_SAMPLE_X, HAAR_SAMPLE_Y));
 
     IplImage *frameCopy = cvCreateImage(cvSize(frame->width,frame->height), IPL_DEPTH_8U, 3);
@@ -255,10 +247,11 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
 
 void HaarClassifier::Save() {
     if (!isTrained) return;
+
+	Classifier::Save();
+
     USES_CONVERSION;
     WCHAR filename[MAX_PATH];
-
-    SHCreateDirectory(NULL, directoryName);
 
 	// save the cascade data
     wcscpy(filename,directoryName);
@@ -269,13 +262,4 @@ void HaarClassifier::Save() {
     wcscpy(filename, directoryName);
     wcscat(filename, FILE_IMAGE_NAME);
 	cvSaveImage(W2A(filename), filterImage);
-
-    // save the "friendly name"
-    wcscpy(filename,directoryName);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "w");
-    fputws(friendlyName, namefile);
-    fclose(namefile);
-
-    isOnDisk = true;
 }

@@ -13,7 +13,7 @@ GestureClassifier::GestureClassifier() :
 
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Gesture Filter");
-    classifierType = IDC_RADIO_GESTURE;
+    classifierType = GESTURE_FILTER;
 
     // append identifier to directory name
     wcscat(directoryName, FILE_GESTURE_SUFFIX);
@@ -25,16 +25,13 @@ GestureClassifier::GestureClassifier() :
 }
 
 GestureClassifier::GestureClassifier(LPCWSTR pathname) :
-	Classifier() {
+	Classifier(pathname) {
 
 	USES_CONVERSION;
 
     nModels = 0;
     maxModelLength = 0;
     models = NULL;
-
-    // save the directory name for later
-    wcscpy(directoryName, pathname);
 
     WCHAR filename[MAX_PATH];
     wcscpy(filename, pathname);
@@ -52,16 +49,8 @@ GestureClassifier::GestureClassifier(LPCWSTR pathname) :
     }
     fclose(datafile);
 
-    // load the "friendly name" and set the type
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "r");
-    fgetws(friendlyName, MAX_PATH, namefile);
-    fclose(namefile);
-    classifierType = IDC_RADIO_GESTURE;
-
-    isTrained = true;
-    isOnDisk = true;
+	// set the type
+	classifierType = GESTURE_FILTER;
 
 	UpdateTrajectoryImage();
 
@@ -234,10 +223,13 @@ void GestureClassifier::UpdateTrajectoryImage() {
 }
 
 void GestureClassifier::Save() {
+    if (!isTrained) return;
+
+	Classifier::Save();
+
     USES_CONVERSION;
     WCHAR filename[MAX_PATH];
 
-    SHCreateDirectory(NULL, directoryName);
     // save the trajectory data
     wcscpy(filename,directoryName);
     wcscat(filename, FILE_DATA_NAME);
@@ -251,13 +243,4 @@ void GestureClassifier::Save() {
 		models[i]->WriteToFile(datafile);
     }
     fclose(datafile);
-
-    // save the "friendly name"
-    wcscpy(filename,directoryName);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "w");
-    fputws(friendlyName, namefile);
-    fclose(namefile);
-
-    isOnDisk = true;
 }

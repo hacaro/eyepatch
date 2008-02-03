@@ -109,9 +109,9 @@ void CVideoRunner::ProcessFrame() {
         // TODO: support AND operation as well
         cvSet(guessMask, cvScalar(0xFF));
 
-        if ((*i)->classifierType == IDC_RADIO_MOTION) {
+        if ((*i)->classifierType == MOTION_FILTER) {
             ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames, guessMask);
-        } else if ((*i)->classifierType == IDC_RADIO_GESTURE) {
+        } else if ((*i)->classifierType == GESTURE_FILTER) {
             vector<MotionTrack> trackList;
             trajectories.GetCurrentTracks(&trackList);
             if (trackList.size() == 0) {
@@ -314,9 +314,9 @@ void CVideoRunner::StopProcessing() {
 
 void CVideoRunner::AddActiveFilter(Classifier *c) {
     WaitForSingleObject(m_hMutex,INFINITE);
-    if (c->classifierType == IDC_RADIO_MOTION) {
+    if (c->classifierType == MOTION_FILTER) {
         trackingMotion++;
-    } else if (c->classifierType == IDC_RADIO_GESTURE) {
+    } else if (c->classifierType == GESTURE_FILTER) {
         trackingBlobs++;
     }
     activeClassifiers.push_back(c);

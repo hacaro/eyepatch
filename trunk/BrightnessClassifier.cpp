@@ -17,15 +17,15 @@ BrightnessClassifier::BrightnessClassifier() :
 
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Brightness Filter");
-    classifierType = IDC_RADIO_BRIGHTNESS;
+    classifierType = BRIGHTNESS_FILTER;
     
     // append identifier to directory name
     wcscat(directoryName, FILE_BRIGHTNESS_SUFFIX);
 }
 
 BrightnessClassifier::BrightnessClassifier(LPCWSTR pathname) :
-	Classifier() {
-
+	Classifier(pathname) {
+	
     USES_CONVERSION;
 
 	// allocate histogram
@@ -35,33 +35,26 @@ BrightnessClassifier::BrightnessClassifier(LPCWSTR pathname) :
 	float* hranges = hranges_arr;
 	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
 
-    // save the directory name for later
-    wcscpy(directoryName, pathname);
-
     WCHAR filename[MAX_PATH];
     wcscpy(filename, pathname);
     wcscat(filename, FILE_DATA_NAME);
 
-    // load the data from the histogram file
+    // load the data from the histogram file (and compute average level)
     FILE *datafile = fopen(W2A(filename), "rb");
+	avg_level = 0;
     for(int i = 0; i < hdims; i++) {
         float val;
         fread(&val, sizeof(float), 1, datafile);
 		cvSetReal1D(hist->bins,i,val);
+		avg_level += val;
     }
+	avg_level /= hdims;
     fclose(datafile);
 
-    // load the "friendly name" and set the type
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "r");
-    fgetws(friendlyName, MAX_PATH, namefile);
-    fclose(namefile);
-    classifierType = IDC_RADIO_BRIGHTNESS;
-
-    UpdateHistogramImage();
-    isTrained = true;
-    isOnDisk = true;
+	// set the type
+	classifierType = BRIGHTNESS_FILTER;
+	
+	UpdateHistogramImage();
 }
 
 BrightnessClassifier::~BrightnessClassifier() {
@@ -131,9 +124,12 @@ void BrightnessClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contours = NULL;
 
+	// threhold the backprojection image
+	cvThreshold(backproject, backproject, threshold*255, 255, CV_THRESH_BINARY);
+
     // close the backprojection image
     IplConvKernel *circElem = cvCreateStructuringElementEx(3,3,1,1,CV_SHAPE_ELLIPSE);        
-    cvMorphologyEx(backproject, backproject, 0, circElem, CV_MOP_CLOSE, 1);  
+    cvMorphologyEx(backproject, backproject, 0, circElem, CV_MOP_CLOSE, 2);
 
     // find contours in backprojection image
     cvFindContours( backproject, storage, &contours, sizeof(CvContour),
@@ -178,10 +174,16 @@ void BrightnessClassifier::UpdateHistogramImage() {
 	cvConvertScale(hist->bins, hist->bins, max_val ? 255./max_val : 0., 0);
 	cvSet(histimg, CV_RGB(220,220,240));
 	int bin_w = histimg->width / hdims;
-	for(int i = 0; i < hdims; i++)
-	{
-		int val = cvRound( cvGetReal1D(hist->bins,i)*histimg->height/255 );
-		CvScalar color = CV_RGB(i*255.f/hdims,i*255.f/hdims,i*255.f/hdims);
+	avg_level = 0;
+	float total_size = 0;
+	for(int i = 0; i < hdims; i++) {
+		double bin_size = cvGetReal1D(hist->bins,i);
+		double bin_level = i*255.0f/hdims;
+		int val = cvRound( bin_size*histimg->height/255 );
+		avg_level += bin_size*bin_level;
+		total_size += bin_size;
+
+		CvScalar color = CV_RGB(i*255.0f/hdims,i*255.0f/hdims,i*255.0f/hdims);
 		cvRectangle( histimg, cvPoint(i*bin_w,histimg->height),
 			cvPoint((i+1)*bin_w,histimg->height - val),
 			color, -1, 8, 0 );
@@ -189,17 +191,27 @@ void BrightnessClassifier::UpdateHistogramImage() {
 			cvPoint((i+1)*bin_w,histimg->height - val),
 			CV_RGB(0,0,0), 1, 8, 0 );
 	}
+	avg_level /= total_size;
+
+	// draw a red line at the average level
+	cvLine( histimg, cvPoint(0, histimg->height - avg_level*histimg->height/255), 
+		cvPoint(histimg->width, histimg->height - avg_level*histimg->height/255),
+		CV_RGB(255,0,0), 2, 8, 0);
+
     cvResize(histimg, filterImage);
     IplToBitmap(filterImage, filterBitmap);
     cvReleaseImage(&histimg);
 }
 
 void BrightnessClassifier::Save() {
-    USES_CONVERSION;
+    if (!isTrained) return;
+
+	Classifier::Save();
+
+	USES_CONVERSION;
     WCHAR filename[MAX_PATH];
 
-    SHCreateDirectory(NULL, directoryName);
-    // save the histogram data
+	// save the histogram data
     wcscpy(filename,directoryName);
     wcscat(filename, FILE_DATA_NAME);
     FILE *datafile = fopen(W2A(filename), "wb");
@@ -208,13 +220,4 @@ void BrightnessClassifier::Save() {
         fwrite(&val, sizeof(float), 1, datafile);
 	}
     fclose(datafile);
-
-    // save the "friendly name"
-    wcscpy(filename,directoryName);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "w");
-    fputws(friendlyName, namefile);
-    fclose(namefile);
-
-    isOnDisk = true;
 }

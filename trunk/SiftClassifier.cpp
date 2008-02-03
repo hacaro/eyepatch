@@ -15,21 +15,18 @@ SiftClassifier::SiftClassifier() :
 
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Feature Filter");
-    classifierType = IDC_RADIO_FEATURES;        
+    classifierType = SIFT_FILTER;        
 
     // append identifier to directory name
     wcscat(directoryName, FILE_SIFT_SUFFIX);
 }
 
 SiftClassifier::SiftClassifier(LPCWSTR pathname) :
-	Classifier() {
+	Classifier(pathname) {
 	USES_CONVERSION;
     numSampleFeatures = 0;
     sampleCopy = NULL;
     sampleFeatures = NULL;
-
-    // save the directory name for later
-    wcscpy(directoryName, pathname);
 
     WCHAR filename[MAX_PATH];
     wcscpy(filename, pathname);
@@ -45,16 +42,8 @@ SiftClassifier::SiftClassifier(LPCWSTR pathname) :
     sampleWidth = sampleCopy->width;
     sampleHeight = sampleCopy->height;
 
-    // load the "friendly name" and set the type
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "r");
-    fgetws(friendlyName, MAX_PATH, namefile);
-    fclose(namefile);
-    classifierType = IDC_RADIO_FEATURES;
-
-    isTrained = true;
-    isOnDisk = true;
+	// set the type
+    classifierType = SIFT_FILTER;
 
     UpdateSiftImage();
 }
@@ -223,10 +212,11 @@ void SiftClassifier::UpdateSiftImage() {
 
 void SiftClassifier::Save() {
     if (!isTrained) return;
+
+	Classifier::Save();
+
     USES_CONVERSION;
     WCHAR filename[MAX_PATH];
-
-    SHCreateDirectory(NULL, directoryName);
 
 	// save the feature data
     wcscpy(filename,directoryName);
@@ -237,13 +227,4 @@ void SiftClassifier::Save() {
     wcscpy(filename, directoryName);
     wcscat(filename, FILE_IMAGE_NAME);
 	cvSaveImage(W2A(filename), sampleCopy);
-
-    // save the "friendly name"
-    wcscpy(filename,directoryName);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "w");
-    fputws(friendlyName, namefile);
-    fclose(namefile);
-
-    isOnDisk = true;
 }

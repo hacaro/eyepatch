@@ -13,6 +13,17 @@ CFilterSelect::~CFilterSelect(void) {
 }
 
 LRESULT CFilterSelect::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+
+	// Populate the combo box with the different classifier types
+    HWND hwndCombo = GetDlgItem(IDC_FILTER_COMBO);
+	for (int i=0; i<NUM_FILTERS; i++) {
+		ComboBox_InsertString(hwndCombo, -1, filterNames[i]);
+	}
+	
+	// Set the range of the threshold slider from 0 to 100, and intial value to 50
+    SendDlgItemMessage(IDC_FILTER_THRESHOLD, TBM_SETRANGEMIN, FALSE, 0);
+    SendDlgItemMessage(IDC_FILTER_THRESHOLD, TBM_SETRANGEMAX, FALSE, 100);
+    SendDlgItemMessage(IDC_FILTER_THRESHOLD, TBM_SETPOS, TRUE, 50);
     return 0;
 }
 
@@ -21,18 +32,20 @@ LRESULT CFilterSelect::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
     return 0;
 }
 
+LRESULT CFilterSelect::OnTrack(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	long sliderPosition = (long) SendDlgItemMessage(IDC_FILTER_THRESHOLD, TBM_GETPOS, 0, 0);
+	bool isDragging = (LOWORD(wParam) == SB_THUMBTRACK);
+	parent->SendMessage(WM_SET_THRESHOLD, ((WPARAM)sliderPosition), isDragging);
+	return 0;
+}
+
 LRESULT CFilterSelect::OnEnable(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     GetDlgItem(IDC_TRAINBUTTON).EnableWindow(wParam);
     GetDlgItem(IDC_SHOWBUTTON).EnableWindow(wParam);
     GetDlgItem(IDC_SAVEFILTER).EnableWindow(wParam);
     GetDlgItem(IDC_FILTER_LIST).EnableWindow(wParam);
-    GetDlgItem(IDC_RADIO_COLOR).EnableWindow(wParam);
-    GetDlgItem(IDC_RADIO_SHAPE).EnableWindow(wParam);
-    GetDlgItem(IDC_RADIO_BRIGHTNESS).EnableWindow(wParam);
-    GetDlgItem(IDC_RADIO_FEATURES).EnableWindow(wParam);
-    GetDlgItem(IDC_RADIO_APPEARANCE).EnableWindow(wParam);
-    GetDlgItem(IDC_RADIO_MOTION).EnableWindow(wParam);
-    GetDlgItem(IDC_RADIO_GESTURE).EnableWindow(wParam);
+    GetDlgItem(IDC_FILTER_THRESHOLD).EnableWindow(wParam);
+    GetDlgItem(IDC_FILTER_COMBO).EnableWindow(wParam);
     return 1;
 }
 
@@ -46,7 +59,6 @@ LRESULT CFilterSelect::OnTextCallback(int idCtrl, LPNMHDR pnmh, BOOL&) {
         default:
             break;
     }
-
     return 0;
 }
 
@@ -113,6 +125,17 @@ LRESULT CFilterSelect::OnItemKeyDown(int idCtrl, LPNMHDR pnmh, BOOL&) {
         }
     }
     return 0;
+}
+
+void CFilterSelect::SelectFilter(int filterIndex) {
+	if ((filterIndex<0) || (filterIndex>=NUM_FILTERS)) return;
+    HWND hwndCombo = GetDlgItem(IDC_FILTER_COMBO);
+	ComboBox_SetCurSel(hwndCombo, filterIndex);
+}
+
+void CFilterSelect::SetThreshold(float threshold) {
+	int newPos = threshold * 100;
+	SendDlgItemMessage(IDC_FILTER_THRESHOLD, TBM_SETPOS, true, newPos);
 }
 
 void CFilterSelect::AddSavedFilter(Classifier* classifier) {
