@@ -45,12 +45,16 @@
 // number of frames for which we collect background information before detecting blobs
 #define GESTURE_NUM_FGTRAINING_FRAMES 10
 // minimum number of frames required for a valid gesture
-#define GESTURE_MIN_TRAJECTORY_LENGTH 20
+#define GESTURE_MIN_TRAJECTORY_LENGTH 40
 // number of samples away from the end we need to be to consider the gesture finished
 #define GESTURE_PHASE_CUTOFF 10
 #define GESTURE_NUM_CONDENSATION_SAMPLES 1000
 // maximum number of tracks we can look at simultaneously
 #define GESTURE_MAX_SIMULTANEOUS_TRACKS 1
+// amount of temporal scaling allowed in match
+#define RHO_MIN 0.7
+#define RHO_MAX 1.3
+
 
 // minimum number of background subtraction frames to "spin up" background model
 #define BACKGROUND_SUBTRACTION_MIN_FRAMES 10
@@ -120,7 +124,7 @@
 #define WM_SET_THRESHOLD       (WM_APP+6)
 
 // Classifier type for standard built-in classifiers
-#define IDC_STANDARD_CLASSIFIER 10001
+#define FILTER_BUILTIN 10001
 
 // Number of classifier types in the system
 #define NUM_FILTERS 7

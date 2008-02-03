@@ -24,7 +24,11 @@ public:
     long nFrames;
     bool processingVideo;
     IplImage *copyFrame, *outputFrame, *outputAccImage;
-    Bitmap *bmpInput, *bmpOutput;
+	Bitmap *bmpInput, *bmpOutput, *bmpMotion, *bmpGesture;
+
+    //  keep track of the number of active filters that require motion or blob tracking
+    int trackingMotion;
+    int trackingBlobs;
 
 private:
     CvCapture *videoCapture;
@@ -35,10 +39,6 @@ private:
     // functions that may be called by ProcessFrame (if motion/gesture filters are active)
     void ProcessMotionFrame();
     void ProcessBlobFrame();
-
-    //  keep track of the number of active filters that require motion or blob tracking
-    int trackingMotion;
-    int trackingBlobs;
 
     // for keeping track of position within circular motion history buffer
     int last;

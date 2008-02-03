@@ -33,6 +33,9 @@ CVideoMarkup::CVideoMarkup() :
     m_videoControl(this),
     m_videoRect(0,0,VIDEO_X,VIDEO_Y),
     m_filterRect(0, VIDEO_Y+SLIDER_Y, VIDEO_X, WINDOW_Y),
+    labelFont(L"Verdana", 10),
+    bigFont(L"Verdana", 14),
+	stringFormat(),
     posSelectPen(Color(100,100,255,100),2),
     negSelectPen(Color(100,255,100,100),2),
     guessPen(Color(100,255,100),4),
@@ -41,6 +44,8 @@ CVideoMarkup::CVideoMarkup() :
     negBrush(Color(50,255,100,100)),
     hoverBrush(Color(25, 50, 150, 255)),
     grayBrush(Color(150, 0, 0, 0)),
+	blackBrush(Color(0,0,0)),
+	whiteBrush(Color(255,255,255)),
     ltgrayBrush(Color(240,240,240)) {
 	guessPen.SetLineJoin(LineJoinRound);
     gesturePen.SetLineJoin(LineJoinRound);
@@ -121,16 +126,22 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
         graphics->ResetClip();
     }
 
+    graphicsExamples->FillRectangle(&ltgrayBrush, Rect(0,0,EXAMPLEWINDOW_WIDTH,EXAMPLEWINDOW_HEIGHT));
     if (classifier->isTrained) {
-        graphicsExamples->DrawImage(classifier->GetFilterImage(),20,0);
-    } else {
-        graphicsExamples->FillRectangle(&ltgrayBrush, Rect(0,0,EXAMPLEWINDOW_WIDTH/2,EXAMPLEWINDOW_HEIGHT));
-    }
+        graphicsExamples->DrawImage(classifier->GetFilterImage(),10,0);
+	    graphicsExamples->DrawString(L"FILTER MODEL", 12, &labelFont, PointF(15,5), &whiteBrush);
+	}
     if (showGuesses) {
-        graphicsExamples->DrawImage(classifier->GetApplyImage(),EXAMPLEWINDOW_WIDTH/2, 0);
-    } else {
-        graphicsExamples->FillRectangle(&ltgrayBrush, Rect(EXAMPLEWINDOW_WIDTH/2, 0, EXAMPLEWINDOW_WIDTH/2, EXAMPLEWINDOW_HEIGHT));
+        graphicsExamples->DrawImage(classifier->GetApplyImage(),FILTERIMAGE_WIDTH+20, 0);
+	    graphicsExamples->DrawString(L"FILTER OUTPUT", 13, &labelFont, PointF(FILTERIMAGE_WIDTH+25,5), &whiteBrush);
     }
+	if (classifier->isOnDisk) {
+		LPWSTR name = classifier->GetName();
+		graphicsExamples->DrawString(L"Active Filter:", 14, &labelFont, PointF(2*FILTERIMAGE_WIDTH+30,10), &blackBrush);
+	    graphicsExamples->DrawString(name, wcslen(name), &bigFont,
+			RectF(2*FILTERIMAGE_WIDTH+30,50,EXAMPLEWINDOW_WIDTH-(2*FILTERIMAGE_WIDTH+30),EXAMPLEWINDOW_HEIGHT-50),
+			&stringFormat, &blackBrush);
+	}
 
     if (recognizerMode == GESTURE_FILTER) {
         // draw the current gesture motion trajectories in this frame
@@ -148,9 +159,9 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 
             PointF *trackPoints = new PointF[nPoints];
             for (int j = startPoint; j<mt.size(); j++) {
-                MotionSample ms = mt[j];
-                trackPoints[j-startPoint] = PointF(ms.x, ms.y);                
-            }
+                OneDollarPoint ms = mt[j];
+                trackPoints[j-startPoint] = PointF(ms.m_x, ms.m_y);
+			}
             graphics->DrawCurve(&gesturePen, trackPoints, nPoints);
             delete[] trackPoints;
         }
@@ -164,8 +175,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
     return 0;
 }
 
-LRESULT CVideoMarkup::OnButtonDown( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
-{
+LRESULT CVideoMarkup::OnButtonDown( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
     POINT p;
     p.x = LOWORD(lParam);
     p.y = HIWORD(lParam);
@@ -818,11 +828,17 @@ void CVideoMarkup::RunClassifierOnCurrentFrame() {
         vector<MotionTrack> trackList;
         m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
 
-        for (int i=0; i<trackList.size(); i++) {
-            // TODO: figure out how to visualize multiple tracks in demo image
-            MotionTrack mt = trackList[i];
-            ((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
-        }
+        if (trackList.size() == 0) {
+			cvZero(m_videoLoader.guessMask);
+		} else {
+//	        for (int i=0; i<trackList.size(); i++) {
+			// BLAH -- only checking first active track
+			for (int i=0; i<1; i++) {
+				// TODO: figure out how to visualize multiple tracks in demo image
+				MotionTrack mt = trackList[i];
+				((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
+			}
+		}
     } else {
         classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);
     }

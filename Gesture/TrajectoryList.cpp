@@ -27,19 +27,7 @@ void AddTrackToList(DefBlobTrack* pTrack, vector<MotionTrack> *trackList, long s
         int frameNum = frameBegin + i;
         if ((frameNum >= startFrame) && (frameNum <= endFrame)) {
             CvBlob* pB = pS->GetBlob(i);
-            MotionSample ms;
-            ms.x = CV_BLOB_X(pB);
-            ms.vx = ms.x-lastx;
-            lastx = ms.x;
-            ms.y = CV_BLOB_Y(pB);
-            ms.vy = ms.y-lasty;
-            lasty = ms.y;
-            if (frameNum == startFrame) { // the first frame should have zero velocity
-                ms.vx = 0.0;
-                ms.vy = 0.0;
-            }
-            ms.sizex = CV_BLOB_WX(pB);
-            ms.sizey = CV_BLOB_WY(pB);
+            OneDollarPoint ms(CV_BLOB_X(pB), CV_BLOB_Y(pB));
             mt.push_back(ms);
         }
     }

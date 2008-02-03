@@ -343,19 +343,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Gesture\Condensation.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Gesture\RandomUtils.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Gesture\TrajectoryList.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Gesture\TrajectoryModel.cpp"
+					RelativePath=".\Gesture\OneDollar.cpp"
 					>
 				</File>
 			</Filter>
@@ -434,10 +422,6 @@
 			</File>
 			<File
 				RelativePath=".\FilterSelect.h"
-				>
-			</File>
-			<File
-				RelativePath=".\precomp.h"
 				>
 			</File>
 			<File
@@ -568,19 +552,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Gesture\Condensation.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Gesture\RandomUtils.h"
+					RelativePath=".\Gesture\OneDollar.h"
 					>
 				</File>
 				<File
 					RelativePath=".\Gesture\TrajectoryList.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Gesture\TrajectoryModel.h"
 					>
 				</File>
 			</Filter>

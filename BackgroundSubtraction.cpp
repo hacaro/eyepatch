@@ -11,7 +11,7 @@ BackgroundSubtraction::BackgroundSubtraction() :
 
     // set the "friendly name" and type
     wcscpy(friendlyName, L"Subtract Background");
-    classifierType = IDC_STANDARD_CLASSIFIER;
+    classifierType = FILTER_BUILTIN;
 
     isTrained = false;
     isOnDisk = false;

@@ -66,7 +66,7 @@ private:
 
     Pen blackPen, arrowPen;
     SolidBrush whiteBrush, blackBrush;
-    Font labelFont;
+    Font labelFont, smallFont;
 
     CVideoRunner m_videoRunner;
     CFilterLibrary m_filterLibrary;

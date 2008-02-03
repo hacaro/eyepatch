@@ -7,9 +7,6 @@
 
 GestureClassifier::GestureClassifier() :
 	Classifier() {
-    nModels = 0;
-    maxModelLength = 0;
-    models = NULL;
 
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Gesture Filter");
@@ -17,11 +14,6 @@ GestureClassifier::GestureClassifier() :
 
     // append identifier to directory name
     wcscat(directoryName, FILE_GESTURE_SUFFIX);
-
-    // ConDens structures for running live model    
-    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
-        activeCondens[i] = NULL;
-    }
 }
 
 GestureClassifier::GestureClassifier(LPCWSTR pathname) :
@@ -29,23 +21,20 @@ GestureClassifier::GestureClassifier(LPCWSTR pathname) :
 
 	USES_CONVERSION;
 
-    nModels = 0;
-    maxModelLength = 0;
-    models = NULL;
-
     WCHAR filename[MAX_PATH];
     wcscpy(filename, pathname);
     wcscat(filename, FILE_DATA_NAME);
 
-    // load the trajectories from the data file
+	// load the templates from the data file
     FILE *datafile = fopen(W2A(filename), "rb");
-	fread(&nModels, sizeof(int), 1, datafile); 
+	fread(&nTemplates, sizeof(int), 1, datafile);
 
-    models = new TrajectoryModel*[nModels];
-    int modelNum = 0;
-	for(int i = 0; i < nModels; i++) {
-		models[i] = new TrajectoryModel(datafile);
-		maxModelLength = max(maxModelLength, models[i]->GetLength());
+	for(int i = 0; i < nTemplates; i++) {
+		Template t(datafile);
+		maxTemplateLength = max(maxTemplateLength,t.GetLength());
+		char tname[MAX_PATH];
+		sprintf(tname, "Gesture %d", i);
+		rec.AddTemplate(tname, t);
     }
     fclose(datafile);
 
@@ -53,47 +42,30 @@ GestureClassifier::GestureClassifier(LPCWSTR pathname) :
 	classifierType = GESTURE_FILTER;
 
 	UpdateTrajectoryImage();
-
-    // ConDens structures for running live model
-    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
-        activeCondens[i] = new CondensationSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
-    }
 }
 
 GestureClassifier::~GestureClassifier() {
-    if (isTrained) { // delete the models
-        for (int i=0; i<nModels; i++) {
-            delete models[i];
-        }
-        delete[] models;
 
-        for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
-            if (activeCondens[i] != NULL) delete activeCondens[i];
-            activeCondens[i] = NULL;
-        }
-    }
 }
 
 void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
     if (isTrained) { // delete the old models
-        for (int i=0; i<nModels; i++) {
-            delete models[i];
-        }
-        delete[] models;
+		rec.DeleteUserTemplates();
     }
-    maxModelLength = 0;
+    maxTemplateLength = 0;
 
-    nModels = sampleSet->rangeSampleCount;
-    models = new TrajectoryModel*[nModels];
-    int modelNum = 0;
+    nTemplates = sampleSet->rangeSampleCount;
 
-    // TODO: call into trainingset class to do this instead of accessing samplemap
+	// TODO: call into trainingset class to do this instead of accessing samplemap
+	int tNum = 0;
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
         if (sample->iGroupId == GROUPID_RANGESAMPLES) { // gesture (range) sample
-            models[modelNum] = new TrajectoryModel(sample->motionTrack);
-            maxModelLength = max(maxModelLength, sample->motionTrack.size());
-            modelNum++;
+			char tname[MAX_PATH];
+			sprintf(tname, "Gesture %d", tNum);
+			rec.AddTemplate(tname, sample->motionTrack);
+            maxTemplateLength = max(maxTemplateLength, sample->motionTrack.size());
+			tNum++;
 		}
     }
     if (isOnDisk) { // this classifier has been saved so we'll update the files
@@ -105,11 +77,6 @@ void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
 
 	// update demo image
 	UpdateTrajectoryImage();
-
-    // ConDens structures for running live model
-    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
-        activeCondens[i] = new CondensationSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
-    }
 }
 
 BOOL GestureClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
@@ -121,86 +88,31 @@ void GestureClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     assert(false);
 }    
 
-void GestureClassifier::UpdateRunningModel(vector<MotionTrack> *trackList) {
-    int numTracks = trackList->size();
-    if (numTracks > GESTURE_MAX_SIMULTANEOUS_TRACKS) {
-        numTracks = GESTURE_MAX_SIMULTANEOUS_TRACKS;
-    }
-    for (int i=0; i<numTracks; i++) {
-        MotionTrack mt = (*trackList)[i];
-        MotionSample ms = mt[mt.size()-1];
-        activeCondens[i]->Update(ms.vx, ms.vy, ms.sizex, ms.sizey);
-        lastSample[i] = ms;
-    }
-}
-
-void GestureClassifier::ResetRunningModel() {
-    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
-        if (activeCondens[i] != NULL) delete activeCondens[i];
-        activeCondens[i] = new CondensationSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
-    }
-}
-
-void GestureClassifier::GetMaskFromRunningModel(IplImage *guessMask) {
-    IplImage *newMask = cvCloneImage(guessMask);
-    cvZero(newMask);
-    for (int i=0; i<GESTURE_MAX_SIMULTANEOUS_TRACKS; i++) {
-        for (int modelNum=0; modelNum<nModels; modelNum++) {
-            double probability = activeCondens[i]->GetModelProbability(modelNum);
-            double completionProb = activeCondens[i]->GetModelCompletionProbability(modelNum);
-            if (completionProb>0.1) {
-                MotionSample ms = lastSample[i];
-                // draw a rectangle in the new mask image
-                CvPoint topLeft = cvPoint(ms.x - ms.sizex/2, ms.y - ms.sizey/2);
-                CvPoint bottomRight = cvPoint(ms.x + ms.sizex/2, ms.y + ms.sizey/2);
-                cvRectangle(newMask, topLeft, bottomRight, cvScalar(0xFF), CV_FILLED, 8); 
-            }
-        }
-    }
-    cvAnd(guessMask, newMask, guessMask);
-}
-
 void GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
     IplImage *newMask = cvCloneImage(guessMask);
     cvZero(newMask);
-    CondensationSampleSet condensSampleSet(GESTURE_NUM_CONDENSATION_SAMPLES, models, nModels);
 
     // don't start all the way at the beginning of the track if it's really long
-    int startFrame = max(0, mt.size()-RHO_MAX*((double)maxModelLength));
-
-    MotionSample ms;
-    for (int i = startFrame; i<mt.size(); i++) {
-        // update probabilities based on this sample point
-        ms = mt[i];
-        condensSampleSet.Update(ms.vx, ms.vy, ms.sizex, ms.sizey);
-    }
+    int startFrame = max(0, mt.size()-RHO_MAX*((double)maxTemplateLength));
 
     cvZero(applyImage);
-    int barWidth = applyImage->width/(nModels*2+1);
-    double maxY = (double)applyImage->height - 40.0;
-    int startY = applyImage->height-10;
 
-    for (int modelNum=0; modelNum<nModels; modelNum++) {
-        double probability = condensSampleSet.GetModelProbability(modelNum);
-        double completionProb = condensSampleSet.GetModelCompletionProbability(modelNum);
+	Result r = rec.Recognize(mt);
 
-        CvPoint tl = cvPoint(barWidth+(modelNum*2)*barWidth, (int)(startY-5-completionProb*maxY));
-        CvPoint br = cvPoint(barWidth+(modelNum*2+1)*barWidth, startY);
-        cvRectangle(applyImage, tl, br, colorSwatch[modelNum % COLOR_SWATCH_SIZE], -1, CV_AA);
+	if (r.m_score > threshold) {
+		// draw a rectangle in the new mask image
+        CvPoint topLeft = cvPoint(0, 0);
+        CvPoint bottomRight = cvPoint(newMask->width, newMask->height);
+        cvRectangle(newMask, topLeft, bottomRight, cvScalar(0xFF), CV_FILLED, 8); 
 
-        if (completionProb>0.1) {
+		// draw the recognized gesture in the apply image
+		DrawTrack(applyImage, rec.m_templates[r.m_index].m_points, colorSwatch[r.m_index % COLOR_SWATCH_SIZE], 3);
 
-            // draw a rectangle in the new mask image
-            CvPoint topLeft = cvPoint(ms.x - ms.sizex/2, ms.y - ms.sizey/2);
-            CvPoint bottomRight = cvPoint(ms.x + ms.sizex/2, ms.y + ms.sizey/2);
-            cvRectangle(newMask, topLeft, bottomRight, cvScalar(0xFF), CV_FILLED, 8); 
-        }
-    }
-    cvLine(applyImage,cvPoint(0,startY),cvPoint(applyImage->width,startY),CV_RGB(255,255,255),1);
- 
-	CvFont font;
-	cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX_SMALL, 0.55,0.6,0,1, CV_AA);
-	cvPutText (applyImage,"Gesture Completion Probabilities",cvPoint(7,20), &font, cvScalar(255,255,255));
+		// print the name of the recognized gesture
+		CvFont font;
+		cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX_SMALL, 0.55,0.6,0,1, CV_AA);
+		cvPutText (applyImage,r.m_name.c_str(),cvPoint(7,20), &font, cvScalar(255,255,255));
+	}
 
     // Combine old and new mask
     // TODO: support OR operation as well
@@ -211,12 +123,37 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
 }
 
 void GestureClassifier::UpdateTrajectoryImage() {
-    cvZero(filterImage);
-	if (nModels < 1) return;
+	if (nTemplates < 1) return;
 
-	for (int i=0; i<nModels; i++) {
-        DrawTrack(filterImage, models[i], colorSwatch[i % COLOR_SWATCH_SIZE], 3);
+	int gridSize = (int) ceil(sqrt((double)nTemplates));
+    int gridX = 0;
+    int gridY = 0;
+    int gridSampleW = FILTERIMAGE_WIDTH / gridSize;
+    int gridSampleH = FILTERIMAGE_HEIGHT / gridSize;
+    cvZero(filterImage);
+
+
+	// font for printing name of the gesture
+	CvFont font;
+	cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX_SMALL, 0.55,0.6,0,1, CV_AA);
+	char gestnum[10];
+
+	IplImage *gestureImg = cvCreateImage(cvSize(gridSampleW, gridSampleH), filterImage->depth, filterImage->nChannels);
+	for (int i=0; i<nTemplates; i++) {
+		cvSetImageROI(filterImage, cvRect(gridX*gridSampleW, gridY*gridSampleH, gridSampleW, gridSampleH));
+		cvZero(gestureImg);
+		DrawTrack(gestureImg, rec.m_templates[i].m_points, colorSwatch[i % COLOR_SWATCH_SIZE], 3);
+		sprintf(gestnum, "%d", i);
+		cvPutText(gestureImg, gestnum, cvPoint(7,16), &font, cvScalar(255,255,255));
+		cvCopy(gestureImg, filterImage);
+		cvResetImageROI(filterImage);
+        gridX++;
+        if (gridX >= gridSize) {
+            gridX = 0;
+            gridY++;
+        }
 	}
+	cvReleaseImage(&gestureImg);
 
     // update demo image
     IplToBitmap(filterImage, filterBitmap);
@@ -230,17 +167,17 @@ void GestureClassifier::Save() {
     USES_CONVERSION;
     WCHAR filename[MAX_PATH];
 
-    // save the trajectory data
+    // save the template data
     wcscpy(filename,directoryName);
     wcscat(filename, FILE_DATA_NAME);
     FILE *datafile = fopen(W2A(filename), "wb");
 
-	// write out the number of models
-	fwrite(&nModels, sizeof(int), 1, datafile); 
+	// write out the number of templates
+	fwrite(&nTemplates, sizeof(int), 1, datafile); 
 
-	// write out all the trajectory models
-	for(int i = 0; i < nModels; i++) {
-		models[i]->WriteToFile(datafile);
+	// write out all the templates
+	for(int i = 0; i < rec.m_templates.size(); i++) {
+		rec.m_templates[i].WriteToFile(datafile);
     }
     fclose(datafile);
 }

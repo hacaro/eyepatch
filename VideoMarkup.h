@@ -70,7 +70,9 @@ private:
 	Graphics *graphics, *graphicsExamples;
     PointF selectStart, selectCurrent;
     Pen posSelectPen, negSelectPen, guessPen, gesturePen;
-    SolidBrush posBrush, negBrush, hoverBrush, grayBrush, ltgrayBrush;
+    SolidBrush posBrush, negBrush, hoverBrush, grayBrush, ltgrayBrush, whiteBrush, blackBrush;
+    Font labelFont, bigFont;
+	StringFormat stringFormat;
     bool selectingRegion;
 	bool scrubbingVideo;
     int currentGroupId;
