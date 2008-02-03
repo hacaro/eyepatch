@@ -17,12 +17,11 @@
 #define COLOR_SMIN 30
 
 // shape matching parameters
-#define SHAPE_MIN_LENGTH 100
-#define SHAPE_MIN_AREA 10
-#define SHAPE_CANNY_EDGE_FIND 250
+#define SHAPE_MIN_LENGTH 50
+#define SHAPE_MIN_AREA 5
+#define SHAPE_CANNY_EDGE_FIND 230
 #define SHAPE_CANNY_EDGE_LINK 100
-#define SHAPE_CANNY_APERTURE 5
-#define SHAPE_SIMILARITY_THRESHOLD 0.5
+#define SHAPE_CANNY_APERTURE 3
 
 // SIFT matching parameters
 /* the maximum number of keypoint NN candidates to check during BBF search */
@@ -32,18 +31,15 @@
 #define SIFT_MIN_RANSAC_FEATURES 4
 
 // Motion parameters
-#define MOTION_MIN_COMPONENT_AREA 100
 /* history image and deltas are in frames, not seconds */
 #define MOTION_MHI_DURATION 15.0
 #define MOTION_MAX_TIME_DELTA 7.0
 #define MOTION_MIN_TIME_DELTA 1.0
-/* amount of pixel difference considered motion */
-#define MOTION_DIFF_THRESHOLD 30
-/* amount of angle difference (in degrees) that we still consider the same direction */
-#define MOTION_ANGLE_DIFF_THRESHOLD 30
 /* number of images used to compute silhouette */
 #define MOTION_NUM_IMAGES 4
 #define MOTION_NUM_HISTORY_FRAMES 15
+/* amount of pixel difference considered motion */
+#define MOTION_DIFF_THRESHOLD 30
 
 // constants for gesture recognition
 // number of frames for which we collect background information before detecting blobs

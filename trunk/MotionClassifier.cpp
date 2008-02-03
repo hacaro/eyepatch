@@ -94,21 +94,46 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
             // Segmask is marked motion components map.  It is not used further.
             CvSeq *seq = cvSegmentMotion(sample->motionHistory, segmask, storage, MOTION_NUM_HISTORY_FRAMES, MOTION_MAX_TIME_DELTA );
 
-            // calculate orientation and add to list of motion directions
-            double motionAngle = cvCalcGlobalOrientation( orient, mask, sample->motionHistory, 1.0, MOTION_MHI_DURATION);
-            motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
-            motionAngles.push_back(motionAngle);
+//			int motion_min_component_area = 50+threshold*100.0;
+			int motion_min_component_area = 100.0;
+			// iterate through the motion components
+			for(int i = 0; i < seq->total; i++) {
+				CvRect comp_rect = ((CvConnectedComp*)cvGetSeqElem(seq, i ))->rect;
+				if(comp_rect.width * comp_rect.height < motion_min_component_area ) // reject very small components
+					continue;
+				
+				// ignore motion components that are centered outside of our selection rectangle for this sample
+	            Point centerPt((comp_rect.x + comp_rect.width/2), (comp_rect.y + comp_rect.height/2));
+				if (!sample->selectBounds.Contains(centerPt)) continue;
 
-            // copy the motion to the demo image
-            cvResize(dst, filterImageMotion);
+				// select component ROI
+				cvSetImageROI(sample->motionHistory, comp_rect);
+				cvSetImageROI(orient, comp_rect);
+				cvSetImageROI(mask, comp_rect);
+
+				// calculate orientation
+				double motionAngle = cvCalcGlobalOrientation( orient, mask, sample->motionHistory, 1.0, MOTION_MHI_DURATION);
+				motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
+				motionAngles.push_back(motionAngle);
+
+				cvResetImageROI(sample->motionHistory);
+				cvResetImageROI(orient);
+				cvResetImageROI(mask);
+
+				// draw the motion arrow for this direction into the demo image
+				CvScalar color = CV_RGB(255,255,255);
+				double magnitude = min(filterImage->width/3, filterImage->height/3);
+				CvPoint center = cvPoint(filterImage->width/2,filterImage->height/2);
+				cvCircle(filterImageArrows, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
+				DrawArrow(filterImageArrows, center, motionAngle, magnitude, color, 3);
+			}
+			
+            // copy the motion in this sample to the demo image
+			cvSetImageROI(dst, cvRect(sample->selectBounds.X, sample->selectBounds.Y,
+				sample->selectBounds.Width, sample->selectBounds.Height));
+			cvResize(dst, filterImageMotion);
             cvAddWeighted(filterImageMotion, 1.0/((float)sampleSet->posSampleCount), filterImage, 1.0, 0, filterImage);
-
-            // draw the motion arrow for demo image
-            CvScalar color = CV_RGB(255,255,255);
-            double magnitude = min(filterImage->width/3, filterImage->height/3);
-            CvPoint center = cvPoint(filterImage->width/2,filterImage->height/2);
-            cvCircle(filterImageArrows, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
-            DrawArrow(filterImageArrows, center, motionAngle, magnitude, color, 3);
+			cvResetImageROI(dst);
 
             cvReleaseImage(&orient);
             cvReleaseImage(&segmask);
@@ -169,10 +194,12 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
     // Segmask is marked motion components map.  It is not used further.
     CvSeq *seq = cvSegmentMotion(frame, segmask, storage, timestamp, MOTION_MAX_TIME_DELTA);
 
+	int motion_min_component_area = 50+threshold*100.0;
+
     // iterate through the motion components
     for(int i = 0; i < seq->total; i++) {
         CvRect comp_rect = ((CvConnectedComp*)cvGetSeqElem(seq, i ))->rect;
-        if(comp_rect.width * comp_rect.height < MOTION_MIN_COMPONENT_AREA ) // reject very small components
+        if(comp_rect.width * comp_rect.height < motion_min_component_area ) // reject very small components
             continue;
         double magnitude = 30;
 
@@ -192,13 +219,15 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
         // draw mogion components in red unless there is a motion direction match
         CvScalar color = CV_RGB(255,100,100);
 
+		int angle_diff_threshold = 60-threshold*58.0;
+
         // check if the direction of this component matches the direction in one of the samples
         for (list<double>::iterator i = motionAngles.begin(); i!=motionAngles.end(); i++) {
             double angleDiff = fabs((*i)-motionAngle);
             // for angles close to 360
-            if (angleDiff > (360-MOTION_ANGLE_DIFF_THRESHOLD)) angleDiff = 360-angleDiff;
+            if (angleDiff > (360-angle_diff_threshold)) angleDiff = 360-angleDiff;
 
-            if (angleDiff < MOTION_ANGLE_DIFF_THRESHOLD) { // add to list of guesses
+            if (angleDiff < angle_diff_threshold) { // add to list of guesses
                 color = CV_RGB(255,255,255);
 
                 // draw rectangle in mask image
@@ -206,13 +235,12 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
                     cvPoint(comp_rect.x+comp_rect.width, comp_rect.y+comp_rect.height),
                     cvScalar(0xFF), CV_FILLED, 8);
             }
-
-            // draw a clock with arrow indicating the direction
-            CvPoint center = cvPoint((comp_rect.x + comp_rect.width/2), (comp_rect.y + comp_rect.height/2));
-
-            cvCircle(dst, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
-            DrawArrow(dst, center, motionAngle, magnitude, color, 3);
         }
+        // draw a clock with arrow indicating the direction
+        CvPoint center = cvPoint((comp_rect.x + comp_rect.width/2), (comp_rect.y + comp_rect.height/2));
+
+        cvCircle(dst, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
+        DrawArrow(dst, center, motionAngle, magnitude, color, 3);
     }
     // copy motion picture to demo image
     cvResize(dst, applyImage);

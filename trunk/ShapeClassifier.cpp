@@ -119,7 +119,7 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
             int contourNum = 0;
             for (CvSeq *matchContour = templateContours; matchContour != NULL; matchContour = matchContour->h_next) {
                 double similarity = cvMatchShapes(contour, matchContour, CV_CONTOURS_MATCH_I1, 0);
-                if (similarity < SHAPE_SIMILARITY_THRESHOLD) {
+                if (similarity < (1.0-threshold*.95)) {
                     cvDrawContours(copy, contour, colorSwatch[contourNum], CV_RGB(0,0,0), 0, 3, 8, cvPoint(0,0));
 		            CvRect rect = cvBoundingRect(contour, 1);
 

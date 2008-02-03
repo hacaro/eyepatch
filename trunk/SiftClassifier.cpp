@@ -151,7 +151,7 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
         objRect.Width = ptMax.x - ptMin.x;
         objRect.Height = ptMax.y - ptMin.y;
 
-        if (numFeatureMatches >= SIFT_MIN_RANSAC_FEATURES) {
+		if (numFeatureMatches >= SIFT_MIN_RANSAC_FEATURES) {
             // try to use RANSAC algorithm to find transformation
             CvMat* H = ransac_xform(sampleFeatures, numSampleFeatures, FEATURE_FWD_MATCH, lsq_homog, 4, 0.01, homog_xfer_err, 3.0, NULL, NULL );
             if (H != NULL) {
@@ -175,7 +175,8 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
             }
         }
 
-        if (numFeatureMatches > 1) { // we had at least 2 feature matches
+		int minMatches = 1 + threshold*6;
+        if (numFeatureMatches > minMatches) { // we had enough matches to declare the object detected
 
             // draw object location guess in mask image
             cvRectangle(newMask, cvPoint(objRect.X, objRect.Y),
