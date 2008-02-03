@@ -24,6 +24,7 @@ CFilterComposer::CFilterComposer() :
     m_filterLibrary(this),
     m_videoRunner(this),
     labelFont(L"Verdana", 10),
+	smallFont(L"Verdana", 8),
     whiteBrush(Color(255,255,255)),
     blackBrush(Color(0,0,0)),
     blackPen(Color(0,0,0),4),
@@ -43,20 +44,32 @@ LRESULT CFilterComposer::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
     graphics->FillRectangle(&whiteBrush, 10, 40, 320, 240);
     graphics->DrawRectangle(&blackPen, 10, 40, 320, 240);
     graphics->DrawString(L"INPUT VIDEO", 11, &labelFont, PointF(15,45), &blackBrush);
-
     if (m_videoRunner.processingVideo) {
         graphics->DrawImage(m_videoRunner.bmpInput, 10, 40, 320, 240);
+	    graphics->DrawString(L"INPUT VIDEO", 11, &labelFont, PointF(15,45), &whiteBrush);
     }
 
     graphics->FillRectangle(&whiteBrush, 10, 420, 320, 240);
     graphics->DrawRectangle(&blackPen, 10, 420, 320, 240);
     graphics->DrawString(L"FILTERED VIDEO", 14, &labelFont, PointF(15,425), &blackBrush);
-
     if (m_videoRunner.processingVideo) {
         graphics->DrawImage(m_videoRunner.bmpOutput, 10, 420, 320, 240);
+	    graphics->DrawString(L"FILTERED VIDEO", 14, &labelFont, PointF(15,425), &whiteBrush);
     }
 
-    BitBlt(hdc,FILTERLIBRARY_WIDTH,0,WINDOW_X-FILTERLIBRARY_WIDTH,WINDOW_Y,hdcmem,0,0,SRCCOPY);
+	// draw the blob tracking status image
+	if (m_videoRunner.trackingBlobs) {
+        graphics->DrawImage(m_videoRunner.bmpGesture, 10, 290, 160, 120);
+	    graphics->DrawString(L"GESTURE INPUT", 13, &smallFont, PointF(15,295), &whiteBrush);
+	}
+
+	// draw the motion tracking status image
+	if (m_videoRunner.trackingMotion) {
+        graphics->DrawImage(m_videoRunner.bmpMotion, 170, 290, 160, 120);
+	    graphics->DrawString(L"MOTION INPUT", 12, &smallFont, PointF(175,295), &whiteBrush);
+	}
+
+	BitBlt(hdc,FILTERLIBRARY_WIDTH,0,WINDOW_X-FILTERLIBRARY_WIDTH,WINDOW_Y,hdcmem,0,0,SRCCOPY);
     EndPaint(&ps);
 
     return 0;
@@ -240,9 +253,9 @@ void CFilterComposer::ClearCustomClassifiers() {
 }
 
 void CFilterComposer::ClearActiveClassifiers() {
+    m_videoRunner.ClearActiveFilters();
     HWND listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
     m_filterLibrary.ClearFilters(listView);
-    m_videoRunner.ClearActiveFilters();
 }
 
 void CFilterComposer::LoadStandardClassifiers() {

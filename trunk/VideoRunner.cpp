@@ -15,6 +15,8 @@ CVideoRunner::CVideoRunner(CWindow *caller) {
     motionHistory = NULL;
     bmpInput = NULL;
     bmpOutput = NULL;
+	bmpMotion = NULL;
+	bmpGesture = NULL;
     processingVideo = false;
     nFrames = 0;
     parent = caller;
@@ -29,9 +31,9 @@ CVideoRunner::CVideoRunner(CWindow *caller) {
 }
 
 CVideoRunner::~CVideoRunner(void) {
-    if (processingVideo) {
-        StopProcessing();
-    }
+	WaitForSingleObject(m_hMutex,INFINITE);
+    StopProcessing();
+	if (m_hMutex) CloseHandle(m_hMutex);
 }
 
 void CVideoRunner::CreateBlobTracker() {
@@ -117,8 +119,11 @@ void CVideoRunner::ProcessFrame() {
             if (trackList.size() == 0) {
                 cvZero(guessMask);
             } else {
-                ((GestureClassifier*)(*i))->UpdateRunningModel(&trackList);
-                ((GestureClassifier*)(*i))->GetMaskFromRunningModel(guessMask);
+//				for (int trackNum=0; trackNum < trackList.size(); trackNum++) {
+				// BLAH -- only checking first active track
+				for (int trackNum=0; trackNum< 1; trackNum++) {
+	                ((GestureClassifier*)(*i))->ClassifyTrack(trackList[trackNum], guessMask);
+				}
             }
         } else {
             (*i)->ClassifyFrame(copyFrame, guessMask);
@@ -181,6 +186,17 @@ void CVideoRunner::ProcessMotionFrame() {
     // threshold difference image and use it to update motion history image
     cvThreshold(silh, silh, MOTION_DIFF_THRESHOLD, 1, CV_THRESH_BINARY); 
     cvUpdateMotionHistory(silh, motionHistory, nFrames, MOTION_MHI_DURATION); // update MHI
+
+    // convert MHI to blue 8U image
+    IplImage *mask = cvCreateImage(cvSize(motionHistory->width, motionHistory->height), IPL_DEPTH_8U, 1);
+    IplImage *dst = cvCreateImage(cvSize(motionHistory->width, motionHistory->height), IPL_DEPTH_8U, 3);
+    cvCvtScale(motionHistory, mask, 255./MOTION_MHI_DURATION,(MOTION_MHI_DURATION-nFrames)*255./MOTION_MHI_DURATION);
+    cvZero(dst);
+    cvCvtPlaneToPix( mask, 0, 0, 0, dst );
+
+    IplToBitmap(dst, bmpMotion);
+	cvReleaseImage(&mask);
+	cvReleaseImage(&dst);
 }
 
 void CVideoRunner::ProcessBlobFrame() {
@@ -190,7 +206,8 @@ void CVideoRunner::ProcessBlobFrame() {
 
     // we don't need to keep the old trajectories around
     trajectories.DeleteOldTracks();
-/*
+
+	// remainder of this function is just to create the blob status image
     // make a color copy of the grayscale foreground mask
     IplImage* fgImage = pTracker->GetFGMask();
     IplImage *fgImageCopy = cvCloneImage(copyFrame);
@@ -215,12 +232,9 @@ void CVideoRunner::ProcessBlobFrame() {
 
         }
     }
-    cvNamedWindow("BlobWindow");
-    cvShowImage("BlobWindow", maskedCopyFrame);
-    cvWaitKey(5);
+    IplToBitmap(maskedCopyFrame, bmpGesture);
     cvReleaseImage(&maskedCopyFrame);
     cvReleaseImage(&fgImageCopy);
-*/
 }
 
 DWORD WINAPI CVideoRunner::ThreadCallback(CVideoRunner* instance) {
@@ -280,6 +294,10 @@ void CVideoRunner::StartProcessing() {
     bmpInput = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
     bmpOutput = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
 
+	// Create smaller bitmaps for motion and gesture status images
+    bmpMotion = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
+    bmpGesture = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
+
     processingVideo = true;
 
     // Start processing thread
@@ -290,12 +308,9 @@ void CVideoRunner::StartProcessing() {
 void CVideoRunner::StopProcessing() {
     if (!processingVideo) return;
 
-    processingVideo = false;
     // End processing thread
-	WaitForSingleObject(m_hMutex,INFINITE);
-
-	if (m_hMutex) CloseHandle(m_hMutex);
 	TerminateThread(m_hThread, 0);
+    processingVideo = false;
 
     cvReleaseCapture(&videoCapture);
     cvReleaseImage(&copyFrame);
@@ -310,6 +325,8 @@ void CVideoRunner::StopProcessing() {
 
     delete bmpInput;
     delete bmpOutput;
+	delete bmpMotion;
+	delete bmpGesture;
 }
 
 void CVideoRunner::AddActiveFilter(Classifier *c) {

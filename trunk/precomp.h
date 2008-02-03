@@ -58,25 +58,16 @@ using namespace std;
 #include "SIFT/utils.h"
 #include "SIFT/xform.h"
 
-// MotionSample and MotionTrack types for gestures
-typedef struct _MotionSample {
-    double x, y, vx, vy, sizex, sizey;
-} MotionSample;
-typedef vector<MotionSample> MotionTrack;
-
 // Gesture Tracking includes
-#include "Gesture/RandomUtils.h"
-#include "Gesture/TrajectoryList.h"
+#include "Gesture/OneDollar.h"
+typedef vector<OneDollarPoint> MotionTrack;
 #include "Gesture/BlobTracker.h"
-#include "Gesture/TrajectoryModel.h"
-#include "Gesture/Condensation.h"
 
 // Utility functions
 void IplToBitmap(IplImage *src, Bitmap *dst);
 CvScalar hsv2rgb(float hue);
 void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness=1);
 void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness, int maxNumPoints=0);
-void DrawTrack(IplImage *img, TrajectoryModel *mt, CvScalar color, int thickness, int maxNumPoints=0);
 bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin);
 
 // swatch of "nice" colors

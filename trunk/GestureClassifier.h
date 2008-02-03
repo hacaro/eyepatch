@@ -23,14 +23,8 @@ public:
 
 private:
 	void UpdateTrajectoryImage();
+	Recognizer rec;
 
-    int nModels;
-    int maxModelLength;
-    TrajectoryModel** models;
-
-    // TODO: rather than limiting to three simultaneous tracks, it would be better
-    // to place this ConDens updating code in the blob tracker output model
-    // (by making a modified version of TrajectoryList)
-    CondensationSampleSet* activeCondens[GESTURE_MAX_SIMULTANEOUS_TRACKS];
-    MotionSample lastSample[GESTURE_MAX_SIMULTANEOUS_TRACKS];
+    int nTemplates;
+    int maxTemplateLength;
 };
