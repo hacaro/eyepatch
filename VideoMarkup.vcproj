@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="./CVHaar; ./Gesture; ./SIFT"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)/OSCPack&quot;;&quot;$(ProjectDir)/CVHaar&quot;;&quot;$(ProjectDir)/Gesture&quot;;&quot;$(ProjectDir)/SIFT&quot;;&quot;$(ProjectDir)/SocketServer&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -125,7 +125,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="./CVHaar; ./Gesture; ./SIFT"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)/OSCPack&quot;;&quot;$(ProjectDir)/CVHaar&quot;;&quot;$(ProjectDir)/Gesture&quot;;&quot;$(ProjectDir)/SIFT&quot;;&quot;$(ProjectDir)/SocketServer&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"

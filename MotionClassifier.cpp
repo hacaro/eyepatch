@@ -11,19 +11,16 @@ MotionClassifier::MotionClassifier() :
 
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Motion Filter");
-    classifierType = IDC_RADIO_MOTION;        
+    classifierType = MOTION_FILTER;        
 
     // append identifier to directory name
     wcscat(directoryName, FILE_MOTION_SUFFIX);
 }
 
 MotionClassifier::MotionClassifier(LPCWSTR pathname) :
-    Classifier() {
+    Classifier(pathname) {
 
 	USES_CONVERSION;
-
-    // save the directory name for later
-    wcscpy(directoryName, pathname);
 
     // load the motion directions from the data file
     WCHAR filename[MAX_PATH];
@@ -48,16 +45,8 @@ MotionClassifier::MotionClassifier(LPCWSTR pathname) :
     cvReleaseImage(&filterImageCopy);
     IplToBitmap(filterImage, filterBitmap);
 
-    // load the "friendly name" and set the type
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "r");
-    fgetws(friendlyName, MAX_PATH, namefile);
-    fclose(namefile);
-
-    classifierType = IDC_RADIO_MOTION;
-    isTrained = true;
-    isOnDisk = true;
+    // set the type
+    classifierType = MOTION_FILTER;
 }
 
 MotionClassifier::~MotionClassifier() {
@@ -243,10 +232,11 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
 
 void MotionClassifier::Save() {
     if (!isTrained) return;
+
+	Classifier::Save();
+
     USES_CONVERSION;
     WCHAR filename[MAX_PATH];
-
-    SHCreateDirectory(NULL, directoryName);
 
 	// save the motion angle data
     wcscpy(filename,directoryName);
@@ -265,13 +255,4 @@ void MotionClassifier::Save() {
     wcscpy(filename, directoryName);
     wcscat(filename, FILE_IMAGE_NAME);
 	cvSaveImage(W2A(filename), filterImage);
-
-    // save the "friendly name"
-    wcscpy(filename,directoryName);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "w");
-    fputws(friendlyName, namefile);
-    fclose(namefile);
-
-    isOnDisk = true;
 }

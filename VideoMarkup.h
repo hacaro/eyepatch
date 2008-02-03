@@ -15,6 +15,7 @@ public:
     LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
     LRESULT OnCreate(UINT, WPARAM, LPARAM, BOOL& );
     LRESULT OnCommand(UINT, WPARAM, LPARAM, BOOL& );
+	LRESULT OnSetThreshold(UINT, WPARAM, LPARAM, BOOL& );
     LRESULT OnBeginDrag(int, LPNMHDR, BOOL&);
     LRESULT OnCustomDraw(int, LPNMHDR, BOOL&);
 
@@ -27,6 +28,7 @@ public:
     void LoadClassifier(LPWSTR pathname);
     void ReplaceClassifier(Classifier *newClassifier);
     void EmptyTrash();
+	void RunClassifierOnCurrentFrame();
 
     static CWndClassInfo& GetWndClassInfo()
     {
@@ -53,6 +55,7 @@ public:
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
         MESSAGE_HANDLER(WM_LOAD_FILTER, OnLoadFilter)
+        MESSAGE_HANDLER(WM_SET_THRESHOLD, OnSetThreshold)
         NOTIFY_CODE_HANDLER(LVN_BEGINDRAG, OnBeginDrag)
         NOTIFY_CODE_HANDLER(NM_CUSTOMDRAW, OnCustomDraw)
 	ALT_MSG_MAP(1)  // sample listview

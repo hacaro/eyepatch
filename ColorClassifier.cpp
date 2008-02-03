@@ -17,14 +17,14 @@ ColorClassifier::ColorClassifier() :
 
     // set the default "friendly name" and type
     wcscpy(friendlyName, L"Color Filter");
-    classifierType = IDC_RADIO_COLOR;        
+    classifierType = COLOR_FILTER;        
     
     // append identifier to directory name
     wcscat(directoryName, FILE_COLOR_SUFFIX);   
 }
 
 ColorClassifier::ColorClassifier(LPCWSTR pathname) :
-	Classifier() {
+	Classifier(pathname) {
 
     USES_CONVERSION;
 
@@ -34,9 +34,6 @@ ColorClassifier::ColorClassifier(LPCWSTR pathname) :
 	hranges_arr[0] = 0;	hranges_arr[1] = 180;
 	float* hranges = hranges_arr;
 	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
-
-    // save the directory name for later
-    wcscpy(directoryName, pathname);
 
     WCHAR filename[MAX_PATH];
     wcscpy(filename, pathname);
@@ -51,17 +48,10 @@ ColorClassifier::ColorClassifier(LPCWSTR pathname) :
     }
     fclose(datafile);
 
-    // load the "friendly name" and set the type
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "r");
-    fgetws(friendlyName, MAX_PATH, namefile);
-    fclose(namefile);
-    classifierType = IDC_RADIO_COLOR;
+	// set the type
+	classifierType = COLOR_FILTER;
 
     UpdateHistogramImage();
-    isTrained = true;
-    isOnDisk = true;
 }
 
 ColorClassifier::~ColorClassifier() {
@@ -148,6 +138,9 @@ void ColorClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contours = NULL;
 
+	// threhold the backprojection image
+	cvThreshold(backproject, backproject, threshold*255, 255, CV_THRESH_BINARY);
+
     // close the backprojection image
     IplConvKernel *circElem = cvCreateStructuringElementEx(3,3,1,1,CV_SHAPE_ELLIPSE);        
     cvMorphologyEx(backproject, backproject, 0, circElem, CV_MOP_CLOSE, 1);  
@@ -212,10 +205,13 @@ void ColorClassifier::UpdateHistogramImage() {
 
 
 void ColorClassifier::Save() {
+    if (!isTrained) return;
+
+	Classifier::Save();
+
     USES_CONVERSION;
     WCHAR filename[MAX_PATH];
 
-    SHCreateDirectory(NULL, directoryName);
     // save the histogram data
     wcscpy(filename,directoryName);
     wcscat(filename, FILE_DATA_NAME);
@@ -225,13 +221,4 @@ void ColorClassifier::Save() {
         fwrite(&val, sizeof(float), 1, datafile);
 	}
     fclose(datafile);
-
-    // save the "friendly name"
-    wcscpy(filename,directoryName);
-    wcscat(filename, FILE_FRIENDLY_NAME);
-    FILE *namefile = fopen(W2A(filename), "w");
-    fputws(friendlyName, namefile);
-    fclose(namefile);
-
-    isOnDisk = true;
 }

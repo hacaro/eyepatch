@@ -49,7 +49,7 @@ CVideoMarkup::CVideoMarkup() :
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
     classifier = new ColorClassifier();
-    recognizerMode = IDC_RADIO_COLOR;
+    recognizerMode = COLOR_FILTER;
     showGuesses = false;
     selectingRegion = false;
     draggingIcon = false;
@@ -132,7 +132,7 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
         graphicsExamples->FillRectangle(&ltgrayBrush, Rect(EXAMPLEWINDOW_WIDTH/2, 0, EXAMPLEWINDOW_WIDTH/2, EXAMPLEWINDOW_HEIGHT));
     }
 
-    if (recognizerMode == IDC_RADIO_GESTURE) {
+    if (recognizerMode == GESTURE_FILTER) {
         // draw the current gesture motion trajectories in this frame
 	    REAL scaleX = ((REAL)VIDEO_X) / ((REAL)m_videoLoader.videoX);
 	    REAL scaleY = ((REAL)VIDEO_Y) / ((REAL)m_videoLoader.videoY);
@@ -347,26 +347,7 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
 
     m_videoLoader.LoadFrame(sliderPosition);
     if (showGuesses && !scrubbingVideo) {
-        HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
-
-        // reset the mask of guesses
-		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
-
-        if (recognizerMode == IDC_RADIO_MOTION) {
-            ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES, m_videoLoader.guessMask);
-        } else if (recognizerMode == IDC_RADIO_GESTURE) {
-            vector<MotionTrack> trackList;
-            m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-
-            for (int i=0; i<trackList.size(); i++) {
-                // TODO: figure out how to visualize multiple tracks in demo image
-                MotionTrack mt = trackList[i];
-                ((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
-            }
-        } else {
-            classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);
-        }
-        SetCursor(hOld);
+		RunClassifierOnCurrentFrame();
     }
     InvalidateRgn(activeRgn, FALSE);
     return 0;
@@ -437,8 +418,11 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // Create the filter selector
     m_filterSelect.Create(m_hWnd, WS_CHILD | WS_VISIBLE | WS_DISABLED);
     m_filterSelect.MoveWindow(VIDEO_X, VIDEO_Y-50, WINDOW_X-VIDEO_X, WINDOW_Y-VIDEO_Y+50);
-    m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_COLOR);
-    m_filterSelect.ShowWindow(TRUE);
+
+	// Start with "Color" mode selected
+	m_filterSelect.SelectFilter(COLOR_FILTER);
+
+	m_filterSelect.ShowWindow(TRUE);
     m_filterSelect.EnableWindow(FALSE);
 
     return 0;
@@ -466,57 +450,47 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 }
 
 LRESULT CVideoMarkup::OnLoadFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	m_filterSelect.SelectFilter(wParam);
+	recognizerMode = wParam;
     switch(wParam) {
-        case IDC_RADIO_COLOR:
-            recognizerMode = IDC_RADIO_COLOR;
+        case COLOR_FILTER:
             ReplaceClassifier((ColorClassifier*)lParam);
-            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_COLOR);
             break;
-        case IDC_RADIO_SHAPE:
-            recognizerMode = IDC_RADIO_SHAPE;
+        case SHAPE_FILTER:
             ReplaceClassifier((ShapeClassifier*)lParam);
-            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_SHAPE);
             break;
-        case IDC_RADIO_FEATURES:
-            recognizerMode = IDC_RADIO_FEATURES;
+        case SIFT_FILTER:
             ReplaceClassifier((SiftClassifier*)lParam);
-            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_FEATURES);
             break;
-        case IDC_RADIO_BRIGHTNESS:
-            recognizerMode = IDC_RADIO_BRIGHTNESS;
+        case BRIGHTNESS_FILTER:
             ReplaceClassifier((BrightnessClassifier*)lParam);
-            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_BRIGHTNESS);
             break;
-        case IDC_RADIO_APPEARANCE:
-            recognizerMode = IDC_RADIO_APPEARANCE;
+        case ADABOOST_FILTER:
             ReplaceClassifier((HaarClassifier*)lParam);
-            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_APPEARANCE);
             break;
-        case IDC_RADIO_MOTION:
-            recognizerMode = IDC_RADIO_MOTION;
+        case MOTION_FILTER:
             ReplaceClassifier((MotionClassifier*)lParam);
-            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_MOTION);
             break;
-        case IDC_RADIO_GESTURE:
-            recognizerMode = IDC_RADIO_GESTURE;
+        case GESTURE_FILTER:
             ReplaceClassifier((GestureClassifier*)lParam);
-            m_filterSelect.CheckRadioButton(IDC_RADIO_COLOR, IDC_RADIO_GESTURE, IDC_RADIO_GESTURE);
             break;
     }
+    InvalidateRgn(activeRgn, FALSE);
     return 0;
 }
 
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     USES_CONVERSION;
+	bool needToRerunClassifier = false;
     long sliderPosition, sliderRange, selStart, selEnd;
-    switch(wParam) {
+    switch(LOWORD(wParam)) { // this tells us which control the message came from
         case IDC_TRAINBUTTON:
             {
                 WCHAR errorMessage[1000] = L"Sorry, you don't have enough examples to train this recognizer. Please add some more examples and try again.\n";
                 if (!classifier->ContainsSufficientSamples(&sampleSet)) {
-                    if (recognizerMode == IDC_RADIO_APPEARANCE) {
-                        wcscat(errorMessage, L"To build an appearance recognizer you need at least 3 positive and 3 negative examples.");
-                    } else if (recognizerMode == IDC_RADIO_GESTURE) {
+                    if (recognizerMode == ADABOOST_FILTER) {
+                        wcscat(errorMessage, L"To build an Adaboost recognizer you need at least 3 positive and 3 negative examples.");
+                    } else if (recognizerMode == GESTURE_FILTER) {
                         wcscat(errorMessage, L"To build a gesture recognizer you need to to select a range of frames using the 'Mark In' and 'Mark Out' buttons.");
                     }
 		            MessageBox(errorMessage, L"Error Training Recognizer", MB_OK | MB_ICONERROR);
@@ -526,6 +500,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
 		        classifier->StartTraining(&sampleSet);
                 EnableControls(TRUE);
             }
+			needToRerunClassifier = true;
             break;
         case IDC_FRAMELEFT:
         case IDC_FRAMERIGHT:
@@ -534,10 +509,11 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             sliderPosition = (wParam==IDC_FRAMELEFT) ? sliderPosition-1 : sliderPosition+1;
             ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, sliderPosition);
             OnTrack(0,0,0,bHandled);
+			needToRerunClassifier = true;
             break;
         case IDC_MARKIN:
         case IDC_MARKOUT:
-            if (recognizerMode != IDC_RADIO_GESTURE) break;
+            if (recognizerMode != GESTURE_FILTER) break;
             sliderPosition =
                 (long) ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETPOS, 0, 0);
             sliderRange = 
@@ -571,6 +547,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             break;
         case IDC_SHOWBUTTON:
             showGuesses = !showGuesses;
+			needToRerunClassifier = true;
             break;
         case IDC_SAVEFILTER:
             {
@@ -582,60 +559,45 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
                     // also add to the listbox of saved classifiers
                     m_filterSelect.AddSavedFilter(classifier);
                 }
-                // disable the "learn" and "save" buttons until we start a new classifier
-                m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
+                // disable the "train" button until we start a new classifier
                 m_filterSelect.GetDlgItem(IDC_TRAINBUTTON).EnableWindow(FALSE);
+//                m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
+//                m_filterSelect.GetDlgItem(IDC_FILTER_THRESHOLD).EnableWindow(FALSE);
             }
             break;
-        case IDC_RADIO_COLOR:
-            recognizerMode = IDC_RADIO_COLOR;
-            ReplaceClassifier(new ColorClassifier());
-            break;
-        case IDC_RADIO_SHAPE:
-            recognizerMode = IDC_RADIO_SHAPE;
-            ReplaceClassifier(new ShapeClassifier());
-            break;
-        case IDC_RADIO_FEATURES:
-            recognizerMode = IDC_RADIO_FEATURES;
-            ReplaceClassifier(new SiftClassifier());
-            break;
-        case IDC_RADIO_BRIGHTNESS:
-            recognizerMode = IDC_RADIO_BRIGHTNESS;
-            ReplaceClassifier(new BrightnessClassifier());
-            break;
-        case IDC_RADIO_APPEARANCE:
-            recognizerMode = IDC_RADIO_APPEARANCE;
-            ReplaceClassifier(new HaarClassifier());
-            break;
-        case IDC_RADIO_MOTION:
-            recognizerMode = IDC_RADIO_MOTION;
-            ReplaceClassifier(new MotionClassifier());
-            break;
-        case IDC_RADIO_GESTURE:
-            recognizerMode = IDC_RADIO_GESTURE;
-            ReplaceClassifier(new GestureClassifier());
-            break;
+		case IDC_FILTER_COMBO:
+			if (HIWORD(wParam) == CBN_SELCHANGE) { // the user selected a new filter type
+				int selectedIndex = ComboBox_GetCurSel(m_filterSelect.GetDlgItem(IDC_FILTER_COMBO));
+				recognizerMode = selectedIndex;
+				switch(selectedIndex) {
+					case COLOR_FILTER:
+						ReplaceClassifier(new ColorClassifier());
+						break;
+					case SHAPE_FILTER:
+			            ReplaceClassifier(new ShapeClassifier());
+						break;
+					case BRIGHTNESS_FILTER:
+						ReplaceClassifier(new BrightnessClassifier());
+						break;
+					case SIFT_FILTER:
+						ReplaceClassifier(new SiftClassifier());
+						break;
+					case ADABOOST_FILTER:
+						ReplaceClassifier(new HaarClassifier());
+						break;
+					case MOTION_FILTER:
+						ReplaceClassifier(new MotionClassifier());
+						break;
+					case GESTURE_FILTER:
+						ReplaceClassifier(new GestureClassifier());
+						break;
+				}
+			}
+			needToRerunClassifier = true;
+			break;
     }
-    if (showGuesses) {
-        HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
-
-        // reset the mask of guesses
-		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
-
-        if (recognizerMode == IDC_RADIO_MOTION) {
-            ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES, m_videoLoader.guessMask);
-        } else if (recognizerMode == IDC_RADIO_GESTURE) {
-            vector<MotionTrack> trackList;
-            m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-            for (int i=0; i<trackList.size(); i++) {
-                // TODO: figure out how to visualize multiple tracks in demo image
-                MotionTrack mt = trackList[i];
-                ((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
-            }
-        } else {
-            classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);
-        }
-        SetCursor(hOld);
+    if (showGuesses && needToRerunClassifier) {
+		RunClassifierOnCurrentFrame();
     }
     InvalidateRgn(activeRgn, FALSE);
     return 0;
@@ -702,7 +664,7 @@ void CVideoMarkup::OpenVideoFile() {
 
 		InvalidateRgn(activeRgn,FALSE);
 
-	    if (recognizerMode == IDC_RADIO_GESTURE) {
+	    if (recognizerMode == GESTURE_FILTER) {
 			// we're in "gesture" mode so we'll need to precompute the trajectories
 			m_videoLoader.LearnTrajectories();
 		}
@@ -729,7 +691,7 @@ void CVideoMarkup::RecordVideoFile() {
 		    m_videoLoader.LoadFrame(0);
 		    InvalidateRgn(activeRgn,FALSE);
 
-		    if (recognizerMode == IDC_RADIO_GESTURE) {
+		    if (recognizerMode == GESTURE_FILTER) {
 				// we're in "gesture" mode so we'll need to precompute the trajectories
 				m_videoLoader.LearnTrajectories();
 			}
@@ -775,10 +737,17 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
         assert(c_iter != savedClassifiers.end()); 
     }
     classifier = newClassifier;
-    m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
+
+	// update the filter controls
+	m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
     m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(classifier->isTrained);
     m_filterSelect.GetDlgItem(IDC_TRAINBUTTON).EnableWindow(!classifier->isOnDisk);
-    m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
+	m_filterSelect.SelectFilter(classifier->classifierType);
+	m_filterSelect.SetThreshold(classifier->threshold);
+
+	// we'll enable the threshold slider and save button to allow tweaking threshold and resaving
+    m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(classifier->isTrained);
+    m_filterSelect.GetDlgItem(IDC_FILTER_THRESHOLD).EnableWindow(TRUE);
 
     // reset the mask of guesses
 	cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
@@ -786,7 +755,7 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     showGuesses = false;
 
     // change slider attributes to select either a range or just a single frame, depending on classifier type
-    if (recognizerMode == IDC_RADIO_GESTURE) {
+    if (recognizerMode == GESTURE_FILTER) {
         m_videoControl.EnableSelectionRange(true);
         m_videoLoader.LearnTrajectories();
     } else {
@@ -822,4 +791,40 @@ void CVideoMarkup::EmptyTrash() {
         }
         iItem = iNextItem;
     }
+}
+
+// The wParam stores the new threshold value (from 0 to 100) and the lParam 
+// indicates whether or not the slider is currently being dragged
+LRESULT CVideoMarkup::OnSetThreshold(UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
+	if ((wParam < 0) || (wParam > 100)) return 0;
+	float newThresh = ((float)wParam) / 100.0;
+	classifier->threshold = newThresh;
+	if (showGuesses && !lParam) {
+		RunClassifierOnCurrentFrame();
+		InvalidateRgn(activeRgn, FALSE);
+	}
+	return 0;
+}
+
+void CVideoMarkup::RunClassifierOnCurrentFrame() {
+	HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
+
+    // reset the mask of guesses
+	cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
+
+    if (recognizerMode == MOTION_FILTER) {
+        ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES, m_videoLoader.guessMask);
+    } else if (recognizerMode == GESTURE_FILTER) {
+        vector<MotionTrack> trackList;
+        m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
+
+        for (int i=0; i<trackList.size(); i++) {
+            // TODO: figure out how to visualize multiple tracks in demo image
+            MotionTrack mt = trackList[i];
+            ((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
+        }
+    } else {
+        classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);
+    }
+    SetCursor(hOld);
 }

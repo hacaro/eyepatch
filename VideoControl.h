@@ -6,8 +6,8 @@ public:
 
     BEGIN_MSG_MAP(CVideoControl)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
-        MESSAGE_HANDLER(WM_COMMAND, OnTrack)
-        MESSAGE_HANDLER(WM_HSCROLL, OnCommand)
+        MESSAGE_HANDLER(WM_COMMAND, OnCommand)
+        MESSAGE_HANDLER(WM_HSCROLL, OnTrack)
         MESSAGE_HANDLER(WM_ENABLE, OnEnable)
     END_MSG_MAP()
 
