@@ -8,6 +8,7 @@ public:
     HBITMAP hbmImage;
     UINT id;
     int iGroupId;
+	Rect selectBounds;
     MotionTrack motionTrack;
 
     TrainingSample(IplImage*, IplImage*, HWND, HIMAGELIST, Rect, int);

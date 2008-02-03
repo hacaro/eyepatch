@@ -6,18 +6,16 @@ TrainingSample::TrainingSample(IplImage* srcImage, IplImage* motionHist, HWND lc
     hwndListControl = lc;
     hImageList = il;
     iGroupId = groupId;
+	selectBounds = bounds;
     motionTrack.clear();
 
     fullImageCopy = cvCreateImage(cvSize(bounds.Width,bounds.Height),IPL_DEPTH_8U, 3); 
-    motionHistory = cvCreateImage(cvSize(bounds.Width,bounds.Height),IPL_DEPTH_32F, 1);
-
-    resizedImage = cvCreateImage(cvSize(LISTVIEW_SAMPLE_X,LISTVIEW_SAMPLE_Y),IPL_DEPTH_8U, 3); 
+    motionHistory = cvCreateImage(cvSize(motionHist->width,motionHist->height),IPL_DEPTH_32F, 1);
+	resizedImage = cvCreateImage(cvSize(LISTVIEW_SAMPLE_X,LISTVIEW_SAMPLE_Y),IPL_DEPTH_8U, 3); 
     bmpImage = new Bitmap(LISTVIEW_SAMPLE_X, LISTVIEW_SAMPLE_Y, PixelFormat24bppRGB);
 
     cvSetImageROI(srcImage, cvRect( bounds.X, bounds.Y, bounds.Width, bounds.Height));
     cvCopyImage(srcImage, fullImageCopy);
-    cvSetImageROI(motionHist, cvRect( bounds.X, bounds.Y, bounds.Width, bounds.Height));
-    cvCopyImage(motionHist, motionHistory);
 
     if (srcImage->width >= LISTVIEW_SAMPLE_X && srcImage->height >= LISTVIEW_SAMPLE_Y) {
         cvResize(srcImage, resizedImage, CV_INTER_AREA);
@@ -25,7 +23,9 @@ TrainingSample::TrainingSample(IplImage* srcImage, IplImage* motionHist, HWND lc
         cvResize(srcImage, resizedImage, CV_INTER_LINEAR);
     }
     cvResetImageROI(srcImage);
-    cvResetImageROI(motionHist);
+
+	// copy entire frame motion history image (motion history analysis doesn't work as well on partial frame)
+	cvCopyImage(motionHist, motionHistory);
 
     IplToBitmap(resizedImage, bmpImage);
     bmpImage->GetHBITMAP(NULL, &hbmImage);
