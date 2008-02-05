@@ -18,7 +18,9 @@ CVideoRunner::CVideoRunner(CWindow *caller) {
 	bmpMotion = NULL;
 	bmpGesture = NULL;
     processingVideo = false;
+	runningLive = true;
     nFrames = 0;
+	framesAvailable = 0;
     parent = caller;
 
     trackingMotion = 0;
@@ -31,7 +33,6 @@ CVideoRunner::CVideoRunner(CWindow *caller) {
 }
 
 CVideoRunner::~CVideoRunner(void) {
-	WaitForSingleObject(m_hMutex,INFINITE);
     StopProcessing();
 	if (m_hMutex) CloseHandle(m_hMutex);
 }
@@ -99,6 +100,13 @@ void CVideoRunner::ProcessFrame() {
         ProcessBlobFrame();
     }
 
+    // some outputs run on the original (unfiltered) frame
+	// we apply these before applying any of the filters
+    for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
+        (*j)->ProcessInput(copyFrame);
+    }
+
+
     // First black out the output frame
     cvZero(outputFrame);
     int nFiltersInChain = activeClassifiers.size();
@@ -147,7 +155,7 @@ void CVideoRunner::ProcessFrame() {
 
         // apply output chain to filtered frame
         for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
-            (*j)->OutputData(copyFrame, guessMask, contours, W2A((*i)->GetName()));
+            (*j)->ProcessOutput(copyFrame, guessMask, contours, W2A((*i)->GetName()));
         }
 
         // reset the contour storage
@@ -169,7 +177,11 @@ void CVideoRunner::ProcessFrame() {
     ReleaseMutex(m_hMutex);
 
     // Grab next frame (do this AFTER releasing mutex)
-	currentFrame = cvQueryFrame(videoCapture);
+	if (runningLive || (nFrames < framesAvailable)) {
+		currentFrame = cvQueryFrame(videoCapture);
+	} else {	// we are all out of recorded video frames
+		parent->SendMessage(WM_COMMAND, IDC_RUNRECORDED, 0);
+	}
 }
 
 void CVideoRunner::ProcessMotionFrame() {
@@ -248,16 +260,28 @@ DWORD WINAPI CVideoRunner::ThreadCallback(CVideoRunner* instance) {
     return 1L;
 }
 
-void CVideoRunner::StartProcessing() {
-
-    // Attempt to access the camera and get dimensions
-    CvCapture *vc = cvCreateCameraCapture(0);
-
-    if (vc == NULL) {
-		MessageBox(GetActiveWindow(),
-			L"Sorry, I'm unable to connect to a camera.  Please make sure that your camera is plugged in and its drivers are installed.", 
-			L"Error Accessing Camera", MB_OK | MB_ICONERROR);
-		return;
+void CVideoRunner::StartProcessing(bool isLive) {
+	CvCapture *vc = NULL;
+	runningLive = isLive;
+	if (isLive) {    // Attempt to access the camera and get dimensions
+	    vc = cvCreateCameraCapture(0);
+		if (vc == NULL) {
+			MessageBox(GetActiveWindow(),
+				L"Sorry, I'm unable to connect to a camera.  Please make sure that your camera is plugged in and its drivers are installed.", 
+				L"Error Accessing Camera", MB_OK | MB_ICONERROR);
+			return;
+		}
+	} else {	// Attempt to load a recorded video
+		if (!LoadRecordedVideo(parent->m_hWnd, &vc)) {
+			// user didn't select a file
+			return;
+		}
+		if (vc == NULL) { // user selected a file but we couldn't load it
+			MessageBox(GetActiveWindow(), 
+				L"Sorry, I'm unable to load this video file.\nIt may be in a format I can't recognize.", 
+				L"Error Loading Video", MB_OK | MB_ICONERROR);
+			return;
+		}
 	}
 
     // get video capture properties
@@ -266,6 +290,10 @@ void CVideoRunner::StartProcessing() {
     videoX = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_WIDTH);
     videoY = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_HEIGHT);
     fps = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FPS);
+	nFrames = 1;
+	if (!runningLive) {
+		framesAvailable = cvGetCaptureProperty(videoCapture, CV_CAP_PROP_FRAME_COUNT);
+	}
 
 	// create images to store a copy of the current frame input and output, and an accumulator for filter data
     copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
@@ -308,9 +336,12 @@ void CVideoRunner::StartProcessing() {
 void CVideoRunner::StopProcessing() {
     if (!processingVideo) return;
 
-    // End processing thread
+    WaitForSingleObject(m_hMutex,INFINITE);
+
+	// End processing thread
 	TerminateThread(m_hThread, 0);
     processingVideo = false;
+	currentFrame = NULL;
 
     cvReleaseCapture(&videoCapture);
     cvReleaseImage(&copyFrame);
@@ -327,6 +358,7 @@ void CVideoRunner::StopProcessing() {
     delete bmpOutput;
 	delete bmpMotion;
 	delete bmpGesture;
+    ReleaseMutex(m_hMutex);
 }
 
 void CVideoRunner::AddActiveFilter(Classifier *c) {
@@ -358,4 +390,27 @@ void CVideoRunner::ClearActiveOutputs() {
     WaitForSingleObject(m_hMutex,INFINITE);
     activeOutputs.clear();
     ReleaseMutex(m_hMutex);
+}
+
+
+BOOL CVideoRunner::LoadRecordedVideo(HWND hwndOwner, CvCapture** capture) {
+    WCHAR szFileName[MAX_PATH] = L"";
+    OPENFILENAMEW ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
+    ofn.hwndOwner = hwndOwner;
+    ofn.lpstrFilter = L"Video Files\0*.avi;*.mpg;*.mp4;*.wmv;*.flv;*.mpeg;*.m2v;*.mpv;*.mov;*.qt;*.vob;*.rm\0";
+    ofn.lpstrFile = szFileName;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.lpstrDefExt = L"avi";
+
+    if(!GetOpenFileName(&ofn)) {
+	    return FALSE;
+    }
+
+    USES_CONVERSION;
+    // Attempt to load the video file and get dimensions
+    *capture = cvCreateFileCapture(W2A(szFileName));
+	return TRUE;
 }

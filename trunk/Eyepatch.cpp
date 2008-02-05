@@ -111,14 +111,9 @@ LRESULT CEyepatch::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
 
 LRESULT CEyepatch::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 
-    // Free the loaded classifiers and outputsinks
-	m_filterComposer.ClearActiveClassifiers();
-    m_filterComposer.ClearStandardClassifiers();
-    m_filterComposer.ClearCustomClassifiers();
-    m_filterComposer.ClearOutputs();
-
-    m_videoMarkup.DestroyWindow();
     m_filterComposer.DestroyWindow();
+    m_videoMarkup.DestroyWindow();
+
     DestroyMenu(hMenu);
     PostQuitMessage( 0 );
 	return 0;
@@ -239,7 +234,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
 	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	CEyepatch *wnd = new CEyepatch();
-	wnd->Create(NULL, CRect(0,0,WINDOW_X,WINDOW_Y), APP_CLASS);
+	wnd->Create(NULL, CRect(0,0,WINDOW_X,WINDOW_Y), APP_CLASS,
+		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE);
 	while( GetMessage( &msg, NULL, 0, 0 ) ){
 		TranslateMessage( &msg );
 		DispatchMessage( &msg );

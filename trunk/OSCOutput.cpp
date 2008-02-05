@@ -15,7 +15,10 @@ OSCOutput::~OSCOutput() {
     delete transmitSocket;
 }
 
-void OSCOutput::OutputData(IplImage *image, IplImage *mask, CvSeq* contours, char *filterName) {
+void OSCOutput::ProcessInput(IplImage *image) {
+}
+
+void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, CvSeq* contours, char *filterName) {
     char buffer[OSC_OUTPUT_BUFFER_SIZE];
     char messageType[OSC_OUTPUT_BUFFER_SIZE];
     sprintf(messageType, "%s/", filterName);

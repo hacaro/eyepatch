@@ -64,6 +64,7 @@ typedef vector<OneDollarPoint> MotionTrack;
 #include "Gesture/BlobTracker.h"
 
 // Utility functions
+void CopyImageToClipboard (IplImage* img);
 void IplToBitmap(IplImage *src, Bitmap *dst);
 CvScalar hsv2rgb(float hue);
 void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness=1);

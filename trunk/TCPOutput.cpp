@@ -29,7 +29,10 @@ DWORD WINAPI TCPOutput::ServerListenThread(SocketServer* server) {
     return 1L;
 }
 
-void TCPOutput::OutputData(IplImage *image, IplImage *mask, CvSeq* contours, char *filterName) {
+void TCPOutput::ProcessInput(IplImage *image) {
+}
+
+void TCPOutput::ProcessOutput(IplImage *image, IplImage *mask, CvSeq* contours, char *filterName) {
     char buffer[TCP_OUTPUT_BUFFER_SIZE];
     char message[TCP_OUTPUT_BUFFER_SIZE];
 

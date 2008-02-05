@@ -16,6 +16,7 @@
 #include "OutputSink.h"
 #include "OSCOutput.h"
 #include "TCPOutput.h"
+#include "ClipboardOutput.h"
 #include "FilterLibrary.h"
 #include "VideoRunner.h"
 #include "FilterComposer.h"
@@ -121,12 +122,16 @@ LRESULT CFilterComposer::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     return 0;
 }
 
-
 LRESULT CFilterComposer::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 
-    if (m_videoRunner.processingVideo) {
-        m_videoRunner.StopProcessing();
-    }
+	// Stop running (if we are currently processing video)
+	m_videoRunner.StopProcessing();
+
+	// Free the loaded classifiers and outputsinks
+	ClearActiveClassifiers();
+    ClearStandardClassifiers();
+    ClearCustomClassifiers();
+    ClearOutputs();
     
     delete graphics;
 	DeleteDC(hdcmem);
@@ -183,7 +188,7 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
         case IDC_RUNLIVE:
             hMenu = ::GetMenu(this->GetParent());
             if (!m_videoRunner.processingVideo) {
-                m_videoRunner.StartProcessing();
+                m_videoRunner.StartProcessing(true);
                 if (m_videoRunner.processingVideo) {
                     m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).EnableWindow(FALSE);
                     m_filterLibrary.GetDlgItem(IDC_RUNLIVE).SetWindowText(L"Stop Running");
@@ -206,6 +211,32 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
                 ::DrawMenuBar(GetParent());
             }
             break;
+		case IDC_RUNRECORDED:
+            hMenu = ::GetMenu(this->GetParent());
+            if (!m_videoRunner.processingVideo) {
+                m_videoRunner.StartProcessing(false);
+                if (m_videoRunner.processingVideo) {
+                    m_filterLibrary.GetDlgItem(IDC_RUNLIVE).EnableWindow(FALSE);
+                    m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).SetWindowText(L"Stop Running");
+
+                    // disable the menu
+                    EnableMenuItem(hMenu, 0, MF_BYPOSITION | MF_GRAYED);
+                    EnableMenuItem(hMenu, 1, MF_BYPOSITION | MF_GRAYED);
+                    EnableMenuItem(hMenu, 2, MF_BYPOSITION | MF_GRAYED);
+                    ::DrawMenuBar(GetParent());
+                }
+            } else {
+                m_videoRunner.StopProcessing();
+                m_filterLibrary.GetDlgItem(IDC_RUNLIVE).EnableWindow(TRUE);
+                m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).SetWindowText(L"Run on Recorded Video...");
+
+                // reenable the menu
+                EnableMenuItem(hMenu, 0, MF_BYPOSITION | MF_ENABLED);
+                EnableMenuItem(hMenu, 1, MF_BYPOSITION | MF_ENABLED);
+                EnableMenuItem(hMenu, 2, MF_BYPOSITION | MF_ENABLED);
+                ::DrawMenuBar(GetParent());
+            }
+			break;
         case IDC_RESET:
             ClearActiveClassifiers();
             ClearActiveOutputs();
@@ -288,6 +319,11 @@ void CFilterComposer::LoadOutputs() {
     OutputSink *tcp = new TCPOutput();
     outputSinks.push_back(tcp);
     m_filterLibrary.AddOutput(listView, tcp);
+
+	// Clipboard output
+    OutputSink *clipboard = new ClipboardOutput();
+    outputSinks.push_back(clipboard);
+    m_filterLibrary.AddOutput(listView, clipboard);
 
 }
 

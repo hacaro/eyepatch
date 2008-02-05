@@ -346,10 +346,18 @@
 					RelativePath=".\Gesture\OneDollar.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\Gesture\TrajectoryList.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Outputs"
 				>
+				<File
+					RelativePath=".\ClipboardOutput.cpp"
+					>
+				</File>
 				<File
 					RelativePath=".\OSCOutput.cpp"
 					>
@@ -422,6 +430,10 @@
 			</File>
 			<File
 				RelativePath=".\FilterSelect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\precomp.h"
 				>
 			</File>
 			<File
@@ -563,6 +575,10 @@
 			<Filter
 				Name="Outputs"
 				>
+				<File
+					RelativePath=".\ClipboardOutput.h"
+					>
+				</File>
 				<File
 					RelativePath=".\OSCOutput.h"
 					>
