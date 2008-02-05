@@ -759,18 +759,21 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
     m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(classifier->isTrained);
     m_filterSelect.GetDlgItem(IDC_FILTER_THRESHOLD).EnableWindow(TRUE);
 
-    // reset the mask of guesses
-	cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
 
-    showGuesses = false;
+	if (m_videoLoader.videoLoaded) {
+		// reset the mask of guesses
+		cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
 
-    // change slider attributes to select either a range or just a single frame, depending on classifier type
-    if (recognizerMode == GESTURE_FILTER) {
-        m_videoControl.EnableSelectionRange(true);
-        m_videoLoader.LearnTrajectories();
-    } else {
-        m_videoControl.EnableSelectionRange(false);
-    }
+		showGuesses = false;
+
+		// change slider attributes to select either a range or just a single frame, depending on classifier type
+		if (recognizerMode == GESTURE_FILTER) {
+			m_videoControl.EnableSelectionRange(true);
+			m_videoLoader.LearnTrajectories();
+		} else {
+			m_videoControl.EnableSelectionRange(false);
+		}
+	}
 }
 
 void CVideoMarkup::EmptyTrash() {
