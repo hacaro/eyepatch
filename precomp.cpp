@@ -1,5 +1,38 @@
 #include "precomp.h"
 
+void CopyImageToClipboard (IplImage* img) {
+	if ((img==NULL) || (img->nChannels != 3)) return;
+	if (::OpenClipboard(NULL)) {
+
+		// create HGLOBAL storage for image
+		HGLOBAL  hMem = GlobalAlloc (GMEM_MOVEABLE, img->imageSize + sizeof(BITMAPINFOHEADER) + 16);
+		BYTE *pClipData = (BYTE*)GlobalLock(hMem);
+
+		// fill in image info
+		BITMAPINFOHEADER bmh;
+		ZeroMemory(&bmh, sizeof(BITMAPINFOHEADER));
+		bmh.biBitCount = 24;
+		bmh.biPlanes = 1;
+		bmh.biHeight = -img->height;
+		bmh.biWidth = img->width;
+		bmh.biSize = sizeof(BITMAPINFOHEADER);
+		bmh.biSizeImage = img->imageSize;
+
+		CopyMemory (pClipData, &bmh, sizeof(BITMAPINFOHEADER)) ;
+		pClipData += sizeof(BITMAPINFOHEADER);
+
+		CopyMemory (pClipData, img->imageData, img->imageSize) ;
+		GlobalUnlock (hMem) ;
+		if (::EmptyClipboard()) {
+			::SetClipboardData (CF_DIB, hMem) ;
+		} else {
+			GlobalFree (hMem) ;  // something went wrong, so we better free the memory
+		}
+		::CloseClipboard() ;
+		// GlobalFree (hMem) ; // Clipboard now owns the memory location, so we don't free it!
+	}
+}
+
 void IplToBitmap(IplImage *src, Bitmap *dst) {
     BitmapData bmData;
     bmData.Width = src->width;

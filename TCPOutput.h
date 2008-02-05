@@ -5,10 +5,12 @@
 #include "../SocketServer/SocketServer.h"
 
 class TCPOutput : public OutputSink {
+
 public:
     TCPOutput();
     ~TCPOutput();
-    void OutputData(IplImage* image, IplImage* mask, CvSeq* contours, char* filterName);
+	void ProcessInput(IplImage* image);
+    void ProcessOutput(IplImage* image, IplImage* mask, CvSeq* contours, char* filterName);
 
 private:
     SocketServer server;

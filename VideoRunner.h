@@ -9,7 +9,7 @@ public:
 	~CVideoRunner();
 
     static DWORD WINAPI ThreadCallback(CVideoRunner*);
-    void StartProcessing();
+    void StartProcessing(bool isLive);
     void StopProcessing();
 	void ProcessFrame();
 
@@ -19,10 +19,12 @@ public:
     void AddActiveOutput(OutputSink *o);
     void ClearActiveOutputs();
 
+	BOOL LoadRecordedVideo(HWND hwndOwner, CvCapture** capture);
+
 	int videoX, videoY;
     int fps;
-    long nFrames;
-    bool processingVideo;
+    long nFrames, framesAvailable;
+    bool processingVideo, runningLive;
     IplImage *copyFrame, *outputFrame, *outputAccImage;
 	Bitmap *bmpInput, *bmpOutput, *bmpMotion, *bmpGesture;
 
