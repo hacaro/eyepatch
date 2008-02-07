@@ -8,7 +8,7 @@ OSCOutput::OSCOutput() :
     OutputSink() {
     transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_ADDRESS, OSC_PORT));
  
-    SetName(L"OSC over UDP");
+    SetName(L"OSC over UDP on Port 7000");
 }
 
 OSCOutput::~OSCOutput() {

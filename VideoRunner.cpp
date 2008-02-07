@@ -380,14 +380,27 @@ void CVideoRunner::ClearActiveFilters() {
     ReleaseMutex(m_hMutex);
 }
 
-void CVideoRunner::AddActiveOutput(OutputSink *o) {
+bool CVideoRunner::AddActiveOutput(OutputSink *o) {	// returns true if the output was added; false if it was already active
+	bool alreadyAdded = false;
     WaitForSingleObject(m_hMutex,INFINITE);
-    activeOutputs.push_back(o);
+    for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
+		if ((*j) == o) {
+			alreadyAdded = true;
+		}
+    }
+	if (!alreadyAdded) {
+		activeOutputs.push_back(o);
+		o->StartRunning();
+	}
     ReleaseMutex(m_hMutex);
+	return !alreadyAdded;
 }
 
 void CVideoRunner::ClearActiveOutputs() {
     WaitForSingleObject(m_hMutex,INFINITE);
+    for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
+        (*j)->StopRunning();
+    }
     activeOutputs.clear();
     ReleaseMutex(m_hMutex);
 }

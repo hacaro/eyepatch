@@ -17,6 +17,7 @@
 #include "OSCOutput.h"
 #include "TCPOutput.h"
 #include "ClipboardOutput.h"
+#include "StreamingVideoOutput.h"
 #include "FilterLibrary.h"
 #include "VideoRunner.h"
 #include "FilterComposer.h"
@@ -173,10 +174,12 @@ LRESULT CFilterComposer::OnAddStandardFilter( UINT, WPARAM wParam, LPARAM lParam
 
 LRESULT CFilterComposer::OnAddOutputSink( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     HWND listView;
-    m_videoRunner.AddActiveOutput((OutputSink*)lParam);
-    listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_OUTPUT_LIST);
-    m_filterLibrary.AddOutput(listView, (OutputSink*)lParam);
-    ::InvalidateRect(listView, NULL, FALSE);
+	bool newlyAdded = m_videoRunner.AddActiveOutput((OutputSink*)lParam);
+	if (newlyAdded) {
+		listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_OUTPUT_LIST);
+		m_filterLibrary.AddOutput(listView, (OutputSink*)lParam);
+		::InvalidateRect(listView, NULL, FALSE);
+	}
     return 0;
 }
 
@@ -324,6 +327,11 @@ void CFilterComposer::LoadOutputs() {
     OutputSink *clipboard = new ClipboardOutput();
     outputSinks.push_back(clipboard);
     m_filterLibrary.AddOutput(listView, clipboard);
+
+	// video streaming output
+	OutputSink *streamvideo = new StreamingVideoOutput();
+    outputSinks.push_back(streamvideo);
+    m_filterLibrary.AddOutput(listView, streamvideo);
 
 }
 

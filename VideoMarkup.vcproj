@@ -363,6 +363,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\StreamingVideoOutput.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\TCPOutput.cpp"
 					>
 				</File>
@@ -593,6 +597,10 @@
 				</File>
 				<File
 					RelativePath=".\OutputSink.h"
+					>
+				</File>
+				<File
+					RelativePath=".\StreamingVideoOutput.h"
 					>
 				</File>
 				<File

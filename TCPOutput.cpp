@@ -7,7 +7,7 @@
 TCPOutput::TCPOutput() :
     OutputSink() {
 
-    SetName(L"XML over TCP");
+    SetName(L"XML over TCP on Port 8000");
 
     // Begin server listen thread
 	m_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ServerListenThread, (LPVOID)&server, 0, &threadID);

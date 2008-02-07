@@ -6,7 +6,7 @@
 
 ClipboardOutput::ClipboardOutput() :
     OutputSink() {
-    SetName(L"Frames to Windows Clipboard");
+    SetName(L"Copy Video Frames to Windows Clipboard");
 }
 
 ClipboardOutput::~ClipboardOutput() {
