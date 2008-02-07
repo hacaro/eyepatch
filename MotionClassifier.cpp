@@ -113,7 +113,7 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
 
 				// calculate orientation
 				double motionAngle = cvCalcGlobalOrientation( orient, mask, sample->motionHistory, 1.0, MOTION_MHI_DURATION);
-				motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
+//				motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
 				motionAngles.push_back(motionAngle);
 
 				cvResetImageROI(sample->motionHistory);
@@ -210,7 +210,7 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
 
         // calculate orientation
         double motionAngle = cvCalcGlobalOrientation(orient, mask, frame, MOTION_NUM_HISTORY_FRAMES, MOTION_MHI_DURATION);
-        motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
+//        motionAngle = 360.0 - motionAngle;  // adjust for images with top-left origin
 
         cvResetImageROI(frame);
         cvResetImageROI(orient);
