@@ -16,7 +16,7 @@ public:
     void AddActiveFilter(Classifier*);
     void ClearActiveFilters();
 
-    void AddActiveOutput(OutputSink *o);
+    bool AddActiveOutput(OutputSink *o);
     void ClearActiveOutputs();
 
 	BOOL LoadRecordedVideo(HWND hwndOwner, CvCapture** capture);

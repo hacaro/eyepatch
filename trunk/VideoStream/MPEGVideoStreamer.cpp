@@ -6,7 +6,7 @@ DWORD WINAPI MPEGVideoStreamer::ThreadCallback(LPVOID img) {
 	ULONG startTime = GetTickCount();
 	ULONG framesSent = 0;
 
-	CvVideoWriter *writer = cvCreateStreamingVideoWriter("rtp://127.0.0.1:10000?localport=10001", CV_FOURCC('M','P','G','2'), 24, cvSize(176, 144));
+	CvVideoWriter *writer = cvCreateStreamingVideoWriter("rtp://127.0.0.1:9000?localport=9001", CV_FOURCC('M','P','G','2'), 24, cvSize(176, 144));
 	while(1) {
 		ULONG timeElapsed = GetTickCount()-startTime;
 		ULONG targetFramesSent = (ULONG)(24.0*timeElapsed)/1000.0;
@@ -20,7 +20,7 @@ DWORD WINAPI MPEGVideoStreamer::ThreadCallback(LPVOID img) {
 }
 
 MPEGVideoStreamer::MPEGVideoStreamer() {
-	streaming = false;
+	isStreaming = false;
 	frame = cvCreateImage(cvSize(176,144), 8, 3);
 	cvZero(frame);
 }
@@ -30,8 +30,9 @@ MPEGVideoStreamer::~MPEGVideoStreamer() {
 }
 
 void MPEGVideoStreamer::StartStreaming() {
-	streaming = true;
-	m_hThread = CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)ThreadCallback, (LPVOID)this, 0, &threadID);
+	if (isStreaming) return;
+	isStreaming = true;
+	m_hThread = CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)ThreadCallback, (LPVOID)frame, 0, &threadID);
 }
 
 void MPEGVideoStreamer::UpdateFrame(IplImage *newFrame) {
@@ -39,6 +40,11 @@ void MPEGVideoStreamer::UpdateFrame(IplImage *newFrame) {
 }
 
 void MPEGVideoStreamer::StopStreaming() {
+	if (!isStreaming) return;
 	TerminateThread(m_hThread, 0);
-	streaming = false;
+	isStreaming = false;
+}
+
+bool MPEGVideoStreamer::IsStreaming() {
+	return isStreaming;
 }
