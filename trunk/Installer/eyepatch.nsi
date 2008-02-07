@@ -45,15 +45,19 @@ Section "Eyepatch (required)"
   SetOutPath $INSTDIR
   
   ; Put files there
-  File "avcodec-51.dll"
-  File "avformat-51.dll"
-  File "avutil-49.dll"
   File "cv100.dll"
   File "cvaux100.dll"
   File "cxcore100.dll"
-  File "Eyepatch.exe"
   File "highgui100.dll"
   File "libguide40.dll"
+  File "pthreadGC2.dll"
+  File "swscale-0.dll"
+  File "avcodec-51.dll"
+  File "avformat-51.dll"
+  File "avutil-49.dll"
+  File "libgslcblas.dll"
+  File "libgsl.dll"
+  File "Eyepatch.exe"
 
   
   ; Write the installation path into the registry
@@ -121,17 +125,21 @@ Section "Uninstall"
 
   ; Remove files and uninstaller
 
-  Delete $INSTDIR\avcodec-51.dll
-  Delete $INSTDIR\avformat-51.dll
-  Delete $INSTDIR\avutil-49.dll
   Delete $INSTDIR\cv100.dll
   Delete $INSTDIR\cvaux100.dll
   Delete $INSTDIR\cxcore100.dll
-  Delete $INSTDIR\DivXInstaller.exe
-  Delete $INSTDIR\Eyepatch.exe
   Delete $INSTDIR\highgui100.dll
   Delete $INSTDIR\libguide40.dll
   Delete $INSTDIR\vcredist_x86.exe
+  Delete $INSTDIR\pthreadGC2.dll
+  Delete $INSTDIR\swscale-0.dll
+  Delete $INSTDIR\avcodec-51.dll
+  Delete $INSTDIR\avformat-51.dll
+  Delete $INSTDIR\avutil-49.dll
+  Delete $INSTDIR\DivXInstaller.exe
+  Delete $INSTDIR\libgslcblas.dll
+  Delete $INSTDIR\libgsl.dll
+  Delete $INSTDIR\Eyepatch.exe
   Delete $INSTDIR\uninstall.exe
 
   ; Remove shortcuts, if any
