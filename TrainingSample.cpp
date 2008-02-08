@@ -98,7 +98,8 @@ TrainingSample::TrainingSample(IplImage *frame, MotionTrack mt, HWND lc, HIMAGEL
     cvAddWeighted(frame, 0.5, fullImageCopy, 0.5, 0.0, fullImageCopy);
     
     // draw the trajectory in the sample image
-    DrawTrack(fullImageCopy, mt, CV_RGB(100,255,100), 3);
+	Template t("", mt);
+    DrawTrack(fullImageCopy, t.m_points, CV_RGB(100,255,100), 3, GESTURE_SQUARE_SIZE);
 
     motionHistory = NULL;
 

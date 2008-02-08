@@ -2,17 +2,6 @@
 
 #include "precomp.h"
 
-//
-// Recognizer class constants
-//
-#define NumTemplates 16
-#define NumPoints 64
-#define SquareSize 250.0
-#define HalfDiagonal (0.5 * sqrt(250.0 * 250.0 + 250.0 * 250.0))
-#define AngleRange 45.0
-#define AnglePrecision 2.0
-#define Phi (0.5 * (-1.0 + Math.sqrt(5.0)))
-
 class OneDollarPoint {
 public:
 	double m_x, m_y;
@@ -74,7 +63,6 @@ vector<OneDollarPoint> RotateToZero(vector<OneDollarPoint> points);
 vector<OneDollarPoint> RotateBy(vector<OneDollarPoint> points, double theta);
 vector<OneDollarPoint> ScaleToSquare(vector<OneDollarPoint> points, double size);
 vector<OneDollarPoint> TranslateToOrigin(vector<OneDollarPoint> points);
-vector<OneDollarPoint> ReverseOrder(vector<OneDollarPoint> points);
 double DistanceAtBestAngle(vector<OneDollarPoint> points, Template T, double a, double b, double threshold);
 double DistanceAtAngle(vector<OneDollarPoint> points, Template T, double theta);
 OneDollarPoint Centroid(vector<OneDollarPoint> points);

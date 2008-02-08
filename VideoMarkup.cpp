@@ -11,7 +11,6 @@
 #include "HaarClassifier.h"
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
-#include "Gesture/BlobTracker.h"
 #include "FilterSelect.h"
 #include "VideoControl.h"
 #include "VideoMarkup.h"
@@ -39,7 +38,6 @@ CVideoMarkup::CVideoMarkup() :
     posSelectPen(Color(100,100,255,100),2),
     negSelectPen(Color(100,255,100,100),2),
     guessPen(Color(100,255,100),4),
-    gesturePen(Color(200,100,255,100),4),
     posBrush(Color(50,100,255,100)),
     negBrush(Color(50,255,100,100)),
     hoverBrush(Color(25, 50, 150, 255)),
@@ -48,9 +46,6 @@ CVideoMarkup::CVideoMarkup() :
 	whiteBrush(Color(255,255,255)),
     ltgrayBrush(Color(240,240,240)) {
 	guessPen.SetLineJoin(LineJoinRound);
-    gesturePen.SetLineJoin(LineJoinRound);
-    gesturePen.SetDashStyle(DashStyleDot);
-    gesturePen.SetDashCap(DashCapRound);
 
     // TODO: all non window-related variables should be initialized here instead of in OnCreate
     classifier = new ColorClassifier();
@@ -145,27 +140,14 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 
     if (recognizerMode == GESTURE_FILTER) {
         // draw the current gesture motion trajectories in this frame
-	    REAL scaleX = ((REAL)VIDEO_X) / ((REAL)m_videoLoader.videoX);
-	    REAL scaleY = ((REAL)VIDEO_Y) / ((REAL)m_videoLoader.videoY);
-	    graphics->ScaleTransform(scaleX, scaleY);
-
         vector<MotionTrack> trackList;
         m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
         for (int i=0; i<trackList.size(); i++) {
-            MotionTrack mt = trackList[i];
-
-            int startPoint = max(0, mt.size()-GESTURE_MIN_TRAJECTORY_LENGTH);
-            int nPoints = min(GESTURE_MIN_TRAJECTORY_LENGTH,mt.size());
-
-            PointF *trackPoints = new PointF[nPoints];
-            for (int j = startPoint; j<mt.size(); j++) {
-                OneDollarPoint ms = mt[j];
-                trackPoints[j-startPoint] = PointF(ms.m_x, ms.m_y);
-			}
-            graphics->DrawCurve(&gesturePen, trackPoints, nPoints);
-            delete[] trackPoints;
+			MotionTrack mt = trackList[i];
+			mt = ScaleToSquare(mt, 3*VIDEO_Y/4);
+			mt = TranslateToOrigin(mt);
+			DrawTrack(graphics, mt, VIDEO_X, VIDEO_Y, VIDEO_X);
         }
-		graphics->ResetTransform();
     }
 
     BitBlt(hdc,0,0,VIDEO_X,VIDEO_Y,hdcmem,0,0,SRCCOPY);
@@ -830,17 +812,11 @@ void CVideoMarkup::RunClassifierOnCurrentFrame() {
     } else if (recognizerMode == GESTURE_FILTER) {
         vector<MotionTrack> trackList;
         m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-
         if (trackList.size() == 0) {
 			cvZero(m_videoLoader.guessMask);
-		} else {
-//	        for (int i=0; i<trackList.size(); i++) {
-			// BLAH -- only checking first active track
-			for (int i=0; i<1; i++) {
-				// TODO: figure out how to visualize multiple tracks in demo image
-				MotionTrack mt = trackList[i];
-				((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
-			}
+		} else {	// only one track will be returned (TODO: stop using a list since there's now always just one track)
+			MotionTrack mt = trackList[0];
+			((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
 		}
     } else {
         classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);

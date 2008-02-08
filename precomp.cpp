@@ -100,19 +100,29 @@ void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnit
 	cvLine(img, arrowpoint, endpoint, color, thickness, CV_AA, 0);
 }
 
-void DrawTrack(IplImage *img, MotionTrack mt,  CvScalar color, int thickness, int maxNumPoints) {
-    int startPoint = 0;
-    int nPoints = mt.size();
-    if (maxNumPoints!=0) {
-        startPoint = max(0, mt.size()-maxNumPoints);
-        nPoints = min(maxNumPoints,mt.size());
-    }
+void DrawTrack(IplImage *img, MotionTrack mt,  CvScalar color, int thickness, float squareSize) {
+	int nPoints = mt.size();
     CvPoint *trackPoints = new CvPoint[nPoints];
-    for (int i=startPoint; i<mt.size(); i++) {
-        trackPoints[i-startPoint].x = img->width/2 + (mt[i].m_x*img->width)/SquareSize;
-        trackPoints[i-startPoint].y = img->height/2 + (mt[i].m_y*img->height)/SquareSize;
+    for (int i=0; i<nPoints; i++) {
+        trackPoints[i].x = img->width/2 + (mt[i].m_x*img->width)/squareSize;
+        trackPoints[i].y = img->height/2 + (mt[i].m_y*img->height)/squareSize;
     }
     cvPolyLine(img, &trackPoints, &nPoints, 1, 0, color, thickness, CV_AA);
+    delete[] trackPoints;
+}
+
+void DrawTrack(Graphics *graphics, MotionTrack mt, float width, float height, float squareSize) {
+	int nPoints = mt.size();
+	PointF *trackPoints = new PointF[nPoints];
+    for (int i = 0; i<nPoints; i++) {
+        trackPoints[i].X = width/2 + (mt[i].m_x*width)/squareSize;
+        trackPoints[i].Y = height/2 + (mt[i].m_y*height)/squareSize;
+	}
+    for (int i = 0; i<nPoints-1; i++) {
+		Pen p(Color((255*i)/nPoints, 100,255,100), 4);
+	    p.SetEndCap(LineCapRound);
+	    graphics->DrawLine(&p, trackPoints[i], trackPoints[i+1]);
+	}
     delete[] trackPoints;
 }
 

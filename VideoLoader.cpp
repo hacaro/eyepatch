@@ -81,7 +81,7 @@ CVideoLoader::CVideoLoader() :
     bmpVideo = NULL;
 	nFrames = 0;
     currentFrameNumber = 0;
-	m_blobTracker = NULL;
+	m_flowTracker = NULL;
     guessMask = NULL;
     maskedFrame = NULL;
     bmpMasked = NULL;
@@ -94,7 +94,7 @@ CVideoLoader::~CVideoLoader(void) {
         cvReleaseImage(&motionHistory);
         cvReleaseImage(&guessMask);
         cvReleaseImage(&maskedFrame);
-		if (m_blobTracker != NULL) delete m_blobTracker;
+		if (m_flowTracker != NULL) delete m_flowTracker;
         delete bmpVideo;
         delete bmpMasked;
     }
@@ -177,8 +177,8 @@ BOOL CVideoLoader::OpenVideoFile(HWND hwndOwner, LPCWSTR filename) {
 	videoLoaded = TRUE;
 
 	// create a new blob tracker for the new video
-	if (m_blobTracker != NULL) delete m_blobTracker;
-	m_blobTracker = new BlobTracker();
+	if (m_flowTracker != NULL) delete m_flowTracker;
+	m_flowTracker = new FlowTracker();
 
 	return TRUE;
 }
@@ -294,21 +294,21 @@ IplImage* CVideoLoader::GetMotionHistory() {
 
 void CVideoLoader::LearnTrajectories() { 
     if (!videoLoaded) return;
-	if (!m_blobTracker) return;
-	if (m_blobTracker->isTrained) return;
-    m_blobTracker->LearnTrajectories(videoCapture);
+	if (!m_flowTracker) return;
+	if (m_flowTracker->isTrained) return;
+    m_flowTracker->LearnTrajectories(videoCapture);
     LoadFrame(currentFrameNumber);
 }
 
 void CVideoLoader::GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
-	if (!m_blobTracker) return;
-	if (!m_blobTracker->isTrained) return;
-    m_blobTracker->GetTrajectoriesInRange(trackList, startFrame, endFrame);
+	if (!m_flowTracker) return;
+	if (!m_flowTracker->isTrained) return;
+    m_flowTracker->GetTrajectoriesInRange(trackList, startFrame, endFrame);
 }
 
 void CVideoLoader::GetTrajectoriesAtCurrentFrame(vector<MotionTrack> *trackList) {
-	if (!m_blobTracker) return;
-	if (!m_blobTracker->isTrained) return;
+	if (!m_flowTracker) return;
+	if (!m_flowTracker->isTrained) return;
     long startFrame = max(0,currentFrameNumber-GESTURE_MIN_TRAJECTORY_LENGTH);
-    m_blobTracker->GetTrajectoriesAtFrame(trackList, currentFrameNumber);
+    m_flowTracker->GetTrajectoriesAtFrame(trackList, currentFrameNumber);
 }

@@ -59,16 +59,18 @@ LRESULT CFilterComposer::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 	    graphics->DrawString(L"FILTERED VIDEO", 14, &labelFont, PointF(15,425), &whiteBrush);
     }
 
-	// draw the blob tracking status image
-	if (m_videoRunner.trackingBlobs) {
-        graphics->DrawImage(m_videoRunner.bmpGesture, 10, 290, 160, 120);
-	    graphics->DrawString(L"GESTURE INPUT", 13, &smallFont, PointF(15,295), &whiteBrush);
-	}
+	if (m_videoRunner.processingVideo) {
+		// draw the blob tracking status image
+		if (m_videoRunner.trackingGesture) {
+			graphics->DrawImage(m_videoRunner.bmpGesture, 10, 290, 160, 120);
+			graphics->DrawString(L"GESTURE INPUT", 13, &smallFont, PointF(15,295), &whiteBrush);
+		}
 
-	// draw the motion tracking status image
-	if (m_videoRunner.trackingMotion) {
-        graphics->DrawImage(m_videoRunner.bmpMotion, 170, 290, 160, 120);
-	    graphics->DrawString(L"MOTION INPUT", 12, &smallFont, PointF(175,295), &whiteBrush);
+		// draw the motion tracking status image
+		if (m_videoRunner.trackingMotion) {
+			graphics->DrawImage(m_videoRunner.bmpMotion, 170, 290, 160, 120);
+			graphics->DrawString(L"MOTION INPUT", 12, &smallFont, PointF(175,295), &whiteBrush);
+		}
 	}
 
 	BitBlt(hdc,FILTERLIBRARY_WIDTH,0,WINDOW_X-FILTERLIBRARY_WIDTH,WINDOW_Y,hdcmem,0,0,SRCCOPY);

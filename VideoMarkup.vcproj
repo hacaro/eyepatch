@@ -343,7 +343,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Gesture\FlowTracker.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\Gesture\OneDollar.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gesture\SimpleFlowTracker.cpp"
 					>
 				</File>
 				<File
@@ -576,7 +584,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Gesture\FlowTracker.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Gesture\OneDollar.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Gesture\SimpleFlowTracker.h"
 					>
 				</File>
 				<File
