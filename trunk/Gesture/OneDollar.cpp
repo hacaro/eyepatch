@@ -1,4 +1,5 @@
 #include "precomp.h"
+#include "constants.h"
 #include "OneDollar.h"
 
 // number of default templates included at startup
@@ -17,7 +18,7 @@ Template::Template(string name, vector<OneDollarPoint> points) {
 	m_name = name;
 	m_points = Resample(points, NumPoints);
 	m_points = RotateToZero(m_points);
-	m_points = ScaleToSquare(m_points, SquareSize);
+	m_points = ScaleToSquare(m_points, GESTURE_SQUARE_SIZE);
 	m_points = TranslateToOrigin(m_points);
 }
 
@@ -108,7 +109,7 @@ Result Recognizer::Recognize(vector<OneDollarPoint> points) {
 
 	points = Resample(points, NumPoints);
 	points = RotateToZero(points);
-	points = ScaleToSquare(points, SquareSize);
+	points = ScaleToSquare(points, GESTURE_SQUARE_SIZE);
 	points = TranslateToOrigin(points);
 
 	double b = FLT_MAX;
@@ -126,26 +127,44 @@ Result Recognizer::Recognize(vector<OneDollarPoint> points) {
 }
 
 Result Recognizer::BackRecognize(vector<OneDollarPoint> points) {
-	Result error("NONE", 0, -1);
-	if (m_templates.size() == 0) return error;
+	Result r("NONE", 0, -1);
+	if (m_templates.size() == 0) return r;
 
-	points = ReverseOrder(points);
-	points = Resample(points, NumPoints);
-	points = RotateToZero(points);
-	points = ScaleToSquare(points, SquareSize);
-	points = TranslateToOrigin(points);
+	// Start by looking at the last GESTURE_MIN_TRAJECTORY_LENGTH points
+	// then increase the amount of points be try to recognize, going backwards, until we get a good match
+	// give up when we are looking at GESTURE_MAX_TRAJECTORY_LENGTH points
 
-	double b = FLT_MAX;
-	int t = 0;
-	for (int i = m_templates.size()-1; i >=0; i--) {
-		double d = DistanceAtBestAngle(points, m_templates[i], -AngleRange, +AngleRange, AnglePrecision);
-		if (d < b) {
-			b = d;
-			t = i;
+	reverse(points.begin(), points.end());
+	double maxScore = 0;
+	int maxLength = min(points.size(), GESTURE_MAX_TRAJECTORY_LENGTH);
+	for (int npts=GESTURE_MIN_TRAJECTORY_LENGTH; npts<maxLength; npts += GESTURE_BACKREC_STEPSIZE) {
+		vector<OneDollarPoint> sublist;
+		for (int pi=0; pi<npts; pi++) {
+			sublist.push_back(points[pi]);
+		}
+		reverse(sublist.begin(), sublist.end());
+		sublist = Resample(sublist, NumPoints);
+		sublist = RotateToZero(sublist);
+		sublist = ScaleToSquare(sublist, GESTURE_SQUARE_SIZE);
+		sublist = TranslateToOrigin(sublist);
+
+		double b = FLT_MAX;
+		int t = 0;
+		for (int i = m_templates.size()-1; i >=0; i--) {
+			double d = DistanceAtBestAngle(sublist, m_templates[i], -AngleRange, +AngleRange, AnglePrecision);
+			if (d < b) {
+				b = d;
+				t = i;
+			}
+		}
+		double score = 1.0 - (b / HalfDiagonal);
+		if (score > maxScore) {	// we've found the best result so far
+			maxScore = score;
+			r.m_name = m_templates[t].m_name;
+			r.m_score = score;
+			r.m_index = t;
 		}
 	}
-	double score = 1.0 - (b / HalfDiagonal);
-	Result r(m_templates[t].m_name, score, t);
 	return r;
 }
 
@@ -280,13 +299,6 @@ vector<OneDollarPoint> TranslateToOrigin(vector<OneDollarPoint> points) {
 		OneDollarPoint np(qx, qy);
 		newpoints.push_back(np);
 	}
-	return newpoints;
-}		
-
-vector<OneDollarPoint> ReverseOrder(vector<OneDollarPoint> points) {
-	if (points.size() < 1) return points;
-	vector<OneDollarPoint> newpoints;
-	reverse_copy(points.begin(), points.end(), newpoints.begin());
 	return newpoints;
 }		
 

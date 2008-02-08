@@ -62,13 +62,15 @@ using namespace std;
 #include "Gesture/OneDollar.h"
 typedef vector<OneDollarPoint> MotionTrack;
 #include "Gesture/BlobTracker.h"
+#include "Gesture/FlowTracker.h"
 
 // Utility functions
 void CopyImageToClipboard (IplImage* img);
 void IplToBitmap(IplImage *src, Bitmap *dst);
 CvScalar hsv2rgb(float hue);
 void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness=1);
-void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness, int maxNumPoints=0);
+void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness, float squareSize);
+void DrawTrack(Graphics *graphics, MotionTrack mt, float width, float height, float squareSize);
 bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin);
 
 // swatch of "nice" colors

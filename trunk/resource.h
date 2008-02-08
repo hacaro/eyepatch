@@ -21,6 +21,8 @@
 #define IDD_FILTERRUN_DIALOG            121
 #define IDD_FILTERLIBRARY_DIALOG        121
 #define IDB_ARROW                       122
+#define IDD_BLOBTRACKER_DIALOG1         122
+#define IDD_FLOWTRACKER_DIALOG          122
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004

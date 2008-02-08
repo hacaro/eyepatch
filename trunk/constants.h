@@ -41,19 +41,21 @@
 /* amount of pixel difference considered motion */
 #define MOTION_DIFF_THRESHOLD 30
 
-// constants for gesture recognition
-// number of frames for which we collect background information before detecting blobs
-#define GESTURE_NUM_FGTRAINING_FRAMES 10
-// minimum number of frames required for a valid gesture
-#define GESTURE_MIN_TRAJECTORY_LENGTH 40
-// number of samples away from the end we need to be to consider the gesture finished
-#define GESTURE_PHASE_CUTOFF 10
-#define GESTURE_NUM_CONDENSATION_SAMPLES 1000
-// maximum number of tracks we can look at simultaneously
-#define GESTURE_MAX_SIMULTANEOUS_TRACKS 1
-// amount of temporal scaling allowed in match
-#define RHO_MIN 0.7
-#define RHO_MAX 1.3
+// Gesture parameters
+
+// minimum and maximum number of frames required for a valid gesture */
+#define GESTURE_MIN_TRAJECTORY_LENGTH 5
+#define GESTURE_MAX_TRAJECTORY_LENGTH 150
+
+// OneDollar Recognizer class constants
+#define NumTemplates 16
+#define NumPoints 64
+#define GESTURE_SQUARE_SIZE 250.0
+#define GESTURE_BACKREC_STEPSIZE 10
+#define HalfDiagonal (0.5 * sqrt(250.0 * 250.0 + 250.0 * 250.0))
+#define AngleRange 45.0
+#define AnglePrecision 2.0
+#define Phi (0.5 * (-1.0 + Math.sqrt(5.0)))
 
 
 // minimum number of background subtraction frames to "spin up" background model

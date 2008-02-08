@@ -1,4 +1,5 @@
 #pragma once
+#include "SimpleFlowTracker.h"
 
 class CFilterComposer;
 
@@ -30,7 +31,7 @@ public:
 
     //  keep track of the number of active filters that require motion or blob tracking
     int trackingMotion;
-    int trackingBlobs;
+    int trackingGesture;
 
 private:
     CvCapture *videoCapture;
@@ -40,18 +41,13 @@ private:
 
     // functions that may be called by ProcessFrame (if motion/gesture filters are active)
     void ProcessMotionFrame();
-    void ProcessBlobFrame();
+    void ProcessGestureFrame();
 
     // for keeping track of position within circular motion history buffer
     int last;
 
-    // blob tracking functions and structures (for gesture filter)
-    void CreateBlobTracker();
-    void DestroyBlobTracker();
-
-    CvBlobTrackerAutoParam1 param;
-    CvBlobTrackerAuto *pTracker;
-    TrajectoryList trajectories;
+	// for tracking optical flow for gesture tracking
+	SimpleFlowTracker m_flowTracker;
 
     // list of classifiers to apply to live video stream
     list<Classifier*> activeClassifiers;

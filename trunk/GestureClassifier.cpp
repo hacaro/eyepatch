@@ -88,30 +88,33 @@ void GestureClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     assert(false);
 }    
 
-void GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
+bool GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
+	bool isMatch = false;
     IplImage *newMask = cvCloneImage(guessMask);
     cvZero(newMask);
 
     // don't start all the way at the beginning of the track if it's really long
-    int startFrame = max(0, mt.size()-RHO_MAX*((double)maxTemplateLength));
+    int startFrame = max(0, mt.size()-GESTURE_MAX_TRAJECTORY_LENGTH);
 
     cvZero(applyImage);
 
-	Result r = rec.Recognize(mt);
+	Result r = rec.BackRecognize(mt);
 
 	if (r.m_score > threshold) {
+		isMatch = true;
+
 		// draw a rectangle in the new mask image
         CvPoint topLeft = cvPoint(0, 0);
         CvPoint bottomRight = cvPoint(newMask->width, newMask->height);
         cvRectangle(newMask, topLeft, bottomRight, cvScalar(0xFF), CV_FILLED, 8); 
 
 		// draw the recognized gesture in the apply image
-		DrawTrack(applyImage, rec.m_templates[r.m_index].m_points, colorSwatch[r.m_index % COLOR_SWATCH_SIZE], 3);
+		DrawTrack(applyImage, rec.m_templates[r.m_index].m_points, colorSwatch[r.m_index % COLOR_SWATCH_SIZE], 3, GESTURE_SQUARE_SIZE);
 
 		// print the name of the recognized gesture
 		CvFont font;
 		cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX_SMALL, 0.55,0.6,0,1, CV_AA);
-		cvPutText (applyImage,r.m_name.c_str(),cvPoint(7,20), &font, cvScalar(255,255,255));
+		cvPutText (applyImage,r.m_name.c_str(),cvPoint(7,applyImage->height-20), &font, cvScalar(255,255,255));
 	}
 
     // Combine old and new mask
@@ -120,6 +123,7 @@ void GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
 
     IplToBitmap(applyImage, applyBitmap);
 	cvReleaseImage(&newMask);
+	return isMatch;
 }
 
 void GestureClassifier::UpdateTrajectoryImage() {
@@ -142,9 +146,9 @@ void GestureClassifier::UpdateTrajectoryImage() {
 	for (int i=0; i<nTemplates; i++) {
 		cvSetImageROI(filterImage, cvRect(gridX*gridSampleW, gridY*gridSampleH, gridSampleW, gridSampleH));
 		cvZero(gestureImg);
-		DrawTrack(gestureImg, rec.m_templates[i].m_points, colorSwatch[i % COLOR_SWATCH_SIZE], 3);
+		DrawTrack(gestureImg, rec.m_templates[i].m_points, colorSwatch[i % COLOR_SWATCH_SIZE], 3, GESTURE_SQUARE_SIZE);
 		sprintf(gestnum, "%d", i);
-		cvPutText(gestureImg, gestnum, cvPoint(7,16), &font, cvScalar(255,255,255));
+		cvPutText(gestureImg, gestnum, cvPoint(7,gridSampleH-10), &font, cvScalar(255,255,255));
 		cvCopy(gestureImg, filterImage);
 		cvResetImageROI(filterImage);
         gridX++;

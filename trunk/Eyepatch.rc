@@ -192,6 +192,15 @@ BEGIN
     GROUPBOX        "Outputs: Double Click to Activate",IDC_STATIC,7,278,244,118
 END
 
+IDD_FLOWTRACKER_DIALOG DIALOGEX 0, 0, 227, 195
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Extracting Motion"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Stop Learning Gestures",IDCANCEL,70,174,89,14
+    LTEXT           "Identifying the motion trajectories in this video...",IDC_PROGRESS_LABEL,7,7,213,12
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -253,6 +262,14 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 433
         BOTTOMMARGIN, 441
+    END
+
+    IDD_FLOWTRACKER_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 188
     END
 END
 #endif    // APSTUDIO_INVOKED

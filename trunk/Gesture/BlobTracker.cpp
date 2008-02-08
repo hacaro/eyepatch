@@ -3,6 +3,8 @@
 #include "TrajectoryList.h"
 #include "BlobTracker.h"
 
+#define GESTURE_NUM_FGTRAINING_FRAMES 10
+
 CBlobTrackerDialog::CBlobTrackerDialog(BlobTracker *p) :
 	videoRect(10, 35, 330, 275), 
 	drawRect(10, 35, 320, 240) {

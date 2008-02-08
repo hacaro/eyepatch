@@ -69,7 +69,7 @@ private:
 
 	Graphics *graphics, *graphicsExamples;
     PointF selectStart, selectCurrent;
-    Pen posSelectPen, negSelectPen, guessPen, gesturePen;
+    Pen posSelectPen, negSelectPen, guessPen;
     SolidBrush posBrush, negBrush, hoverBrush, grayBrush, ltgrayBrush, whiteBrush, blackBrush;
     Font labelFont, bigFont;
 	StringFormat stringFormat;
