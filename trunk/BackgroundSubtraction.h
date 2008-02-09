@@ -11,8 +11,10 @@ public:
     void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, IplImage*);
     void Save();
+	void ResetRunningState();
 
 private:
     long frameNum;
     CvBGStatModel* bgmodel;
+	IplImage *smallFrameCopy, *fgMask;
 };

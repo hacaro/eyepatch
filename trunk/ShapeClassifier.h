@@ -11,6 +11,7 @@ public:
 	void StartTraining(TrainingSet*);
 	void ClassifyFrame(IplImage*, IplImage*);
     void Save();
+	void ResetRunningState() {}		// This classifier doesn't have store any new state info while running live
 
 private:
     void UpdateContourImage();

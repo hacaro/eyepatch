@@ -16,6 +16,7 @@ public:
 
     void AddActiveFilter(Classifier*);
     void ClearActiveFilters();
+	void ResetActiveFilterRunningStates();
 
     bool AddActiveOutput(OutputSink *o);
     void ClearActiveOutputs();

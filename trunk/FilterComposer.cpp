@@ -192,6 +192,7 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
         case IDC_RUNLIVE:
             hMenu = ::GetMenu(this->GetParent());
             if (!m_videoRunner.processingVideo) {
+				m_videoRunner.ResetActiveFilterRunningStates();
                 m_videoRunner.StartProcessing(true);
                 if (m_videoRunner.processingVideo) {
                     m_filterLibrary.GetDlgItem(IDC_RUNRECORDED).EnableWindow(FALSE);
@@ -218,6 +219,7 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
 		case IDC_RUNRECORDED:
             hMenu = ::GetMenu(this->GetParent());
             if (!m_videoRunner.processingVideo) {
+				m_videoRunner.ResetActiveFilterRunningStates();
                 m_videoRunner.StartProcessing(false);
                 if (m_videoRunner.processingVideo) {
                     m_filterLibrary.GetDlgItem(IDC_RUNLIVE).EnableWindow(FALSE);
@@ -288,6 +290,7 @@ void CFilterComposer::ClearCustomClassifiers() {
 }
 
 void CFilterComposer::ClearActiveClassifiers() {
+	m_videoRunner.ResetActiveFilterRunningStates();
     m_videoRunner.ClearActiveFilters();
     HWND listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
     m_filterLibrary.ClearFilters(listView);

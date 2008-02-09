@@ -14,6 +14,7 @@ public:
     // run classifier on an entire motion track and return TRUE if it matches a template
     bool ClassifyTrack(MotionTrack mt, IplImage*);
     void Save();
+	void ResetRunningState() {}		// This classifier doesn't have store any new state info while running live
 
 private:
 	void UpdateTrajectoryImage();
