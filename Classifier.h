@@ -66,11 +66,11 @@ public:
 	virtual void StartTraining(TrainingSet*) = 0;
     virtual BOOL ContainsSufficientSamples(TrainingSet*) = 0;
 	virtual void ClassifyFrame(IplImage*, IplImage*) = 0;
+	virtual void ResetRunningState() = 0;
 
 	virtual void Save() {
 		USES_CONVERSION;
 		WCHAR filename[MAX_PATH];
-		FILE *savefile;
 
 		// make sure the directory exists 
 	    SHCreateDirectory(NULL, directoryName);

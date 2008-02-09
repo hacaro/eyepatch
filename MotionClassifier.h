@@ -12,6 +12,7 @@ public:
 	void ClassifyFrame(IplImage*, IplImage*);
     void ClassifyMotion(IplImage*, double, IplImage*);
     void Save();
+	void ResetRunningState() {}		// This classifier doesn't have store any new state info while running live
 
 private:
     list<double> motionAngles;

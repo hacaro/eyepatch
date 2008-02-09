@@ -295,6 +295,14 @@ void CVideoRunner::ClearActiveFilters() {
     ReleaseMutex(m_hMutex);
 }
 
+void CVideoRunner::ResetActiveFilterRunningStates() {
+    WaitForSingleObject(m_hMutex,INFINITE);
+    for (list<Classifier*>::iterator i=activeClassifiers.begin(); i!=activeClassifiers.end(); i++) {
+        (*i)->ResetRunningState();
+    }
+    ReleaseMutex(m_hMutex);
+}
+
 bool CVideoRunner::AddActiveOutput(OutputSink *o) {	// returns true if the output was added; false if it was already active
 	bool alreadyAdded = false;
     WaitForSingleObject(m_hMutex,INFINITE);
