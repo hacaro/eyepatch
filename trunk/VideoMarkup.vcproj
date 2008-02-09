@@ -339,10 +339,6 @@
 				Name="Gesture"
 				>
 				<File
-					RelativePath=".\Gesture\BlobTracker.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\Gesture\FlowTracker.cpp"
 					>
 				</File>
@@ -352,10 +348,6 @@
 				</File>
 				<File
 					RelativePath=".\Gesture\SimpleFlowTracker.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Gesture\TrajectoryList.cpp"
 					>
 				</File>
 			</Filter>
@@ -580,10 +572,6 @@
 				Name="Gesture"
 				>
 				<File
-					RelativePath=".\Gesture\BlobTracker.h"
-					>
-				</File>
-				<File
 					RelativePath=".\Gesture\FlowTracker.h"
 					>
 				</File>
@@ -593,10 +581,6 @@
 				</File>
 				<File
 					RelativePath=".\Gesture\SimpleFlowTracker.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Gesture\TrajectoryList.h"
 					>
 				</File>
 			</Filter>

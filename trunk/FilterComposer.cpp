@@ -12,7 +12,6 @@
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
 #include "BackgroundSubtraction.h"
-#include "Gesture/BlobTracker.h"
 #include "OutputSink.h"
 #include "OSCOutput.h"
 #include "TCPOutput.h"

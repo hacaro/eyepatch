@@ -4,6 +4,7 @@
 #define WINVER 0x0600
 #define _WIN32_IE 0x0700
 #define UNICODE
+#define _CRT_SECURE_NO_WARNINGS
 
 // Windows includes
 #include <winsock2.h>   // this must come first to prevent errors with MSVC7
@@ -15,7 +16,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
 
 // standard includes
 #define _USE_MATH_DEFINES
@@ -61,7 +61,6 @@ using namespace std;
 // Gesture Tracking includes
 #include "Gesture/OneDollar.h"
 typedef vector<OneDollarPoint> MotionTrack;
-#include "Gesture/BlobTracker.h"
 #include "Gesture/FlowTracker.h"
 
 // Utility functions
@@ -69,7 +68,7 @@ void CopyImageToClipboard (IplImage* img);
 void IplToBitmap(IplImage *src, Bitmap *dst);
 CvScalar hsv2rgb(float hue);
 void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnitude, CvScalar color, int thickness=1);
-void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness, float squareSize);
+void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness, float squareSize, int maxPointsToDraw=0);
 void DrawTrack(Graphics *graphics, MotionTrack mt, float width, float height, float squareSize);
 bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin);
 

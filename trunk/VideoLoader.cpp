@@ -300,15 +300,17 @@ void CVideoLoader::LearnTrajectories() {
     LoadFrame(currentFrameNumber);
 }
 
-void CVideoLoader::GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
-	if (!m_flowTracker) return;
-	if (!m_flowTracker->isTrained) return;
-    m_flowTracker->GetTrajectoriesInRange(trackList, startFrame, endFrame);
+MotionTrack CVideoLoader::GetTrajectoryInRange(long startFrame, long endFrame) {
+	MotionTrack empty;
+	if (!m_flowTracker) return empty;
+	if (!m_flowTracker->isTrained) return empty;
+	return m_flowTracker->GetTrajectoryInRange(startFrame, endFrame);
 }
 
-void CVideoLoader::GetTrajectoriesAtCurrentFrame(vector<MotionTrack> *trackList) {
-	if (!m_flowTracker) return;
-	if (!m_flowTracker->isTrained) return;
+MotionTrack CVideoLoader::GetTrajectoryAtCurrentFrame() {
+	MotionTrack empty;
+	if (!m_flowTracker) return empty;
+	if (!m_flowTracker->isTrained) return empty;
     long startFrame = max(0,currentFrameNumber-GESTURE_MIN_TRAJECTORY_LENGTH);
-    m_flowTracker->GetTrajectoriesAtFrame(trackList, currentFrameNumber);
+    return m_flowTracker->GetTrajectoryAtFrame(currentFrameNumber);
 }
