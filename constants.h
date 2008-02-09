@@ -17,10 +17,9 @@
 #define COLOR_SMIN 30
 
 // shape matching parameters
-#define SHAPE_MIN_LENGTH 50
-#define SHAPE_MIN_AREA 5
-#define SHAPE_CANNY_EDGE_FIND 230
-#define SHAPE_CANNY_EDGE_LINK 100
+#define SHAPE_MIN_CONTOUR_POINTS 40
+#define SHAPE_CANNY_EDGE_FIND 220
+#define SHAPE_CANNY_EDGE_LINK 50
 #define SHAPE_CANNY_APERTURE 3
 
 // SIFT matching parameters
