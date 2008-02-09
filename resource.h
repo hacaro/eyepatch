@@ -13,7 +13,6 @@
 #define IDD_FILTERSELECT_DIALOG         109
 #define IDD_VIDEORECORDER_DIALOG        110
 #define IDI_EYEPATCH                    111
-#define IDD_BLOBTRACKER_DIALOG          111
 #define IDI_FRAMELEFT                   115
 #define IDI_FRAMERIGHT                  116
 #define IDI_MARKIN                      117
@@ -21,7 +20,6 @@
 #define IDD_FILTERRUN_DIALOG            121
 #define IDD_FILTERLIBRARY_DIALOG        121
 #define IDB_ARROW                       122
-#define IDD_BLOBTRACKER_DIALOG1         122
 #define IDD_FLOWTRACKER_DIALOG          122
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003

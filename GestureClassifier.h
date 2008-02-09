@@ -13,12 +13,6 @@ public:
 
     // run classifier on an entire motion track and return TRUE if it matches a template
     bool ClassifyTrack(MotionTrack mt, IplImage*);
-
-    // update model one sample at a time (for running live, frame-by-frame)
-    void UpdateRunningModel(vector<MotionTrack> *trackList);
-    void ResetRunningModel();
-    void GetMaskFromRunningModel(IplImage*);
-
     void Save();
 
 private:

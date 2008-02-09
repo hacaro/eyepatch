@@ -47,6 +47,14 @@
 #define GESTURE_MIN_TRAJECTORY_LENGTH 5
 #define GESTURE_MAX_TRAJECTORY_LENGTH 150
 
+// optical flow constants
+#define FLOW_MAX_TRACK_FEATURES 200
+#define FLOW_MAX_ERROR_THRESHOLD 200
+// reduce motion from pixel jitter by ignoring motion less than this threshold (divided by the number of trackpoints)
+#define FLOW_MIN_MOTION_THRESHOLD 12.0
+// clear out the trajectory after this many frames with no motion
+#define FLOW_INACTIVE_THRESHOLD 20
+
 // OneDollar Recognizer class constants
 #define NumTemplates 16
 #define NumPoints 64

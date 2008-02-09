@@ -93,7 +93,7 @@ void FlowTracker::ProcessFrame() {
 	cvConvertImage(copyFrame, grcurrentFrame);
 
 	// Pick out the good features in the image
-	int nFeatures = 200;
+	int nFeatures = FLOW_MAX_TRACK_FEATURES;
 	cvGoodFeaturesToTrack(grlastFrame, eigimage, tempimage, lastframe_features, &nFeatures, 0.01, 10);
 
 	cvFindCornerSubPix(grlastFrame, lastframe_features, nFeatures, cvSize(5,5), cvSize(-1,-1),
@@ -113,7 +113,7 @@ void FlowTracker::ProcessFrame() {
 	// Draw the flow field and average all the flow vectors
 	double mvecx = 0, mvecy = 0, magnitude = 0, npoints = 0;
 	for (int i=0; i<nFeatures; i++) {
-		if ((found_features[i] == 0) || (feature_error[i]>200)) continue;
+		if ((found_features[i] == 0) || (feature_error[i]>FLOW_MAX_ERROR_THRESHOLD)) continue;
 		CvPoint p,q;
 		p.x = lastframe_features[i].x;
 		p.y = lastframe_features[i].y;
@@ -129,6 +129,14 @@ void FlowTracker::ProcessFrame() {
 		mvecx /= npoints;
 		mvecy /= npoints;
 	}
+	magnitude = _hypot(mvecx, mvecy);
+	if (magnitude < FLOW_MIN_MOTION_THRESHOLD/npoints) {
+		mvecx = 0;
+		mvecy = 0;
+		numInactiveFrames++;
+	} else {
+		numInactiveFrames = 0;
+	}
 
 	cvCircle(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2), 3, CV_RGB(255,255,255),-1,CV_AA);
 	cvLine(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2),
@@ -141,7 +149,7 @@ void FlowTracker::ProcessFrame() {
 
 	MotionTrack scaledpts = ScaleToSquare(trajectory, 2*GESTURE_SQUARE_SIZE/3);
 	scaledpts = TranslateToOrigin(scaledpts);
-	DrawTrack(copyFrame, scaledpts, CV_RGB(100,255,100), 3, GESTURE_SQUARE_SIZE);
+	DrawTrack(copyFrame, scaledpts, CV_RGB(100,255,100), 3, GESTURE_SQUARE_SIZE, GESTURE_MAX_TRAJECTORY_LENGTH);
 
     // display color foreground image in window
     IplToBitmap(copyFrame, bmpVideo);
@@ -185,6 +193,7 @@ void FlowTracker::LearnTrajectories(CvCapture* vidCap) {
 
 	currentX = currentFrame->width/2;
 	currentY = currentFrame->height/2;
+	numInactiveFrames = 0;
 
     m_FlowTrackerDialog.DoModal();
 
@@ -199,30 +208,28 @@ void FlowTracker::LearnTrajectories(CvCapture* vidCap) {
     isTrained = true;
 }
 
-void FlowTracker::GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame) {
-    trackList->clear();
+MotionTrack FlowTracker::GetTrajectoryInRange(long startFrame, long endFrame) {
 	MotionTrack subtrack;
 	if (startFrame < 0) startFrame = 0;
 	if (endFrame > trajectory.size()-1) endFrame = trajectory.size()-1;
-	if (endFrame - startFrame < GESTURE_MIN_TRAJECTORY_LENGTH) return;
+	if (endFrame - startFrame < GESTURE_MIN_TRAJECTORY_LENGTH) return subtrack;
 
 	for (int i=startFrame; i<=endFrame; i++) {
 		subtrack.push_back(trajectory[i]);
 	}
 	subtrack = ScaleToSquare(subtrack, GESTURE_SQUARE_SIZE);
-	trackList->push_back(subtrack);
+	return subtrack;
 }
 
-void FlowTracker::GetTrajectoriesAtFrame(vector<MotionTrack> *trackList, long frameNum) {
-    trackList->clear();
-	if (frameNum < GESTURE_MIN_TRAJECTORY_LENGTH) return;
-	if (frameNum > trajectory.size()-1) return;
+MotionTrack FlowTracker::GetTrajectoryAtFrame(long frameNum) {
+	MotionTrack subtrack;
+	if (frameNum < GESTURE_MIN_TRAJECTORY_LENGTH) return subtrack;
+	if (frameNum > trajectory.size()-1) return subtrack;
 	int startFrame = max(0, frameNum-GESTURE_MAX_TRAJECTORY_LENGTH);
 
-	MotionTrack subtrack;
 	for (int i=startFrame; i<=frameNum; i++) {
 		subtrack.push_back(trajectory[i]);
 	}
 	subtrack = ScaleToSquare(subtrack, GESTURE_SQUARE_SIZE);
-	trackList->push_back(subtrack);
+	return subtrack;
 }

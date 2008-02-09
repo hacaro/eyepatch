@@ -21,6 +21,8 @@ private:
 	list<OneDollarPoint> trajectory;
 	double currentX, currentY;
 
+	int numInactiveFrames;
+
 	// Images to store current and previous frame, in color and in grayscale
 	IplImage *currentFrame, *grcurrentFrame, *grlastFrame;
 	

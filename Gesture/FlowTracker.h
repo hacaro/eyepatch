@@ -41,8 +41,8 @@ public:
 	FlowTracker();
     ~FlowTracker(void);
     void LearnTrajectories(CvCapture* pCap);
-    void GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame);
-    void GetTrajectoriesAtFrame(vector<MotionTrack> *trackList, long frameNum);
+    MotionTrack GetTrajectoryInRange(long startFrame, long endFrame);
+    MotionTrack GetTrajectoryAtFrame(long frameNum);
     void ProcessFrame();
 
     bool isTrained;
@@ -55,6 +55,8 @@ protected:
 private:
     MotionTrack trajectory;
 	double currentX, currentY;
+
+	int numInactiveFrames;
 
 	friend class CFlowTrackerDialog;
 	CFlowTrackerDialog m_FlowTrackerDialog;

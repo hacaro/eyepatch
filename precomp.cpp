@@ -100,23 +100,30 @@ void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnit
 	cvLine(img, arrowpoint, endpoint, color, thickness, CV_AA, 0);
 }
 
-void DrawTrack(IplImage *img, MotionTrack mt,  CvScalar color, int thickness, float squareSize) {
-	int nPoints = mt.size();
+void DrawTrack(IplImage *img, MotionTrack mt,  CvScalar color, int thickness, float squareSize, int maxPointsToDraw) {
+	int nPoints = (int) mt.size();
+	int startPoint = 0;
+	if (maxPointsToDraw > 0) {
+		if (nPoints > maxPointsToDraw) {
+			startPoint = nPoints - maxPointsToDraw;
+			nPoints = maxPointsToDraw;
+		}
+	}
     CvPoint *trackPoints = new CvPoint[nPoints];
     for (int i=0; i<nPoints; i++) {
-        trackPoints[i].x = img->width/2 + (mt[i].m_x*img->width)/squareSize;
-        trackPoints[i].y = img->height/2 + (mt[i].m_y*img->height)/squareSize;
+        trackPoints[i].x = (int) (img->width/2 + (mt[i+startPoint].m_x*img->width)/squareSize);
+        trackPoints[i].y = (int) (img->height/2 + (mt[i+startPoint].m_y*img->height)/squareSize);
     }
     cvPolyLine(img, &trackPoints, &nPoints, 1, 0, color, thickness, CV_AA);
     delete[] trackPoints;
 }
 
 void DrawTrack(Graphics *graphics, MotionTrack mt, float width, float height, float squareSize) {
-	int nPoints = mt.size();
+	int nPoints = (int) mt.size();
 	PointF *trackPoints = new PointF[nPoints];
     for (int i = 0; i<nPoints; i++) {
-        trackPoints[i].X = width/2 + (mt[i].m_x*width)/squareSize;
-        trackPoints[i].Y = height/2 + (mt[i].m_y*height)/squareSize;
+        trackPoints[i].X = (REAL) (width/2 + (mt[i].m_x*width)/squareSize);
+        trackPoints[i].Y = (REAL) (height/2 + (mt[i].m_y*height)/squareSize);
 	}
     for (int i = 0; i<nPoints-1; i++) {
 		Pen p(Color((255*i)/nPoints, 100,255,100), 4);
@@ -127,7 +134,7 @@ void DrawTrack(Graphics *graphics, MotionTrack mt, float width, float height, fl
 }
 
 bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin = true) {
-    int len = _tcslen(lpszDir);
+    int len = (int) _tcslen(lpszDir);
     TCHAR *pszFrom = new TCHAR[len+2];
     _tcscpy(pszFrom, lpszDir);
     pszFrom[len] = 0;

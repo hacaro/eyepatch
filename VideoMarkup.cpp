@@ -139,15 +139,11 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
 	}
 
     if (recognizerMode == GESTURE_FILTER) {
-        // draw the current gesture motion trajectories in this frame
-        vector<MotionTrack> trackList;
-        m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-        for (int i=0; i<trackList.size(); i++) {
-			MotionTrack mt = trackList[i];
-			mt = ScaleToSquare(mt, 3*VIDEO_Y/4);
-			mt = TranslateToOrigin(mt);
-			DrawTrack(graphics, mt, VIDEO_X, VIDEO_Y, VIDEO_X);
-        }
+        // draw the current gesture motion trajectory in this frame
+        MotionTrack mt = m_videoLoader.GetTrajectoryAtCurrentFrame();
+		mt = ScaleToSquare(mt, 3*VIDEO_Y/4);
+		mt = TranslateToOrigin(mt);
+		DrawTrack(graphics, mt, VIDEO_X, VIDEO_Y, VIDEO_X);
     }
 
     BitBlt(hdc,0,0,VIDEO_X,VIDEO_Y,hdcmem,0,0,SRCCOPY);
@@ -527,14 +523,9 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
                 selEnd = ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETSELEND, 0, 0);
                 // TODO: display informative error message if not enough frames are selected
                 if (selEnd - selStart < GESTURE_MIN_TRAJECTORY_LENGTH) break;
-                vector<MotionTrack> trackList;
-
-                m_videoLoader.GetTrajectoriesInRange(&trackList, selStart, selEnd);
-                for (int i=0; i<trackList.size(); i++) {
-                    MotionTrack mt = trackList[i];
-                    TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, mt, m_sampleListView, m_hImageList, GROUPID_RANGESAMPLES);
-                    sampleSet.AddSample(sample);
-                }
+                MotionTrack mt = m_videoLoader.GetTrajectoryInRange(selStart, selEnd);
+                TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, mt, m_sampleListView, m_hImageList, GROUPID_RANGESAMPLES);
+                sampleSet.AddSample(sample);
             }
             break;
         case IDC_SHOWBUTTON:
@@ -810,12 +801,10 @@ void CVideoMarkup::RunClassifierOnCurrentFrame() {
     if (recognizerMode == MOTION_FILTER) {
         ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES, m_videoLoader.guessMask);
     } else if (recognizerMode == GESTURE_FILTER) {
-        vector<MotionTrack> trackList;
-        m_videoLoader.GetTrajectoriesAtCurrentFrame(&trackList);
-        if (trackList.size() == 0) {
+		MotionTrack mt = m_videoLoader.GetTrajectoryAtCurrentFrame();
+        if (mt.size() == 0) {
 			cvZero(m_videoLoader.guessMask);
-		} else {	// only one track will be returned (TODO: stop using a list since there's now always just one track)
-			MotionTrack mt = trackList[0];
+		} else {
 			((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
 		}
     } else {

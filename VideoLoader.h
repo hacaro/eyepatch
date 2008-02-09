@@ -45,8 +45,8 @@ public:
     void LearnTrajectories();
 	void ConvertFrame();
     Bitmap* GetMaskedBitmap();
-    void GetTrajectoriesInRange(vector<MotionTrack> *trackList, long startFrame, long endFrame);
-    void GetTrajectoriesAtCurrentFrame(vector<MotionTrack> *trackList);
+    MotionTrack GetTrajectoryInRange(long startFrame, long endFrame);
+    MotionTrack GetTrajectoryAtCurrentFrame();
 
     long nFrames;
 	int videoX, videoY;
