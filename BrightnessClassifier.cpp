@@ -130,6 +130,7 @@ void BrightnessClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     // close the backprojection image
     IplConvKernel *circElem = cvCreateStructuringElementEx(3,3,1,1,CV_SHAPE_ELLIPSE);        
     cvMorphologyEx(backproject, backproject, 0, circElem, CV_MOP_CLOSE, 2);
+	cvReleaseStructuringElement(&circElem);
 
     // find contours in backprojection image
     cvFindContours( backproject, storage, &contours, sizeof(CvContour),
