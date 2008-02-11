@@ -35,7 +35,6 @@ BackgroundSubtraction::~BackgroundSubtraction() {
 	cvReleaseImage(&smallFrameCopy);
 	if (isTrained) {
 		cvReleaseBGStatModel(&bgmodel);
-		cvReleaseImage(&fgMask);
 	}
 }
 
@@ -52,13 +51,16 @@ void BackgroundSubtraction::StartTraining(TrainingSet *sampleSet) {
     assert(FALSE);
 }
 
-void BackgroundSubtraction::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
-    if(!frame) return;
+ClassifierOutputData BackgroundSubtraction::ClassifyFrame(IplImage *frame) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
+
+    if(!frame) return data;
 
 	cvResize(frame, smallFrameCopy);
 
     if (!isTrained) {
-		
         // we need some more background frames before we have a decent background model
         if (frameNum < BACKGROUND_SUBTRACTION_DISCARD_FRAMES) {
             // throw away the first few frames (usually junk)
@@ -68,7 +70,6 @@ void BackgroundSubtraction::ClassifyFrame(IplImage *frame, IplImage* guessMask) 
 				CV_BGFG_FGD_N1CC, CV_BGFG_FGD_N2CC, 1, 1, 2*CV_BGFG_FGD_ALPHA_1, 3*CV_BGFG_FGD_ALPHA_2,
 				2*CV_BGFG_FGD_ALPHA_3, CV_BGFG_FGD_DELTA, CV_BGFG_FGD_T, CV_BGFG_FGD_MINAREA};
             bgmodel = cvCreateFGDStatModel(smallFrameCopy, &bgmodelparams);
-			fgMask = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
 		} else {
             // update background model
             cvUpdateBGStatModel(smallFrameCopy, bgmodel);
@@ -90,10 +91,10 @@ void BackgroundSubtraction::ClassifyFrame(IplImage *frame, IplImage* guessMask) 
 		cvMorphologyEx(fgMaskSmall, fgMaskSmall, 0, circElem, CV_MOP_CLOSE, 3);
 		cvReleaseStructuringElement(&circElem);
 
-        // Combine foreground mask with passed-in mask
-		cvResize(fgMaskSmall, fgMask);
-        cvAnd(guessMask, fgMask, guessMask);
+		// copy the final output mask
+		cvResize(fgMaskSmall, guessMask);
     }
+	return data;
 }
 
 
@@ -106,7 +107,6 @@ void BackgroundSubtraction::Save() {
 void BackgroundSubtraction::ResetRunningState() {
 	if (isTrained) {
 		cvReleaseBGStatModel(&bgmodel);
-		cvReleaseImage(&fgMask);
 	}
 	isTrained = false;
 	frameNum = 0;

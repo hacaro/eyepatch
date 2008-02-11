@@ -311,6 +311,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\ClassifierOutputData.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\ColorClassifier.cpp"
 					>
 				</File>
@@ -541,6 +545,10 @@
 				</File>
 				<File
 					RelativePath=".\Classifier.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ClassifierOutputData.h"
 					>
 				</File>
 				<File

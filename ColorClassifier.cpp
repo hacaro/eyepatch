@@ -108,16 +108,20 @@ void ColorClassifier::StartTraining(TrainingSet *sampleSet) {
 	isTrained = true;
 }
 
-void ColorClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
-    if (!isTrained) return;
-    if(!frame) return;
+ClassifierOutputData ColorClassifier::ClassifyFrame(IplImage *frame) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
+
+	if (!isTrained) return data;
+    if(!frame) return data;
 
     IplImage *image = cvCreateImage( cvGetSize(frame), 8, 3 );
     IplImage *hsv = cvCreateImage( cvGetSize(frame), 8, 3 );
     IplImage *hue = cvCreateImage( cvGetSize(frame), 8, 1 );
     IplImage *mask = cvCreateImage( cvGetSize(frame), 8, 1 );
 	IplImage *backproject = cvCreateImage( cvGetSize(frame), 8, 1 );
-    IplImage *newMask = cvCloneImage(guessMask);
+    IplImage *newMask = cvCreateImage( cvGetSize(frame), 8, 1 );
     cvZero(newMask);
 
     cvCopy( frame, image, 0 );
@@ -164,9 +168,8 @@ void ColorClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
         }
 	}
 
-    // Combine old and new mask
-    // TODO: support OR operation as well
-    cvAnd(guessMask, newMask, guessMask);
+	// copy the final output mask
+    cvResize(newMask, guessMask);
 
     // update bitmap demo image
     cvResize(image, applyImage);
@@ -180,6 +183,8 @@ void ColorClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
 	cvReleaseImage(&mask);
 	cvReleaseImage(&backproject);
 	cvReleaseImage(&newMask);
+
+	return data;
 }
 
 void ColorClassifier::UpdateHistogramImage() {

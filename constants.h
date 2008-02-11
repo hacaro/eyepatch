@@ -91,6 +91,8 @@
 #define EXAMPLEWINDOW_HEIGHT 185
 #define FILTERIMAGE_WIDTH 240
 #define FILTERIMAGE_HEIGHT 180
+#define GUESSMASK_WIDTH 160
+#define GUESSMASK_HEIGHT 120
 #define FILTERLIBRARY_WIDTH 670
 
 // save recognizer: folder prefixes and file names

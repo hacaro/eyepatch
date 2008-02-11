@@ -9,8 +9,8 @@ public:
 
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
-	void ClassifyFrame(IplImage*, IplImage*);
-    void ClassifyMotion(IplImage*, double, IplImage*);
+	ClassifierOutputData ClassifyFrame(IplImage*);
+    ClassifierOutputData ClassifyMotion(IplImage*, double);
     void Save();
 	void ResetRunningState() {}		// This classifier doesn't have store any new state info while running live
 

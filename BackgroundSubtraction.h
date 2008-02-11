@@ -9,12 +9,12 @@ public:
 
     BOOL ContainsSufficientSamples(TrainingSet*);
     void StartTraining(TrainingSet*);
-	void ClassifyFrame(IplImage*, IplImage*);
+	ClassifierOutputData ClassifyFrame(IplImage*);
     void Save();
 	void ResetRunningState();
 
 private:
     long frameNum;
     CvBGStatModel* bgmodel;
-	IplImage *smallFrameCopy, *fgMask, *fgMaskSmall;
+	IplImage *smallFrameCopy, *fgMaskSmall;
 };

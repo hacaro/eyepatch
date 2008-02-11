@@ -34,7 +34,7 @@ public:
 
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
-	void ClassifyFrame(IplImage*, IplImage*);
+	ClassifierOutputData ClassifyFrame(IplImage*);
     void Save();
 	void ResetRunningState() {}		// This classifier doesn't have store any new state info while running live
 

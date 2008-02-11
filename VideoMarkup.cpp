@@ -795,20 +795,19 @@ LRESULT CVideoMarkup::OnSetThreshold(UINT, WPARAM wParam, LPARAM lParam, BOOL& )
 void CVideoMarkup::RunClassifierOnCurrentFrame() {
 	HCURSOR hOld = SetCursor(LoadCursor(0, IDC_WAIT));
 
-    // reset the mask of guesses
-	cvSet(m_videoLoader.guessMask, cvScalar(0xFF));
+	ClassifierOutputData outdata;
 
     if (recognizerMode == MOTION_FILTER) {
-        ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES, m_videoLoader.guessMask);
+        outdata = ((MotionClassifier*)classifier)->ClassifyMotion(m_videoLoader.GetMotionHistory(), MOTION_NUM_HISTORY_FRAMES);
     } else if (recognizerMode == GESTURE_FILTER) {
 		MotionTrack mt = m_videoLoader.GetTrajectoryAtCurrentFrame();
-        if (mt.size() == 0) {
-			cvZero(m_videoLoader.guessMask);
-		} else {
-			((GestureClassifier*)classifier)->ClassifyTrack(mt, m_videoLoader.guessMask);
-		}
+		outdata = ((GestureClassifier*)classifier)->ClassifyTrack(mt);
     } else {
-        classifier->ClassifyFrame(m_videoLoader.copyFrame, m_videoLoader.guessMask);
+        outdata = classifier->ClassifyFrame(m_videoLoader.copyFrame);
     }
+	
+	IplImage *mask = outdata.GetImageData("Mask");
+	cvResize(mask, m_videoLoader.guessMask);
+
     SetCursor(hOld);
 }

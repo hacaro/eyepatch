@@ -83,15 +83,20 @@ BOOL GestureClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
     return (sampleSet->rangeSampleCount > 0);
 }
 
-void GestureClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
+ClassifierOutputData GestureClassifier::ClassifyFrame(IplImage *frame) {
     // not implemented: this class uses ClassifyTrack instead
     assert(false);
+	ClassifierOutputData data;
+	return data;
 }    
 
-bool GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
-	bool isMatch = false;
-    IplImage *newMask = cvCloneImage(guessMask);
-    cvZero(newMask);
+ClassifierOutputData GestureClassifier::ClassifyTrack(MotionTrack mt) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
+
+	if (!isTrained) return data;
+	if (mt.size() < GESTURE_MIN_TRAJECTORY_LENGTH) return data;
 
     // don't start all the way at the beginning of the track if it's really long
     int startFrame = max(0, mt.size()-GESTURE_MAX_TRAJECTORY_LENGTH);
@@ -101,12 +106,13 @@ bool GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
 	Result r = rec.BackRecognize(mt);
 
 	if (r.m_score > threshold) {
-		isMatch = true;
+		data.AddVariable("IsMatch", 1);
 
-		// draw a rectangle in the new mask image
-        CvPoint topLeft = cvPoint(0, 0);
-        CvPoint bottomRight = cvPoint(newMask->width, newMask->height);
-        cvRectangle(newMask, topLeft, bottomRight, cvScalar(0xFF), CV_FILLED, 8); 
+		// fill up the mask image
+		cvSet(guessMask, cvScalar(0xFF));
+
+		// add a variable for the detected gesture number
+		data.AddVariable("Gesture", r.m_index);
 
 		// draw the recognized gesture in the apply image
 		DrawTrack(applyImage, rec.m_templates[r.m_index].m_points, colorSwatch[r.m_index % COLOR_SWATCH_SIZE], 3, GESTURE_SQUARE_SIZE);
@@ -117,13 +123,8 @@ bool GestureClassifier::ClassifyTrack(MotionTrack mt, IplImage* guessMask) {
 		cvPutText (applyImage,r.m_name.c_str(),cvPoint(7,applyImage->height-20), &font, cvScalar(255,255,255));
 	}
 
-    // Combine old and new mask
-    // TODO: support OR operation as well
-    cvAnd(guessMask, newMask, guessMask);
-
     IplToBitmap(applyImage, applyBitmap);
-	cvReleaseImage(&newMask);
-	return isMatch;
+	return data;
 }
 
 void GestureClassifier::UpdateTrajectoryImage() {
