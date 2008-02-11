@@ -16,5 +16,5 @@ public:
 private:
     long frameNum;
     CvBGStatModel* bgmodel;
-	IplImage *smallFrameCopy, *fgMask;
+	IplImage *smallFrameCopy, *fgMask, *fgMaskSmall;
 };
