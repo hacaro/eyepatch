@@ -70,19 +70,23 @@ void CVideoRunner::ProcessFrame() {
     // apply filter chain to frame
     for (list<Classifier*>::iterator i=activeClassifiers.begin(); i!=activeClassifiers.end(); i++) {
 
-        // start with a full mask (all on)
-        // TODO: support AND operation as well
-        cvSet(guessMask, cvScalar(0xFF));
+		ClassifierOutputData outdata;
 
         if ((*i)->classifierType == MOTION_FILTER) {
-            ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames, guessMask);
+            outdata = ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames);
         } else if ((*i)->classifierType == GESTURE_FILTER) {
 			MotionTrack mt = m_flowTracker.GetCurrentTrajectory();
-            bool isMatch = ((GestureClassifier*)(*i))->ClassifyTrack(mt, guessMask);
-			if (isMatch) m_flowTracker.ClearCurrentTrajectory();
+            outdata = ((GestureClassifier*)(*i))->ClassifyTrack(mt);
+			if (outdata.HasVariable("IsMatch")) {
+				m_flowTracker.ClearCurrentTrajectory();
+			}
         } else {
-            (*i)->ClassifyFrame(copyFrame, guessMask);
+            outdata = (*i)->ClassifyFrame(copyFrame);
         } 
+
+		// pull the mask out of the returned data
+		IplImage *mask = outdata.GetImageData("Mask");
+		cvResize(mask, guessMask);
 
         // Copy the masked output of this filter to accumulator frame
         cvZero(outputAccImage);

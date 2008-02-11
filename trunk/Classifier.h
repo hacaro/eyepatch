@@ -1,4 +1,5 @@
 #pragma once
+#include "ClassifierOutputData.h"
 
 class Classifier
 {
@@ -11,6 +12,7 @@ public:
 		threshold = 0.5;
         filterImage = cvCreateImage(cvSize(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT), IPL_DEPTH_8U, 3);
         applyImage = cvCreateImage(cvSize(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT), IPL_DEPTH_8U, 3);
+		guessMask = cvCreateImage(cvSize(GUESSMASK_WIDTH, GUESSMASK_HEIGHT), IPL_DEPTH_8U, 1);
         filterBitmap = new Bitmap(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT, PixelFormat24bppRGB);
         applyBitmap = new Bitmap(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT, PixelFormat24bppRGB);
 
@@ -34,6 +36,7 @@ public:
 
 		filterImage = cvCreateImage(cvSize(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT), IPL_DEPTH_8U, 3);
         applyImage = cvCreateImage(cvSize(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT), IPL_DEPTH_8U, 3);
+		guessMask = cvCreateImage(cvSize(GUESSMASK_WIDTH, GUESSMASK_HEIGHT), IPL_DEPTH_8U, 1);
         filterBitmap = new Bitmap(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT, PixelFormat24bppRGB);
         applyBitmap = new Bitmap(FILTERIMAGE_WIDTH, FILTERIMAGE_HEIGHT, PixelFormat24bppRGB);
 
@@ -59,13 +62,14 @@ public:
 	virtual ~Classifier() {
         cvReleaseImage(&filterImage);
         cvReleaseImage(&applyImage);
+		cvReleaseImage(&guessMask);
         delete filterBitmap;
         delete applyBitmap;
     }
 
 	virtual void StartTraining(TrainingSet*) = 0;
     virtual BOOL ContainsSufficientSamples(TrainingSet*) = 0;
-	virtual void ClassifyFrame(IplImage*, IplImage*) = 0;
+	virtual ClassifierOutputData ClassifyFrame(IplImage*) = 0;
 	virtual void ResetRunningState() = 0;
 
 	virtual void Save() {
@@ -118,7 +122,7 @@ public:
 
 protected:
     Bitmap *filterBitmap, *applyBitmap;
-    IplImage *filterImage, *applyImage;
+    IplImage *filterImage, *applyImage, *guessMask;
 
     WCHAR friendlyName[MAX_PATH];
     WCHAR directoryName[MAX_PATH];

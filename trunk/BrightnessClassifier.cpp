@@ -101,14 +101,18 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
 	isTrained = true;
 }
 
-void BrightnessClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
-    if (!isTrained) return;
-    if(!frame) return;
+ClassifierOutputData BrightnessClassifier::ClassifyFrame(IplImage *frame) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
+
+	if (!isTrained) return data;
+    if(!frame) return data;
 
     IplImage *image = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 3 );
     IplImage *brightness = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 1 );
 	IplImage *backproject = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 1 );
-    IplImage *newMask = cvCloneImage(guessMask);
+    IplImage *newMask = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 1 );
     cvZero(newMask);
 
     cvCopy(frame, image, 0);
@@ -150,9 +154,8 @@ void BrightnessClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
         }
 	}
 
-    // Combine old and new mask
-    // TODO: support OR operation as well
-    cvAnd(guessMask, newMask, guessMask);
+	// copy the final output mask
+    cvResize(newMask, guessMask);
 
     // update bitmap demo image
     cvResize(image, applyImage);
@@ -164,6 +167,8 @@ void BrightnessClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
 	cvReleaseImage(&brightness);
 	cvReleaseImage(&backproject);
 	cvReleaseImage(&newMask);
+
+	return data;
 }
 
 void BrightnessClassifier::UpdateHistogramImage() {

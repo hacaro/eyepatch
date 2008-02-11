@@ -159,18 +159,24 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
 	isTrained = true;
 }
 
-void MotionClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
+ClassifierOutputData MotionClassifier::ClassifyFrame(IplImage *frame) {
     // not implemented: this classifier uses ClassifyMotion instead
     assert(false);
+	ClassifierOutputData data;
+	return data;
 }
 
-void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImage* guessMask) {
-    if (!isTrained) return;
-    if(!frame) return;
+ClassifierOutputData MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
+	
+	if (!isTrained) return data;
+    if(!frame) return data;
 
     // check to make sure that the frame passed in is a motion history image (not a normal frame image)
-    if (frame->depth != IPL_DEPTH_32F) return;
-    if (frame->nChannels != 1) return;
+    if (frame->depth != IPL_DEPTH_32F) return data;
+    if (frame->nChannels != 1) return data;
 
     // first find the motion components in this motion history image
     CvSize size = cvSize(frame->width,frame->height);
@@ -178,7 +184,7 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
     IplImage *segmask = cvCreateImage(size, IPL_DEPTH_32F, 1);
     IplImage *mask = cvCreateImage(size, IPL_DEPTH_8U, 1);
     IplImage *dst = cvCreateImage(size, IPL_DEPTH_8U, 3);
-    IplImage *newMask = cvCloneImage(guessMask);
+    IplImage *newMask = cvCreateImage(size, IPL_DEPTH_8U, 1);
     cvZero(newMask);
     CvMemStorage *storage = cvCreateMemStorage(0);
 
@@ -235,6 +241,7 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
                     cvPoint(comp_rect.x+comp_rect.width, comp_rect.y+comp_rect.height),
                     cvScalar(0xFF), CV_FILLED, 8);
             }
+			data.AddVariable("MotionAngle", (float)motionAngle);
         }
         // draw a clock with arrow indicating the direction
         CvPoint center = cvPoint((comp_rect.x + comp_rect.width/2), (comp_rect.y + comp_rect.height/2));
@@ -246,9 +253,8 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
     cvResize(dst, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 
-    // Combine old and new mask
-    // TODO: support OR operation as well
-    cvAnd(guessMask, newMask, guessMask);
+	// copy the final output mask
+    cvResize(newMask, guessMask);
 
     cvReleaseImage(&orient);
     cvReleaseImage(&segmask);
@@ -256,6 +262,8 @@ void MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp, IplImag
     cvReleaseImage(&dst);
 	cvReleaseImage(&newMask);
     cvReleaseMemStorage(&storage);
+
+	return data;
 }
 
 void MotionClassifier::Save() {

@@ -9,10 +9,10 @@ public:
 
     BOOL ContainsSufficientSamples(TrainingSet*);
 	void StartTraining(TrainingSet*);
-	void ClassifyFrame(IplImage*, IplImage*);
+	ClassifierOutputData ClassifyFrame(IplImage*);
 
-    // run classifier on an entire motion track and return TRUE if it matches a template
-    bool ClassifyTrack(MotionTrack mt, IplImage*);
+    // run classifier on current entire motion track
+    ClassifierOutputData ClassifyTrack(MotionTrack mt);
     void Save();
 	void ResetRunningState() {}		// This classifier doesn't have store any new state info while running live
 

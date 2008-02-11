@@ -14,8 +14,8 @@ SiftClassifier::SiftClassifier() :
     sampleFeatures = NULL;
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Feature Filter");
-    classifierType = SIFT_FILTER;        
+    wcscpy(friendlyName, L"SIFT Filter");
+    classifierType = SIFT_FILTER;
 
     // append identifier to directory name
     wcscat(directoryName, FILE_SIFT_SUFFIX);
@@ -90,14 +90,18 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
     UpdateSiftImage();
 }
 
-void SiftClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
-    if (!isTrained) return;
-    if(!frame) return;
+ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
+
+	if (!isTrained) return data;
+    if(!frame) return data;
 
     // copy current frame and sample image for demo image
     IplImage *frameCopy = cvCloneImage(frame);
     IplImage *featureImage = cvCloneImage(sampleCopy);
-    IplImage *newMask = cvCloneImage(guessMask);
+    IplImage *newMask = cvCreateImage(cvGetSize(frame), IPL_DEPTH_8U, 1);
     cvZero(newMask);
 
     // get features in current frame
@@ -194,13 +198,14 @@ void SiftClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     cvResize(frameCopy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 
-    // Combine old and new mask
-    // TODO: support OR operation as well
-    cvAnd(guessMask, newMask, guessMask);
+	// copy the final output mask
+    cvResize(newMask, guessMask);
 
     cvReleaseImage(&frameCopy);
     cvReleaseImage(&featureImage);
 	cvReleaseImage(&newMask);
+
+	return data;
 }
 
 void SiftClassifier::UpdateSiftImage() {

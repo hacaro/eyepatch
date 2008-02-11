@@ -61,7 +61,7 @@ HaarClassifier::HaarClassifier() :
 	nStagesCompleted = 0;
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Appearance Filter");
+    wcscpy(friendlyName, L"Adaboost Filter");
     classifierType = ADABOOST_FILTER;        
 
     // append identifier to directory name
@@ -205,11 +205,15 @@ void HaarClassifier::StartTraining(TrainingSet* sampleSet) {
 	m_progressDlg.DoModal();
 }
 
-void HaarClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
-    if (!isTrained) return;
-    if (!cascade) return;
+ClassifierOutputData HaarClassifier::ClassifyFrame(IplImage *frame) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
 
-    IplImage *newMask = cvCloneImage(guessMask);
+	if (!isTrained) return data;
+    if (!cascade) return data;
+
+    IplImage *newMask = cvCreateImage(cvGetSize(frame), IPL_DEPTH_8U, 1);
     cvZero(newMask);
 
     // Clear the memory storage we used before
@@ -235,14 +239,16 @@ void HaarClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
         // draw rectangle in mask image
         cvRectangle(newMask, cvPoint(r->x, r->y), cvPoint(r->x+r->width, r->y+r->height), cvScalar(0xFF), CV_FILLED, 8);
     }
+	data.AddVariable("NumObjects", objects->total);
 
-    // Combine old and new mask
-    // TODO: support OR operation as well
-    cvAnd(guessMask, newMask, guessMask);
+	// copy the final output mask
+    cvResize(newMask, guessMask);
 
     cvResize(frameCopy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 	cvReleaseImage(&newMask);
+
+	return data;
 }
 
 void HaarClassifier::Save() {

@@ -112,13 +112,17 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
 	isTrained = true;
 }
 
-void ShapeClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
-    if (!isTrained) return;
-    if(!frame) return;
+ClassifierOutputData ShapeClassifier::ClassifyFrame(IplImage *frame) {
+	ClassifierOutputData data;
+	cvZero(guessMask);
+	data.AddVariable("Mask", guessMask);
+
+	if (!isTrained) return data;
+    if(!frame) return data;
 
     IplImage *copy = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
     IplImage *grayscale = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
-    IplImage *newMask = cvCloneImage(guessMask);
+    IplImage *newMask = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
     cvZero(newMask);
 
     cvCvtColor(frame, grayscale, CV_BGR2GRAY);
@@ -151,14 +155,15 @@ void ShapeClassifier::ClassifyFrame(IplImage *frame, IplImage* guessMask) {
     cvResize(copy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 
-    // Combine old and new mask
-    // TODO: support OR operation as well
-    cvAnd(guessMask, newMask, guessMask);
+	// copy the final output mask
+    cvResize(newMask, guessMask);
 
     cvReleaseMemStorage(&storage);
     cvReleaseImage(&copy);
     cvReleaseImage(&grayscale);
 	cvReleaseImage(&newMask);
+
+	return data;
 }
 
 void ShapeClassifier::UpdateContourImage() {
