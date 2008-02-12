@@ -167,14 +167,13 @@ ClassifierOutputData MotionClassifier::ClassifyFrame(IplImage *frame) {
 }
 
 ClassifierOutputData MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp) {
-	ClassifierOutputData data;
 	cvZero(guessMask);
-	if (!isTrained) return data;
-    if(!frame) return data;
+	if (!isTrained) return outputData;
+    if(!frame) return outputData;
 
     // check to make sure that the frame passed in is a motion history image (not a normal frame image)
-    if (frame->depth != IPL_DEPTH_32F) return data;
-    if (frame->nChannels != 1) return data;
+    if (frame->depth != IPL_DEPTH_32F) return outputData;
+    if (frame->nChannels != 1) return outputData;
 
     // first find the motion components in this motion history image
     CvSize size = cvSize(frame->width,frame->height);
@@ -260,9 +259,9 @@ ClassifierOutputData MotionClassifier::ClassifyMotion(IplImage *frame, double ti
 	cvReleaseImage(&newMask);
     cvReleaseMemStorage(&storage);
 
-	data.AddVariable("Mask", guessMask);
-	data.AddVariable("Contours", GetMaskContours());
-	return data;
+	outputData.SetVariable("Mask", guessMask);
+	outputData.SetVariable("Contours", GetMaskContours());
+	return outputData;
 }
 
 void MotionClassifier::Save() {

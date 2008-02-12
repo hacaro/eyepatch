@@ -113,10 +113,9 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
 }
 
 ClassifierOutputData ShapeClassifier::ClassifyFrame(IplImage *frame) {
-	ClassifierOutputData data;
 	cvZero(guessMask);
-	if (!isTrained) return data;
-    if(!frame) return data;
+	if (!isTrained) return outputData;
+    if(!frame) return outputData;
 
     IplImage *copy = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
     IplImage *grayscale = cvCreateImage( cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
@@ -161,9 +160,9 @@ ClassifierOutputData ShapeClassifier::ClassifyFrame(IplImage *frame) {
     cvReleaseImage(&grayscale);
 	cvReleaseImage(&newMask);
 
-	data.AddVariable("Mask", guessMask);
-	data.AddVariable("Contours", GetMaskContours());
-	return data;
+	outputData.SetVariable("Mask", guessMask);
+	outputData.SetVariable("Contours", GetMaskContours());
+	return outputData;
 }
 
 void ShapeClassifier::UpdateContourImage() {

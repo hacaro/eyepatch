@@ -91,10 +91,9 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
 }
 
 ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
-	ClassifierOutputData data;
 	cvZero(guessMask);
-	if (!isTrained) return data;
-    if(!frame) return data;
+	if (!isTrained) return outputData;
+    if(!frame) return outputData;
 
     // copy current frame and sample image for demo image
     IplImage *frameCopy = cvCloneImage(frame);
@@ -203,9 +202,9 @@ ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
     cvReleaseImage(&featureImage);
 	cvReleaseImage(&newMask);
 
-	data.AddVariable("Mask", guessMask);
-	data.AddVariable("Contours", GetMaskContours());
-	return data;
+	outputData.SetVariable("Mask", guessMask);
+	outputData.SetVariable("Contours", GetMaskContours());
+	return outputData;
 }
 
 void SiftClassifier::UpdateSiftImage() {

@@ -1,5 +1,4 @@
 #include "precomp.h"
-#include "precomp.h"
 #include "constants.h"
 #include "TrainingSample.h"
 #include "TrainingSet.h"
@@ -51,9 +50,8 @@ void BackgroundSubtraction::StartTraining(TrainingSet *sampleSet) {
 }
 
 ClassifierOutputData BackgroundSubtraction::ClassifyFrame(IplImage *frame) {
-	ClassifierOutputData data;
 	cvZero(guessMask);
-    if(!frame) return data;
+    if(!frame) return outputData;
 
 	cvResize(frame, smallFrameCopy);
 
@@ -91,9 +89,9 @@ ClassifierOutputData BackgroundSubtraction::ClassifyFrame(IplImage *frame) {
 		// copy the final output mask
 		cvResize(fgMaskSmall, guessMask);
     }
-	data.AddVariable("Mask", guessMask);
-	data.AddVariable("Contours", GetMaskContours());
-	return data;
+	outputData.SetVariable("Mask", guessMask);
+	outputData.SetVariable("Contours", GetMaskContours());
+	return outputData;
 }
 
 

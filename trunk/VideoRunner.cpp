@@ -78,7 +78,9 @@ void CVideoRunner::ProcessFrame() {
 			MotionTrack mt = m_flowTracker.GetCurrentTrajectory();
             outdata = ((GestureClassifier*)(*i))->ClassifyTrack(mt);
 			if (outdata.HasVariable("IsMatch")) {
-				m_flowTracker.ClearCurrentTrajectory();
+				if (outdata.GetIntData("IsMatch") != 0) {
+					m_flowTracker.ClearCurrentTrajectory();
+				}
 			}
         } else {
             outdata = (*i)->ClassifyFrame(copyFrame);
@@ -275,15 +277,24 @@ void CVideoRunner::StopProcessing() {
     ReleaseMutex(m_hMutex);
 }
 
-void CVideoRunner::AddActiveFilter(Classifier *c) {
+bool CVideoRunner::AddActiveFilter(Classifier *c) {	// returns true if the filter was added; false if it was already active
+	bool alreadyAdded = false;
     WaitForSingleObject(m_hMutex,INFINITE);
-    if (c->classifierType == MOTION_FILTER) {
-        trackingMotion++;
-    } else if (c->classifierType == GESTURE_FILTER) {
-        trackingGesture++;
+    for (list<Classifier*>::iterator j=activeClassifiers.begin(); j!=activeClassifiers.end(); j++) {
+		if ((*j) == c) {
+			alreadyAdded = true;
+		}
     }
-    activeClassifiers.push_back(c);
+	if (!alreadyAdded) {
+		if (c->classifierType == MOTION_FILTER) {
+			trackingMotion++;
+		} else if (c->classifierType == GESTURE_FILTER) {
+			trackingGesture++;
+		}
+		activeClassifiers.push_back(c);
+	}
     ReleaseMutex(m_hMutex);
+	return !alreadyAdded;
 }
 
 void CVideoRunner::ClearActiveFilters() {
