@@ -46,6 +46,11 @@ void ClassifierOutputData::AddVariable(string name, CvSeq* value, bool state) {
 	AddVariable(var);
 }
 
+void ClassifierOutputData::AddVariable(string name, vector<Rect>* value, bool state) {
+	ClassifierOutputVariable var(name, value, state);
+	AddVariable(var);
+}
+
 ClassifierOutputVariable ClassifierOutputData::GetVariable(string name) {
 	for (int i=0; i<data.size(); i++) {
 		ClassifierOutputVariable var = data[i];
@@ -130,6 +135,12 @@ CvSeq* ClassifierOutputData::GetSequenceData(string name) {
 	return var.GetSequenceData();
 }
 
+vector<Rect>* ClassifierOutputData::GetBoundingBoxData(string name) {
+	ClassifierOutputVariable var = GetVariable(name);
+	return var.GetBoundingBoxData();
+}
+
+
 void ClassifierOutputData::SetVariable(string name, int value) {
 	ClassifierOutputVariable var(name, value);
 	SetVariable(var);
@@ -156,6 +167,11 @@ void ClassifierOutputData::SetVariable(string name, IplImage* value) {
 }
 
 void ClassifierOutputData::SetVariable(string name, CvSeq* value) {
+	ClassifierOutputVariable var(name, value);
+	SetVariable(var);
+}
+
+void ClassifierOutputData::SetVariable(string name, vector<Rect>* value) {
 	ClassifierOutputVariable var(name, value);
 	SetVariable(var);
 }

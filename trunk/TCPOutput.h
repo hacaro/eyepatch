@@ -10,7 +10,7 @@ public:
     TCPOutput();
     ~TCPOutput();
 	void ProcessInput(IplImage* image);
-    void ProcessOutput(IplImage* image, IplImage* mask, CvSeq* contours, char* filterName);
+    void ProcessOutput(IplImage* image, IplImage* mask, ClassifierOutputData data, char* filterName);
 	void StartRunning() {}	// the socket server is always running
 	void StopRunning() {}   // so we don't need these functions
 

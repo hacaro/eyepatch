@@ -110,7 +110,7 @@ void CVideoRunner::ProcessFrame() {
 
         // apply output chain to filtered frame
         for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
-            (*j)->ProcessOutput(copyFrame, guessMask, contours, W2A((*i)->GetName()));
+            (*j)->ProcessOutput(copyFrame, guessMask, outdata, W2A((*i)->GetName()));
         }
     }
 
