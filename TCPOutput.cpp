@@ -35,6 +35,11 @@ void TCPOutput::ProcessInput(IplImage *image) {
 void TCPOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputData data, char *filterName) {
     char buffer[TCP_OUTPUT_BUFFER_SIZE];
     char message[TCP_OUTPUT_BUFFER_SIZE];
+	int ival;
+	float fval;
+	Point pt;
+	vector<Rect> *bboxes;
+	string sval;
 
     // If nobody is connected to the server, don't bother doing anything
     if (!server.IsConnected()) return;
@@ -51,17 +56,29 @@ void TCPOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputD
 					// can't do anything with these types
 					break;
 				case CVAR_INT:
+					ival = var.GetIntData();
+					sprintf(message,"<%s VAL=\"%d\" />\r\n", var.GetName().c_str(), ival);
+					strcat(buffer, message);
 					break;
 				case CVAR_FLOAT:
+					fval = var.GetFloatData();
+					sprintf(message,"<%s VAL=\"%f\" />\r\n", var.GetName().c_str(), fval);
+					strcat(buffer, message);
 					break;
 				case CVAR_POINT:
+					pt = var.GetPointData();
+					sprintf(message,"<%s X=\"%d\" Y=\"%d\" />\r\n", var.GetName().c_str(), ((int)pt.X), ((int)pt.Y));
+					strcat(buffer, message);
 					break;
 				case CVAR_STRING:
+					sval = var.GetStringData();
+					sprintf(message,"<%s VAL=\"%s\" />\r\n", var.GetName().c_str(), sval.c_str());
+					strcat(buffer, message);
 					break;
 				case CVAR_SEQ:
 					break;
 				case CVAR_BBOXES:
-					vector<Rect> *bboxes = var.GetBoundingBoxData();
+					bboxes = var.GetBoundingBoxData();
 					for (vector<Rect>::iterator box = bboxes->begin(); box != bboxes->end(); box++) {
 						Rect r = (*box);
 						sprintf(message,"<%s X=\"%d\" Y=\"%d\" WIDTH=\"%d\" HEIGHT=\"%d\" />\r\n",
