@@ -11,22 +11,34 @@ CClassifierDialog::~CClassifierDialog() {
 
 LRESULT CClassifierDialog::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
 	USES_CONVERSION;
-	CenterWindow();
+
+	ShowWindow(FALSE);	// start with window hidden
 	WCHAR label[MAX_PATH];
 	wsprintf(label, L"Select which data should be output from the \"%s\" classifier:", parent->GetName());
 	GetDlgItem(IDC_TOP_LABEL).SetWindowText(label);
 
 	int nVariables = parent->outputData.NumVariables();
+	int varIdx = 0;
 	for (int i=0; i<nVariables; i++) {
 		string varName = parent->outputData.GetNameOfIndex(i);
 		bool varState = parent->outputData.GetStateOfIndex(i);
-		CWindow checkbox;
-		checkbox.Create(L"BUTTON", this->m_hWnd, CRect(10,50+i*25,300,50+i*25+25),
-			A2W(varName.c_str()), WS_CHILD | BS_AUTOCHECKBOX );
-		Button_SetCheck(checkbox, varState);
-		checkbox.ShowWindow(true);
-		checkbox.UpdateWindow();
+		ClassifierVariableType type = parent->outputData.GetTypeOfIndex(i);
+		if (type != CVAR_IMAGE) {	// we don't currently have a standard way to output images 
+			CWindow checkbox;
+			checkbox.Create(L"BUTTON", this->m_hWnd, CRect(10,50+varIdx*25,300,50+varIdx*25+25),
+				A2W(varName.c_str()), WS_CHILD | BS_AUTOCHECKBOX );
+			Button_SetCheck(checkbox, varState);
+			checkbox.ShowWindow(true);
+			checkbox.UpdateWindow();
+			varIdx++;
+		}
 	}
+
+	MoveWindow(0,0,300, varIdx*25+170, FALSE);
+	GetDlgItem(IDOK).MoveWindow(100, varIdx*25+80, 100, 50, FALSE);
+	CenterWindow();
+	ShowWindow(TRUE);	// now that we're done updating, show the newly setup window
+
 	return TRUE;    // let the system set the focus
 }
 
@@ -202,4 +214,9 @@ void Classifier::ActivateVariable(LPCWSTR varName, bool state) {
 	USES_CONVERSION;
 	string name = W2A(varName);
 	outputData.SetVariableState(name, state);
+}
+
+void Classifier::UpdateStandardOutputData() {
+	outputData.SetVariable("Mask", guessMask);
+	outputData.SetVariable("Contours", GetMaskContours());
 }

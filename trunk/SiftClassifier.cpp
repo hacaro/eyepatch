@@ -202,8 +202,7 @@ ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
     cvReleaseImage(&featureImage);
 	cvReleaseImage(&newMask);
 
-	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	UpdateStandardOutputData();
 	return outputData;
 }
 

@@ -52,6 +52,7 @@ public:
     LPWSTR GetName();
     void SetName(LPCWSTR newName);
 	void ActivateVariable(LPCWSTR varName, bool state);
+	void UpdateStandardOutputData();
 
 	ClassifierOutputData outputData;
 	bool isTrained;

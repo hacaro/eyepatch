@@ -172,3 +172,6 @@ string ClassifierOutputData::GetNameOfIndex(int i) {
 	return data[i].GetName();
 }
 
+ClassifierVariableType ClassifierOutputData::GetTypeOfIndex(int i) {
+	return data[i].GetType();
+}
