@@ -64,6 +64,7 @@ protected:
     Bitmap *filterBitmap, *applyBitmap;
     IplImage *filterImage, *applyImage, *guessMask;
 	CvMemStorage *contourStorage;
+	vector<Rect> boundingBoxes;
 
 	friend class CClassifierDialog;
 	CClassifierDialog m_ClassifierDialog;

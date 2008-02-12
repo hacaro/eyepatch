@@ -96,7 +96,8 @@ Classifier::Classifier() :
 
 	// Create the default variables (all classifiers have these)
 	outputData.AddVariable("Mask", guessMask);
-	outputData.AddVariable("Contours", (CvSeq*)NULL);
+	outputData.AddVariable("BoundingBoxes", &boundingBoxes, true);
+	outputData.AddVariable("Contours", (CvSeq*)NULL, false);
 }
 
 Classifier::Classifier(LPCWSTR pathname) :
@@ -138,7 +139,8 @@ Classifier::Classifier(LPCWSTR pathname) :
 
 	// Create the default variables (all classifiers have these)
 	outputData.AddVariable("Mask", guessMask);
-	outputData.AddVariable("Contours", (CvSeq*)NULL);
+	outputData.AddVariable("BoundingBoxes", &boundingBoxes, true);
+	outputData.AddVariable("Contours", (CvSeq*)NULL, false);
 }
 
 Classifier::~Classifier() {
@@ -218,5 +220,17 @@ void Classifier::ActivateVariable(LPCWSTR varName, bool state) {
 
 void Classifier::UpdateStandardOutputData() {
 	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	CvSeq *contours = GetMaskContours();
+	outputData.SetVariable("Contours", contours);
+
+	// if bounding boxes variable is active, compute bounding boxes of mask contours
+	boundingBoxes.clear();
+    if ((contours != NULL) && (outputData.GetVariableState("BoundingBoxes") == true)){
+        for (CvSeq *contour = contours; contour != NULL; contour = contour->h_next) {
+            CvRect cvr = cvBoundingRect(contour, 1);
+			Rect r(cvr.x, cvr.y, cvr.width, cvr.height);
+			boundingBoxes.push_back(r);
+        }
+		outputData.SetVariable("BoundingBoxes", &boundingBoxes);
+	}
 }

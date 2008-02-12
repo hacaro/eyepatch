@@ -18,28 +18,42 @@ OSCOutput::~OSCOutput() {
 void OSCOutput::ProcessInput(IplImage *image) {
 }
 
-void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, CvSeq* contours, char *filterName) {
+void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputData data, char *filterName) {
     char buffer[OSC_OUTPUT_BUFFER_SIZE];
-    char messageType[OSC_OUTPUT_BUFFER_SIZE];
-    sprintf(messageType, "%s/", filterName);
     osc::OutboundPacketStream p( buffer, OSC_OUTPUT_BUFFER_SIZE );
 
     p << osc::BeginBundleImmediate;
 
-    if (contours != NULL) {
-        for (CvSeq *contour = contours; contour != NULL; contour = contour->h_next) {
-            CvRect r = cvBoundingRect(contour, 1);
-            CvPoint center;
-            int radius;
-            center.x = cvRound((r.x + r.width*0.5));
-            center.y = cvRound((r.y + r.height*0.5));
-            radius = cvRound((r.width + r.height)*0.25);
-
-            p << osc::BeginMessage(messageType)
-                << center.x << center.y << radius << osc::EndMessage;
-        }
-    }
-    p << osc::EndBundle;
-   
+	int nVars = data.NumVariables();
+	for (int i=0; i<nVars; i++) {
+		ClassifierOutputVariable var = data.data[i];
+		if (var.GetState() == true) {	// this variable is active
+			switch(var.GetType()) {
+				case CVAR_VOID:
+				case CVAR_IMAGE:
+					// can't do anything with these types
+					break;
+				case CVAR_INT:
+					break;
+				case CVAR_FLOAT:
+					break;
+				case CVAR_POINT:
+					break;
+				case CVAR_STRING:
+					break;
+				case CVAR_SEQ:
+					break;
+				case CVAR_BBOXES:
+					vector<Rect> *bboxes = var.GetBoundingBoxData();
+					for (vector<Rect>::iterator box = bboxes->begin(); box != bboxes->end(); box++) {
+						Rect r = (*box);
+						p << osc::BeginMessage(var.GetName().c_str())
+							<< ((int)r.X) << ((int)r.Y) << ((int)r.Width) << ((int)r.Height) << osc::EndMessage;
+					}
+					break;
+			}
+		}
+	}
+    p << osc::EndBundle;  
     transmitSocket->Send( p.Data(), p.Size() );
 }

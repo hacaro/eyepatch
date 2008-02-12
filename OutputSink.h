@@ -1,4 +1,5 @@
 #pragma once
+#include "ClassifierOutputData.h"
 
 class OutputSink {
 public:
@@ -13,7 +14,7 @@ public:
     }
 
     virtual void ProcessInput(IplImage* image) = 0;
-    virtual void ProcessOutput(IplImage* image, IplImage* mask, CvSeq* contours, char* filterName) = 0;
+    virtual void ProcessOutput(IplImage* image, IplImage* mask, ClassifierOutputData data, char* filterName) = 0;
 
 	virtual void StartRunning() = 0;
 	virtual void StopRunning() = 0;

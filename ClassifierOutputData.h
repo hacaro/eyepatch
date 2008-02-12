@@ -7,7 +7,8 @@ typedef enum ClassifierVariableType {
 	CVAR_POINT,
     CVAR_STRING,
 	CVAR_IMAGE,
-	CVAR_SEQ
+	CVAR_SEQ,
+	CVAR_BBOXES
 } ClassifierVariableType;
 
 class ClassifierOutputVariable {
@@ -53,6 +54,12 @@ public:
 		m_sequencedata = data;
 		m_state = state;
 	}
+	ClassifierOutputVariable(string name, vector<Rect> *data, bool state=true) {
+		m_name = name;
+		m_type = CVAR_BBOXES;
+		m_bboxdata = data;
+		m_state = state;
+	}
 
 	~ClassifierOutputVariable() { }
 	string GetName() { return m_name; }
@@ -66,6 +73,7 @@ public:
 	string GetStringData() { assert(m_type==CVAR_STRING);	return m_stringdata; }
 	IplImage* GetImageData() { assert(m_type==CVAR_IMAGE);	return m_imagedata; }
 	CvSeq* GetSequenceData() { assert(m_type==CVAR_SEQ);	return m_sequencedata; }
+	vector<Rect>* GetBoundingBoxData() { assert(m_type==CVAR_BBOXES);	return m_bboxdata; }
 
 private:
 	string m_name;
@@ -77,6 +85,7 @@ private:
 	string m_stringdata;
 	IplImage *m_imagedata;
 	CvSeq* m_sequencedata;
+	vector<Rect>* m_bboxdata;
 };
 
 class ClassifierOutputData {
@@ -91,6 +100,7 @@ public:
 	void AddVariable(string name, string value, bool state=true);
 	void AddVariable(string name, IplImage* value, bool state=true);
 	void AddVariable(string name, CvSeq* value, bool state=true);
+	void AddVariable(string name, vector<Rect>* value, bool state=true);
 
 	void SetVariable(ClassifierOutputVariable var);
 	void SetVariable(string name, int value);
@@ -99,6 +109,7 @@ public:
 	void SetVariable(string name, string value);
 	void SetVariable(string name, IplImage* value);
 	void SetVariable(string name, CvSeq* value);
+	void SetVariable(string name, vector<Rect>* value);
 
 	void SetVariableState(string name, bool state);
 	bool GetVariableState(string name);
@@ -110,6 +121,7 @@ public:
 	string GetStringData(string name);
 	IplImage* GetImageData(string name);
 	CvSeq* GetSequenceData(string name);
+	vector<Rect>* GetBoundingBoxData(string name);
 
 	bool HasVariable(string name);
 	int NumVariables();
