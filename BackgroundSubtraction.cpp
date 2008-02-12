@@ -19,7 +19,6 @@ BackgroundSubtraction::BackgroundSubtraction() :
     frameNum = 0;
     bgmodel = NULL;
 
-
 	smallFrameCopy = cvCreateImage(cvSize(160, 120), IPL_DEPTH_8U, 3);
 	fgMaskSmall = cvCreateImage(cvSize(160, 120), IPL_DEPTH_8U, 1);
 }
@@ -54,8 +53,6 @@ void BackgroundSubtraction::StartTraining(TrainingSet *sampleSet) {
 ClassifierOutputData BackgroundSubtraction::ClassifyFrame(IplImage *frame) {
 	ClassifierOutputData data;
 	cvZero(guessMask);
-	data.AddVariable("Mask", guessMask);
-
     if(!frame) return data;
 
 	cvResize(frame, smallFrameCopy);
@@ -94,6 +91,8 @@ ClassifierOutputData BackgroundSubtraction::ClassifyFrame(IplImage *frame) {
 		// copy the final output mask
 		cvResize(fgMaskSmall, guessMask);
     }
+	data.AddVariable("Mask", guessMask);
+	data.AddVariable("Contours", GetMaskContours());
 	return data;
 }
 

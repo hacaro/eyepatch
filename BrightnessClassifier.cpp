@@ -104,8 +104,6 @@ void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
 ClassifierOutputData BrightnessClassifier::ClassifyFrame(IplImage *frame) {
 	ClassifierOutputData data;
 	cvZero(guessMask);
-	data.AddVariable("Mask", guessMask);
-
 	if (!isTrained) return data;
     if(!frame) return data;
 
@@ -168,6 +166,8 @@ ClassifierOutputData BrightnessClassifier::ClassifyFrame(IplImage *frame) {
 	cvReleaseImage(&backproject);
 	cvReleaseImage(&newMask);
 
+	data.AddVariable("Mask", guessMask);
+	data.AddVariable("Contours", GetMaskContours());
 	return data;
 }
 

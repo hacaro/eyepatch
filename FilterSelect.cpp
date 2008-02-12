@@ -34,7 +34,7 @@ LRESULT CFilterSelect::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 LRESULT CFilterSelect::OnTrack(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
 	long sliderPosition = (long) SendDlgItemMessage(IDC_FILTER_THRESHOLD, TBM_GETPOS, 0, 0);
-	bool isDragging = (LOWORD(wParam) == SB_THUMBTRACK);
+	bool isDragging = (LOWORD(wParam) != SB_ENDSCROLL);
 	parent->SendMessage(WM_SET_THRESHOLD, ((WPARAM)sliderPosition), isDragging);
 	return 0;
 }

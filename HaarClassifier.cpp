@@ -208,8 +208,6 @@ void HaarClassifier::StartTraining(TrainingSet* sampleSet) {
 ClassifierOutputData HaarClassifier::ClassifyFrame(IplImage *frame) {
 	ClassifierOutputData data;
 	cvZero(guessMask);
-	data.AddVariable("Mask", guessMask);
-
 	if (!isTrained) return data;
     if (!cascade) return data;
 
@@ -248,6 +246,8 @@ ClassifierOutputData HaarClassifier::ClassifyFrame(IplImage *frame) {
     IplToBitmap(applyImage, applyBitmap);
 	cvReleaseImage(&newMask);
 
+	data.AddVariable("Mask", guessMask);
+	data.AddVariable("Contours", GetMaskContours());
 	return data;
 }
 

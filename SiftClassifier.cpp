@@ -93,8 +93,6 @@ void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
 ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
 	ClassifierOutputData data;
 	cvZero(guessMask);
-	data.AddVariable("Mask", guessMask);
-
 	if (!isTrained) return data;
     if(!frame) return data;
 
@@ -205,6 +203,8 @@ ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
     cvReleaseImage(&featureImage);
 	cvReleaseImage(&newMask);
 
+	data.AddVariable("Mask", guessMask);
+	data.AddVariable("Contours", GetMaskContours());
 	return data;
 }
 

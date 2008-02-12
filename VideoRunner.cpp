@@ -85,18 +85,20 @@ void CVideoRunner::ProcessFrame() {
         } 
 
 		// pull the mask out of the returned data
-		IplImage *mask = outdata.GetImageData("Mask");
-		cvResize(mask, guessMask);
+		if (outdata.HasVariable("Mask")) {
+			IplImage *mask = outdata.GetImageData("Mask");
+			cvResize(mask, guessMask);
+		} else {
+			cvZero(guessMask);
+		}
 
         // Copy the masked output of this filter to accumulator frame
         cvZero(outputAccImage);
         cvCopy(copyFrame, outputAccImage, guessMask);
 
-        // Find contours in mask image and trace in accumulator frame
-        CvSeq* contours = NULL;
-        cvFindContours(guessMask, contourStorage, &contours, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+        // Trace contours in accumulator frame
+		CvSeq *contours = outdata.GetSequenceData("Contours");
         if (contours != NULL) {
-            contours = cvApproxPoly(contours, sizeof(CvContour), contourStorage, CV_POLY_APPROX_DP, 3, 1 );
             cvDrawContours(outputAccImage, contours, colorSwatch[nCurrentFilter%COLOR_SWATCH_SIZE], CV_RGB(0,0,0), 1, 2, CV_AA);
         }
         nCurrentFilter++;
@@ -108,9 +110,6 @@ void CVideoRunner::ProcessFrame() {
         for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
             (*j)->ProcessOutput(copyFrame, guessMask, contours, W2A((*i)->GetName()));
         }
-
-        // reset the contour storage
-        cvClearMemStorage(contourStorage);
     }
 
     // convert to bitmap
@@ -223,9 +222,6 @@ void CVideoRunner::StartProcessing(bool isLive) {
     motionHistory = cvCreateImage(cvSize(videoX,videoY), IPL_DEPTH_32F, 1);
     cvZero(motionHistory);
 
-    // allocate contour storage
-    contourStorage = cvCreateMemStorage(0);
-
     // Allocate an image history ring buffer
     memset(motionBuf, 0, MOTION_NUM_IMAGES*sizeof(IplImage*));
     for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
@@ -271,7 +267,6 @@ void CVideoRunner::StopProcessing() {
         cvReleaseImage(&motionBuf[i]);
     }
     cvReleaseImage(&guessMask);
-    cvReleaseMemStorage(&contourStorage);
 
     delete bmpInput;
     delete bmpOutput;
