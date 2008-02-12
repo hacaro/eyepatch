@@ -64,16 +64,16 @@ LRESULT CFilterLibrary::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
 LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
     
     LPNMLISTVIEW nmlv = (LPNMLISTVIEW) pnmh;
-    if (idCtrl == IDC_MY_FILTER_LIST) {
+    HWND listView = GetDlgItem(idCtrl);
+    LV_ITEM lvi;
+    ZeroMemory(&lvi, sizeof(lvi));
+    lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+    lvi.iItem = nmlv->iItem;
+    lvi.iSubItem = 0;
+
+	if (idCtrl == IDC_MY_FILTER_LIST) {
 
         // we activated an item from the list of custom filters
-        HWND listView = GetDlgItem(IDC_MY_FILTER_LIST);
-
-        LV_ITEM lvi;
-        ZeroMemory(&lvi, sizeof(lvi));
-        lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
-        lvi.iItem = nmlv->iItem;
-        lvi.iSubItem = 0;
         if (ListView_GetItem(listView, &lvi)) {
 
             // filter was double-clicked, so we will add it to the list of filters
@@ -83,13 +83,6 @@ LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
     } else if (idCtrl == IDC_STD_FILTER_LIST) {
     
         // we activated an item from the list of standard filters
-        HWND listView = GetDlgItem(IDC_STD_FILTER_LIST);
-
-        LV_ITEM lvi;
-        ZeroMemory(&lvi, sizeof(lvi));
-        lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
-        lvi.iItem = nmlv->iItem;
-        lvi.iSubItem = 0;
         if (ListView_GetItem(listView, &lvi)) {
 
             // filter was double-clicked, so we will add it to the list of filters
@@ -99,20 +92,22 @@ LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
     } else if (idCtrl == IDC_OUTPUT_LIST) {
 
         // we activated an item from the list of outputs
-        HWND listView = GetDlgItem(IDC_OUTPUT_LIST);
-
-        LV_ITEM lvi;
-        ZeroMemory(&lvi, sizeof(lvi));
-        lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
-        lvi.iItem = nmlv->iItem;
-        lvi.iSubItem = 0;
         if (ListView_GetItem(listView, &lvi)) {
 
             // output was double-clicked, so we will add it to the list of outputs
             OutputSink *output = (OutputSink*) lvi.lParam;
             parent->SendMessage(WM_ADD_OUTPUT_SINK, NULL, ((LPARAM)output));
         }
-    }
+	} else if (idCtrl == IDC_ACTIVE_FILTER_LIST) {
+
+		// we activated an item from the list of currently active filters
+        if (ListView_GetItem(listView, &lvi)) {
+
+            // filter was double-clicked, so we will bring up its configuration dialog box
+            Classifier *classifier = (Classifier*) lvi.lParam;
+			classifier->Configure();
+        }
+	}
     return 0;
 }
 

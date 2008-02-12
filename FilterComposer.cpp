@@ -155,10 +155,12 @@ LRESULT CFilterComposer::OnAddCustomFilter( UINT, WPARAM wParam, LPARAM lParam, 
         case ADABOOST_FILTER:
         case MOTION_FILTER:
         case GESTURE_FILTER:
-            m_videoRunner.AddActiveFilter((Classifier*)lParam);
-            listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
-            m_filterLibrary.AddFilter(listView, (Classifier*)lParam);
-            ::InvalidateRect(listView, NULL, FALSE);
+            bool newlyAdded = m_videoRunner.AddActiveFilter((Classifier*)lParam);
+			if (newlyAdded) {
+				listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
+				m_filterLibrary.AddFilter(listView, (Classifier*)lParam);
+				::InvalidateRect(listView, NULL, FALSE);
+			}
             break;
     }
     return 0;
@@ -166,10 +168,12 @@ LRESULT CFilterComposer::OnAddCustomFilter( UINT, WPARAM wParam, LPARAM lParam, 
 
 LRESULT CFilterComposer::OnAddStandardFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     HWND listView;
-    m_videoRunner.AddActiveFilter((Classifier*)lParam);
-    listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
-    m_filterLibrary.AddFilter(listView, (Classifier*)lParam);
-    ::InvalidateRect(listView, NULL, FALSE);
+    bool newlyAdded  = m_videoRunner.AddActiveFilter((Classifier*)lParam);
+	if (newlyAdded) {
+		listView = m_filterLibrary.GetDlgItem(IDC_ACTIVE_FILTER_LIST);
+		m_filterLibrary.AddFilter(listView, (Classifier*)lParam);
+		::InvalidateRect(listView, NULL, FALSE);
+	}
     return 0;
 }
 

@@ -14,7 +14,7 @@ public:
     void StopProcessing();
 	void ProcessFrame();
 
-    void AddActiveFilter(Classifier*);
+    bool AddActiveFilter(Classifier*);
     void ClearActiveFilters();
 	void ResetActiveFilterRunningStates();
 

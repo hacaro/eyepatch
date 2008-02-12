@@ -311,6 +311,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Classifier.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\ClassifierOutputData.cpp"
 					>
 				</File>

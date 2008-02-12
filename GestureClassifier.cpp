@@ -14,6 +14,10 @@ GestureClassifier::GestureClassifier() :
 
     // append identifier to directory name
     wcscat(directoryName, FILE_GESTURE_SUFFIX);
+
+	// Create the custom output variables for this classifier
+	outputData.AddVariable("IsMatch", (int)0);
+	outputData.AddVariable("Gesture", (int)0);	
 }
 
 GestureClassifier::GestureClassifier(LPCWSTR pathname) :
@@ -40,6 +44,10 @@ GestureClassifier::GestureClassifier(LPCWSTR pathname) :
 
 	// set the type
 	classifierType = GESTURE_FILTER;
+
+	// Create the custom output variables for this classifier
+	outputData.AddVariable("IsMatch", (int)0);
+	outputData.AddVariable("Gesture", (int)0);	
 
 	UpdateTrajectoryImage();
 }
@@ -91,10 +99,10 @@ ClassifierOutputData GestureClassifier::ClassifyFrame(IplImage *frame) {
 }    
 
 ClassifierOutputData GestureClassifier::ClassifyTrack(MotionTrack mt) {
-	ClassifierOutputData data;
 	cvZero(guessMask);
-	if (!isTrained) return data;
-	if (mt.size() < GESTURE_MIN_TRAJECTORY_LENGTH) return data;
+	outputData.SetVariable("IsMatch", 0);
+	if (!isTrained) return outputData;
+	if (mt.size() < GESTURE_MIN_TRAJECTORY_LENGTH) return outputData;
 
     // don't start all the way at the beginning of the track if it's really long
     int startFrame = max(0, mt.size()-GESTURE_MAX_TRAJECTORY_LENGTH);
@@ -104,13 +112,13 @@ ClassifierOutputData GestureClassifier::ClassifyTrack(MotionTrack mt) {
 	Result r = rec.BackRecognize(mt);
 
 	if (r.m_score > threshold) {
-		data.AddVariable("IsMatch", 1);
+		outputData.SetVariable("IsMatch", 1);
 
 		// fill up the mask image
 		cvSet(guessMask, cvScalar(0xFF));
 
 		// add a variable for the detected gesture number
-		data.AddVariable("Gesture", r.m_index);
+		outputData.SetVariable("Gesture", r.m_index);
 
 		// draw the recognized gesture in the apply image
 		DrawTrack(applyImage, rec.m_templates[r.m_index].m_points, colorSwatch[r.m_index % COLOR_SWATCH_SIZE], 3, GESTURE_SQUARE_SIZE);
@@ -123,9 +131,9 @@ ClassifierOutputData GestureClassifier::ClassifyTrack(MotionTrack mt) {
 
     IplToBitmap(applyImage, applyBitmap);
 
-	data.AddVariable("Mask", guessMask);
-	data.AddVariable("Contours", GetMaskContours());
-	return data;
+	outputData.SetVariable("Mask", guessMask);
+	outputData.SetVariable("Contours", GetMaskContours());
+	return outputData;
 }
 
 void GestureClassifier::UpdateTrajectoryImage() {

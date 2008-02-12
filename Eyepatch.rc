@@ -175,7 +175,7 @@ BEGIN
     CONTROL         "",IDC_ACTIVE_FILTER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,270,39,156,136
     CONTROL         "",IDC_ACTIVE_OUTPUT_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,270,253,156,136
     PUSHBUTTON      "Reset Chain",IDC_RESET,270,402,156,36
-    LTEXT           "Active Filters:",IDC_STATIC,270,24,114,8
+    LTEXT           "Active Filters: Double Click to Configure",IDC_STATIC,270,24,151,8
     LTEXT           "Active Outputs:",IDC_STATIC,270,236,114,8
     GROUPBOX        "Active Filter Chain",IDC_STATIC,264,6,168,438
     CONTROL         122,IDC_STATIC,"Static",SS_BITMAP,337,192,27,26
@@ -190,6 +190,15 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Stop Learning Gestures",IDCANCEL,70,174,89,14
     LTEXT           "Identifying the motion trajectories in this video...",IDC_PROGRESS_LABEL,7,7,213,12
+END
+
+IDD_CLASSIFIER_DIALOG DIALOGEX 0, 0, 201, 195
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Classifier Settings"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,56,163,89,25
+    LTEXT           "Select which data should be output from this classifier:",IDC_TOP_LABEL,7,7,187,27
 END
 
 
@@ -251,6 +260,14 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 188
+    END
+
+    IDD_CLASSIFIER_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 194
         TOPMARGIN, 7
         BOTTOMMARGIN, 188
     END

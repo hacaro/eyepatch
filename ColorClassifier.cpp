@@ -109,10 +109,9 @@ void ColorClassifier::StartTraining(TrainingSet *sampleSet) {
 }
 
 ClassifierOutputData ColorClassifier::ClassifyFrame(IplImage *frame) {
-	ClassifierOutputData data;
 	cvZero(guessMask);
-	if (!isTrained) return data;
-    if(!frame) return data;
+	if (!isTrained) return outputData;
+    if(!frame) return outputData;
 
     IplImage *image = cvCreateImage( cvGetSize(frame), 8, 3 );
     IplImage *hsv = cvCreateImage( cvGetSize(frame), 8, 3 );
@@ -182,9 +181,9 @@ ClassifierOutputData ColorClassifier::ClassifyFrame(IplImage *frame) {
 	cvReleaseImage(&backproject);
 	cvReleaseImage(&newMask);
 
-	data.AddVariable("Mask", guessMask);
-	data.AddVariable("Contours", GetMaskContours());
-	return data;
+	outputData.SetVariable("Mask", guessMask);
+	outputData.SetVariable("Contours", GetMaskContours());
+	return outputData;
 }
 
 void ColorClassifier::UpdateHistogramImage() {
