@@ -24,7 +24,14 @@ public:
         SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, rootpath);
         int classifiernum = (int)time(0);
         wsprintf(directoryName, L"%s\\%s\\%s%d", rootpath, APP_CLASS, FILE_CLASSIFIER_PREFIX, classifiernum);
-    }
+
+		// create list of available output variables
+		variableNames.push_back("Mask");
+		variableNames.push_back("Contours");
+
+		// Initialize contour storage
+		contourStorage = cvCreateMemStorage(0);
+	}
 
 	Classifier(LPCWSTR pathname) {
 		USES_CONVERSION;
@@ -57,12 +64,20 @@ public:
 		FILE *threshfile = fopen(W2A(filename), "r");
 		fread(&threshold, sizeof(float), 1, threshfile);
 		fclose(threshfile);
+
+		// create list of available output variables
+		variableNames.push_back("Mask");
+		variableNames.push_back("Contours");
+
+		// Initialize contour storage
+		contourStorage = cvCreateMemStorage(0);
 	}
 
 	virtual ~Classifier() {
         cvReleaseImage(&filterImage);
         cvReleaseImage(&applyImage);
 		cvReleaseImage(&guessMask);
+		cvReleaseMemStorage(&contourStorage);
         delete filterBitmap;
         delete applyBitmap;
     }
@@ -102,6 +117,18 @@ public:
         isOnDisk = false;
     }
 
+	CvSeq* GetMaskContours() {
+        // reset the contour storage
+        cvClearMemStorage(contourStorage);
+
+        CvSeq* contours = NULL;
+		cvFindContours(guessMask, contourStorage, &contours, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+		if (contours != NULL) {
+	        contours = cvApproxPoly(contours, sizeof(CvContour), contourStorage, CV_POLY_APPROX_DP, 3, 1 );
+		}
+		return contours;
+	}
+
     Bitmap* GetFilterImage() {
         return filterBitmap;
     }
@@ -119,10 +146,12 @@ public:
     bool isOnDisk;
     int classifierType;
 	float threshold;
+	vector<string> variableNames;
 
 protected:
     Bitmap *filterBitmap, *applyBitmap;
     IplImage *filterImage, *applyImage, *guessMask;
+	CvMemStorage *contourStorage;
 
     WCHAR friendlyName[MAX_PATH];
     WCHAR directoryName[MAX_PATH];

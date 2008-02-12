@@ -115,8 +115,6 @@ void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
 ClassifierOutputData ShapeClassifier::ClassifyFrame(IplImage *frame) {
 	ClassifierOutputData data;
 	cvZero(guessMask);
-	data.AddVariable("Mask", guessMask);
-
 	if (!isTrained) return data;
     if(!frame) return data;
 
@@ -163,6 +161,8 @@ ClassifierOutputData ShapeClassifier::ClassifyFrame(IplImage *frame) {
     cvReleaseImage(&grayscale);
 	cvReleaseImage(&newMask);
 
+	data.AddVariable("Mask", guessMask);
+	data.AddVariable("Contours", GetMaskContours());
 	return data;
 }
 

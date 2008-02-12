@@ -93,8 +93,6 @@ ClassifierOutputData GestureClassifier::ClassifyFrame(IplImage *frame) {
 ClassifierOutputData GestureClassifier::ClassifyTrack(MotionTrack mt) {
 	ClassifierOutputData data;
 	cvZero(guessMask);
-	data.AddVariable("Mask", guessMask);
-
 	if (!isTrained) return data;
 	if (mt.size() < GESTURE_MIN_TRAJECTORY_LENGTH) return data;
 
@@ -124,6 +122,9 @@ ClassifierOutputData GestureClassifier::ClassifyTrack(MotionTrack mt) {
 	}
 
     IplToBitmap(applyImage, applyBitmap);
+
+	data.AddVariable("Mask", guessMask);
+	data.AddVariable("Contours", GetMaskContours());
 	return data;
 }
 

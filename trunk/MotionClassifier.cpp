@@ -169,8 +169,6 @@ ClassifierOutputData MotionClassifier::ClassifyFrame(IplImage *frame) {
 ClassifierOutputData MotionClassifier::ClassifyMotion(IplImage *frame, double timestamp) {
 	ClassifierOutputData data;
 	cvZero(guessMask);
-	data.AddVariable("Mask", guessMask);
-	
 	if (!isTrained) return data;
     if(!frame) return data;
 
@@ -241,7 +239,6 @@ ClassifierOutputData MotionClassifier::ClassifyMotion(IplImage *frame, double ti
                     cvPoint(comp_rect.x+comp_rect.width, comp_rect.y+comp_rect.height),
                     cvScalar(0xFF), CV_FILLED, 8);
             }
-			data.AddVariable("MotionAngle", (float)motionAngle);
         }
         // draw a clock with arrow indicating the direction
         CvPoint center = cvPoint((comp_rect.x + comp_rect.width/2), (comp_rect.y + comp_rect.height/2));
@@ -263,6 +260,8 @@ ClassifierOutputData MotionClassifier::ClassifyMotion(IplImage *frame, double ti
 	cvReleaseImage(&newMask);
     cvReleaseMemStorage(&storage);
 
+	data.AddVariable("Mask", guessMask);
+	data.AddVariable("Contours", GetMaskContours());
 	return data;
 }
 

@@ -189,6 +189,7 @@ void CVideoLoader::LoadFrame(long framenum) {
     cvSetCaptureProperty(videoCapture, CV_CAP_PROP_POS_FRAMES, framenum);
     currentFrame = cvQueryFrame(videoCapture);
 	if (!currentFrame) return;
+	if ((currentFrame->depth != IPL_DEPTH_8U) || (currentFrame->nChannels != 3)) return;
 
     if (currentFrame->origin  == IPL_ORIGIN_TL) {
         cvCopy(currentFrame,copyFrame);

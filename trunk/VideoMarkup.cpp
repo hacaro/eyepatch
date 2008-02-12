@@ -324,10 +324,10 @@ LRESULT CVideoMarkup::OnTrack( UINT, WPARAM wParam, LPARAM, BOOL& ) {
     long sliderPosition =
         (long) ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_GETPOS, 0, 0);
     selectingRegion = false;
-	if (LOWORD(wParam) == SB_THUMBTRACK) {
-		scrubbingVideo = true;
-	} else {
+	if (LOWORD(wParam) == SB_ENDSCROLL) {
 		scrubbingVideo = false;
+	} else {
+		scrubbingVideo = true;
 	}
     selectStart.X = 0;
     selectStart.Y = 0;
@@ -806,8 +806,12 @@ void CVideoMarkup::RunClassifierOnCurrentFrame() {
         outdata = classifier->ClassifyFrame(m_videoLoader.copyFrame);
     }
 	
-	IplImage *mask = outdata.GetImageData("Mask");
-	cvResize(mask, m_videoLoader.guessMask);
+	if (outdata.HasVariable("Mask")) {
+		IplImage *mask = outdata.GetImageData("Mask");
+		cvResize(mask, m_videoLoader.guessMask);
+	} else {
+		cvZero(m_videoLoader.guessMask);
+	}
 
     SetCursor(hOld);
 }
