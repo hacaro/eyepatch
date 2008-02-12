@@ -97,6 +97,10 @@ Classifier::Classifier() :
 	// Create the default variables (all classifiers have these)
 	outputData.AddVariable("Mask", guessMask);
 	outputData.AddVariable("BoundingBoxes", &boundingBoxes, true);
+	outputData.AddVariable("NumRegions", (int)0, false);
+	outputData.AddVariable("TotalArea", (int)0, false);
+	Point pt(0,0);
+	outputData.AddVariable("Centroid", pt, false);
 	outputData.AddVariable("Contours", (CvSeq*)NULL, false);
 }
 
@@ -140,6 +144,10 @@ Classifier::Classifier(LPCWSTR pathname) :
 	// Create the default variables (all classifiers have these)
 	outputData.AddVariable("Mask", guessMask);
 	outputData.AddVariable("BoundingBoxes", &boundingBoxes, true);
+	outputData.AddVariable("NumRegions", (int)0, false);
+	outputData.AddVariable("TotalArea", (int)0, false);
+	Point pt(0,0);
+	outputData.AddVariable("Centroid", pt, false);
 	outputData.AddVariable("Contours", (CvSeq*)NULL, false);
 }
 
@@ -223,14 +231,28 @@ void Classifier::UpdateStandardOutputData() {
 	CvSeq *contours = GetMaskContours();
 	outputData.SetVariable("Contours", contours);
 
-	// if bounding boxes variable is active, compute bounding boxes of mask contours
+	// compute bounding boxes of mask contours, along with area and centroid, and count # of regions
 	boundingBoxes.clear();
-    if ((contours != NULL) && (outputData.GetVariableState("BoundingBoxes") == true)){
+	Point centroid(0,0);
+	int nRegions = 0;
+	int totalArea = 0;
+    if (contours != NULL){
         for (CvSeq *contour = contours; contour != NULL; contour = contour->h_next) {
             CvRect cvr = cvBoundingRect(contour, 1);
+			totalArea += fabs(cvContourArea(contour));
 			Rect r(cvr.x, cvr.y, cvr.width, cvr.height);
 			boundingBoxes.push_back(r);
+			centroid.X += (cvr.x+cvr.width/2);
+			centroid.Y += (cvr.y+cvr.height/2);
+			nRegions++;
         }
-		outputData.SetVariable("BoundingBoxes", &boundingBoxes);
+		if (nRegions > 0) {
+			centroid.X /= nRegions;
+			centroid.Y /= nRegions;
+		}
 	}
+	outputData.SetVariable("BoundingBoxes", &boundingBoxes);
+	outputData.SetVariable("NumRegions", nRegions);
+	outputData.SetVariable("TotalArea", totalArea);
+	outputData.SetVariable("Centroid", centroid);
 }
