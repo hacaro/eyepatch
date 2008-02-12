@@ -55,6 +55,7 @@ void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputD
 					p << osc::BeginMessage(var.GetName().c_str()) << (sval.c_str()) << osc::EndMessage;
 					break;
 				case CVAR_SEQ:
+					// TODO: not yet implemented (how to format contour data as XML?)
 					break;
 				case CVAR_BBOXES:
 					bboxes = var.GetBoundingBoxData();

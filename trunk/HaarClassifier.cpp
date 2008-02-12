@@ -66,9 +66,6 @@ HaarClassifier::HaarClassifier() :
 
     // append identifier to directory name
     wcscat(directoryName, FILE_HAAR_SUFFIX);
-
-	// Create the custom output variables for this classifier
-	outputData.AddVariable("NumObjects", (int)0);
 }
 
 HaarClassifier::HaarClassifier(LPCWSTR pathname) :
@@ -104,9 +101,6 @@ HaarClassifier::HaarClassifier(LPCWSTR pathname) :
 
 	// set the type
     classifierType = ADABOOST_FILTER;
-
-	// Create the custom output variables for this classifier
-	outputData.AddVariable("NumObjects", (int)0);
 }
 
 HaarClassifier::~HaarClassifier() {
@@ -242,7 +236,6 @@ ClassifierOutputData HaarClassifier::ClassifyFrame(IplImage *frame) {
         // draw rectangle in mask image
         cvRectangle(newMask, cvPoint(r->x, r->y), cvPoint(r->x+r->width, r->y+r->height), cvScalar(0xFF), CV_FILLED, 8);
     }
-	outputData.SetVariable("NumObjects", objects->total);
 
 	// copy the final output mask
     cvResize(newMask, guessMask);

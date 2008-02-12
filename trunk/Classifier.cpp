@@ -23,7 +23,7 @@ LRESULT CClassifierDialog::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam,
 		string varName = parent->outputData.GetNameOfIndex(i);
 		bool varState = parent->outputData.GetStateOfIndex(i);
 		ClassifierVariableType type = parent->outputData.GetTypeOfIndex(i);
-		if (type != CVAR_IMAGE) {	// we don't currently have a standard way to output images 
+		if ((type != CVAR_IMAGE) && (type !=CVAR_SEQ)) {	// we don't currently have a standard way to output images 
 			CWindow checkbox;
 			checkbox.Create(L"BUTTON", this->m_hWnd, CRect(10,50+varIdx*25,300,50+varIdx*25+25),
 				A2W(varName.c_str()), WS_CHILD | BS_AUTOCHECKBOX );

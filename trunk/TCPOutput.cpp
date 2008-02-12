@@ -76,6 +76,7 @@ void TCPOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputD
 					strcat(buffer, message);
 					break;
 				case CVAR_SEQ:
+					// TODO: not yet implemented (how to format contour data as XML?)
 					break;
 				case CVAR_BBOXES:
 					bboxes = var.GetBoundingBoxData();
