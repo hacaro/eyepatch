@@ -259,8 +259,7 @@ ClassifierOutputData MotionClassifier::ClassifyMotion(IplImage *frame, double ti
 	cvReleaseImage(&newMask);
     cvReleaseMemStorage(&storage);
 
-	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	UpdateStandardOutputData();
 	return outputData;
 }
 

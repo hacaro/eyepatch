@@ -115,6 +115,7 @@ public:
 	int NumVariables();
 	bool GetStateOfIndex(int index);
 	string GetNameOfIndex(int index);
+	ClassifierVariableType GetTypeOfIndex(int index);
 
 	vector<ClassifierOutputVariable> data;
 

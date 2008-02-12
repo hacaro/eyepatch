@@ -251,8 +251,7 @@ ClassifierOutputData HaarClassifier::ClassifyFrame(IplImage *frame) {
     IplToBitmap(applyImage, applyBitmap);
 	cvReleaseImage(&newMask);
 
-	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	UpdateStandardOutputData();
 	return outputData;
 }
 

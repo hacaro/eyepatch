@@ -165,8 +165,7 @@ ClassifierOutputData BrightnessClassifier::ClassifyFrame(IplImage *frame) {
 	cvReleaseImage(&backproject);
 	cvReleaseImage(&newMask);
 
-	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	UpdateStandardOutputData();
 	return outputData;
 }
 

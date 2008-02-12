@@ -89,8 +89,7 @@ ClassifierOutputData BackgroundSubtraction::ClassifyFrame(IplImage *frame) {
 		// copy the final output mask
 		cvResize(fgMaskSmall, guessMask);
     }
-	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	UpdateStandardOutputData();
 	return outputData;
 }
 

@@ -131,8 +131,7 @@ ClassifierOutputData GestureClassifier::ClassifyTrack(MotionTrack mt) {
 
     IplToBitmap(applyImage, applyBitmap);
 
-	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	UpdateStandardOutputData();
 	return outputData;
 }
 

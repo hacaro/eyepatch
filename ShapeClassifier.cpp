@@ -160,8 +160,7 @@ ClassifierOutputData ShapeClassifier::ClassifyFrame(IplImage *frame) {
     cvReleaseImage(&grayscale);
 	cvReleaseImage(&newMask);
 
-	outputData.SetVariable("Mask", guessMask);
-	outputData.SetVariable("Contours", GetMaskContours());
+	UpdateStandardOutputData();
 	return outputData;
 }
 
@@ -190,7 +189,6 @@ void ShapeClassifier::UpdateContourImage() {
 			IplImage *contourImg = cvCreateImage(cvSize(contourSize, contourSize), filterImage->depth, filterImage->nChannels);
 
 			cvZero(contourImg);
-			cvRectangle(contourImg, cvPoint(0,0), cvPoint(contourSize,contourSize),  colorSwatch[contourNum], 2);
 			cvDrawContours(contourImg, contour, colorSwatch[contourNum], CV_RGB(255,255,255), 0, 2, CV_AA, cvPoint(-bounds.x, -bounds.y));
 			cvResize(contourImg, filterImage);
 			cvReleaseImage(&contourImg);

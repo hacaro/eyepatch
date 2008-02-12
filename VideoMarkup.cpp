@@ -497,6 +497,7 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             sliderPosition = (wParam==IDC_FRAMELEFT) ? sliderPosition-1 : sliderPosition+1;
             ::SendDlgItemMessage(m_videoControl, IDC_VIDEOSLIDER, TBM_SETPOS, TRUE, sliderPosition);
             OnTrack(0,0,0,bHandled);
+			scrubbingVideo = false;
 			needToRerunClassifier = true;
             break;
         case IDC_MARKIN:
