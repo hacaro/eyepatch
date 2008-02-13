@@ -20,6 +20,7 @@ void OSCOutput::ProcessInput(IplImage *image) {
 
 void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputData data, char *filterName) {
     char buffer[OSC_OUTPUT_BUFFER_SIZE];
+    char oscaddress[OSC_OUTPUT_BUFFER_SIZE];
     osc::OutboundPacketStream p( buffer, OSC_OUTPUT_BUFFER_SIZE );
 	int ival;
 	float fval;
@@ -33,6 +34,7 @@ void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputD
 	for (int i=0; i<nVars; i++) {
 		ClassifierOutputVariable var = data.data[i];
 		if (var.GetState() == true) {	// this variable is active
+			sprintf(oscaddress, "/%s", var.GetName().c_str());
 			switch(var.GetType()) {
 				case CVAR_VOID:
 				case CVAR_IMAGE:
@@ -40,19 +42,19 @@ void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputD
 					break;
 				case CVAR_INT:
 					ival = var.GetIntData();
-					p << osc::BeginMessage(var.GetName().c_str()) << ival << osc::EndMessage;
+					p << osc::BeginMessage(oscaddress) << ival << osc::EndMessage;
 					break;
 				case CVAR_FLOAT:
 					fval = var.GetFloatData();
-					p << osc::BeginMessage(var.GetName().c_str()) << fval << osc::EndMessage;
+					p << osc::BeginMessage(oscaddress) << fval << osc::EndMessage;
 					break;
 				case CVAR_POINT:
 					pt = var.GetPointData();
-					p << osc::BeginMessage(var.GetName().c_str()) << ((int)pt.X) << ((int)pt.Y) << osc::EndMessage;
+					p << osc::BeginMessage(oscaddress) << ((int)pt.X) << ((int)pt.Y) << osc::EndMessage;
 					break;
 				case CVAR_STRING:
 					sval = var.GetStringData();
-					p << osc::BeginMessage(var.GetName().c_str()) << (sval.c_str()) << osc::EndMessage;
+					p << osc::BeginMessage(oscaddress) << (sval.c_str()) << osc::EndMessage;
 					break;
 				case CVAR_SEQ:
 					// TODO: not yet implemented (how to format contour data as XML?)
@@ -61,7 +63,7 @@ void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputD
 					bboxes = var.GetBoundingBoxData();
 					for (vector<Rect>::iterator box = bboxes->begin(); box != bboxes->end(); box++) {
 						Rect r = (*box);
-						p << osc::BeginMessage(var.GetName().c_str())
+						p << osc::BeginMessage(oscaddress)
 							<< ((int)r.X) << ((int)r.Y) << ((int)r.Width) << ((int)r.Height) << osc::EndMessage;
 					}
 					break;
