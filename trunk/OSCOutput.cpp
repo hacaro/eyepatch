@@ -18,7 +18,7 @@ OSCOutput::~OSCOutput() {
 void OSCOutput::ProcessInput(IplImage *image) {
 }
 
-void OSCOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputData data, char *filterName) {
+void OSCOutput::ProcessOutput(IplImage *image, ClassifierOutputData data, char *filterName) {
     char buffer[OSC_OUTPUT_BUFFER_SIZE];
     char oscaddress[OSC_OUTPUT_BUFFER_SIZE];
     osc::OutboundPacketStream p( buffer, OSC_OUTPUT_BUFFER_SIZE );

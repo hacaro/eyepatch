@@ -41,8 +41,7 @@
 #define MOTION_DIFF_THRESHOLD 30
 
 // Gesture parameters
-
-// minimum and maximum number of frames required for a valid gesture */
+// minimum and maximum number of frames required for a valid gesture
 #define GESTURE_MIN_TRAJECTORY_LENGTH 5
 #define GESTURE_MAX_TRAJECTORY_LENGTH 150
 
@@ -64,6 +63,8 @@
 #define AnglePrecision 2.0
 #define Phi (0.5 * (-1.0 + Math.sqrt(5.0)))
 
+// Tesseract OCR parameters
+#define TESSERACT_MAX_CHARS 4096
 
 // minimum number of background subtraction frames to "spin up" background model
 #define BACKGROUND_SUBTRACTION_MIN_FRAMES 10

@@ -27,7 +27,7 @@ public:
     int fps;
     long nFrames, framesAvailable;
     bool processingVideo, runningLive;
-    IplImage *copyFrame, *outputFrame, *outputAccImage;
+    IplImage *copyFrame, *outputFrame, *outputAccImage, *contourMask;
 	Bitmap *bmpInput, *bmpOutput, *bmpMotion, *bmpGesture;
 
     //  keep track of the number of active filters that require motion or blob tracking

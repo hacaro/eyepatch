@@ -7,7 +7,7 @@ public:
     StreamingVideoOutput();
     ~StreamingVideoOutput();
     void ProcessInput(IplImage* image);
-	void ProcessOutput(IplImage* image, IplImage* mask, ClassifierOutputData data, char* filterName);
+	void ProcessOutput(IplImage* image, ClassifierOutputData data, char* filterName);
 	void StartRunning();
 	void StopRunning();
 private:

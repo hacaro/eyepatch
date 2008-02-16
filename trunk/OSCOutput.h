@@ -11,7 +11,7 @@ public:
     ~OSCOutput();
 
 	void ProcessInput(IplImage* image);
-	void ProcessOutput(IplImage* image, IplImage* mask, ClassifierOutputData data, char* filterName);
+	void ProcessOutput(IplImage* image, ClassifierOutputData data, char* filterName);
 	void StartRunning() {}	// nothing is sent when there's no data,
 	void StopRunning() {}   // so we don't need these functions
 

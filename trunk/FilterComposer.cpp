@@ -12,6 +12,7 @@
 #include "MotionClassifier.h"
 #include "GestureClassifier.h"
 #include "BackgroundSubtraction.h"
+#include "TesseractClassifier.h"
 #include "OutputSink.h"
 #include "OSCOutput.h"
 #include "TCPOutput.h"
@@ -302,9 +303,15 @@ void CFilterComposer::ClearActiveClassifiers() {
 
 void CFilterComposer::LoadStandardClassifiers() {
     HWND listView = m_filterLibrary.GetDlgItem(IDC_STD_FILTER_LIST);
+	Classifier *c;
 
     // Background subtraction
-    Classifier *c = new BackgroundSubtraction();
+    c = new BackgroundSubtraction();
+    standardClassifiers.push_back(c);
+    m_filterLibrary.AddFilter(listView, c);
+
+    // Tesseract OCR
+    c = new TesseractClassifier();
     standardClassifiers.push_back(c);
     m_filterLibrary.AddFilter(listView, c);
 }

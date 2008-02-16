@@ -20,7 +20,7 @@ void StreamingVideoOutput::ProcessInput(IplImage *image) {
 	streamer.UpdateFrame(image);
 }
 
-void StreamingVideoOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputData data, char *filterName) {
+void StreamingVideoOutput::ProcessOutput(IplImage *image, ClassifierOutputData data, char *filterName) {
 }
 
 void StreamingVideoOutput::StartRunning() {
