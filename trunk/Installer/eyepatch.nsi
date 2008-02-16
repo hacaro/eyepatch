@@ -59,6 +59,22 @@ Section "Eyepatch (required)"
   File "libgsl.dll"
   File "Eyepatch.exe"
 
+  ; Copy tesseract data files
+  CreateDirectory "$INSTDIR\tessdata"
+  SetOutPath "$INSTDIR\tessdata"
+  File "tessdata\eng.DangAmbigs"
+  File "tessdata\eng.freq-dawg"
+  File "tessdata\eng.inttemp"
+  File "tessdata\eng.normproto"
+  File "tessdata\eng.pffmtable"
+  File "tessdata\eng.unicharset"
+  File "tessdata\eng.user-words"
+  File "tessdata\eng.word-dawg"
+
+  CreateDirectory "$INSTDIR\tessdata\configs"
+  SetOutPath "$INSTDIR\tessdata\configs"
+  File "tessdata\configs\api_config"
+
   
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\Eyepatch "Install_Dir" "$INSTDIR"
@@ -142,11 +158,17 @@ Section "Uninstall"
   Delete $INSTDIR\Eyepatch.exe
   Delete $INSTDIR\uninstall.exe
 
+  Delete "$INSTDIR\tessdata\configs\*.*"
+  Delete "$INSTDIR\tessdata\*.*"
+
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\Eyepatch\*.*"
+  RMDir "$SMPROGRAMS\Eyepatch"
 
   ; Remove directories used
   RMDir "$SMPROGRAMS\Eyepatch"
+  RMDir "$INSTDIR\tessdata\configs"
+  RMDir "$INSTDIR\tessdata"
   RMDir "$INSTDIR"
 
 SectionEnd
