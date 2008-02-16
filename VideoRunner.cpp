@@ -12,6 +12,7 @@ CVideoRunner::CVideoRunner(CWindow *caller) {
     videoCapture = NULL;
     copyFrame = NULL;
     outputAccImage = NULL;
+	contourMask = NULL;
     motionHistory = NULL;
     bmpInput = NULL;
     bmpOutput = NULL;
@@ -101,7 +102,10 @@ void CVideoRunner::ProcessFrame() {
         // Trace contours in accumulator frame
 		CvSeq *contours = outdata.GetSequenceData("Contours");
         if (contours != NULL) {
-            cvDrawContours(outputAccImage, contours, colorSwatch[nCurrentFilter%COLOR_SWATCH_SIZE], CV_RGB(0,0,0), 1, 2, CV_AA);
+			cvZero(contourMask);
+            cvDrawContours(contourMask, contours, cvScalar(0xFF), cvScalar(0x00), 1, 1, CV_AA);
+			cvResize(contourMask, guessMask);
+			cvSet(outputAccImage, colorSwatch[nCurrentFilter%COLOR_SWATCH_SIZE], guessMask);
         }
         nCurrentFilter++;
 
@@ -110,7 +114,7 @@ void CVideoRunner::ProcessFrame() {
 
         // apply output chain to filtered frame
         for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
-            (*j)->ProcessOutput(copyFrame, guessMask, outdata, W2A((*i)->GetName()));
+            (*j)->ProcessOutput(copyFrame, outdata, W2A((*i)->GetName()));
         }
     }
 
@@ -219,6 +223,7 @@ void CVideoRunner::StartProcessing(bool isLive) {
     copyFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
     outputFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
     outputAccImage =  cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
+	contourMask = cvCreateImage(cvSize(GUESSMASK_WIDTH, GUESSMASK_HEIGHT), IPL_DEPTH_8U, 1);
 
     // create image to store motion history
     motionHistory = cvCreateImage(cvSize(videoX,videoY), IPL_DEPTH_32F, 1);
@@ -264,6 +269,7 @@ void CVideoRunner::StopProcessing() {
     cvReleaseImage(&copyFrame);
     cvReleaseImage(&outputFrame);
     cvReleaseImage(&outputAccImage);
+	cvReleaseImage(&contourMask);
     cvReleaseImage(&motionHistory);
     for(int i = 0; i < MOTION_NUM_IMAGES; i++) {
         cvReleaseImage(&motionBuf[i]);

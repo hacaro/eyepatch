@@ -16,5 +16,5 @@ void ClipboardOutput::ProcessInput(IplImage *image) {
 	CopyImageToClipboard(image);
 }
 
-void ClipboardOutput::ProcessOutput(IplImage *image, IplImage *mask, ClassifierOutputData data, char *filterName) {
+void ClipboardOutput::ProcessOutput(IplImage *image, ClassifierOutputData data, char *filterName) {
 }

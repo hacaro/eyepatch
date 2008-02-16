@@ -63,6 +63,9 @@ using namespace std;
 typedef vector<OneDollarPoint> MotionTrack;
 #include "Gesture/FlowTracker.h"
 
+// Tesseract OCR includes
+#include "tessdll.h"
+
 // Utility functions
 void CopyImageToClipboard (IplImage* img);
 void IplToBitmap(IplImage *src, Bitmap *dst);
