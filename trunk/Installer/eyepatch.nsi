@@ -57,6 +57,7 @@ Section "Eyepatch (required)"
   File "avutil-49.dll"
   File "libgslcblas.dll"
   File "libgsl.dll"
+  File "tessdll.dll"
   File "Eyepatch.exe"
 
   ; Copy tesseract data files
@@ -155,6 +156,7 @@ Section "Uninstall"
   Delete $INSTDIR\DivXInstaller.exe
   Delete $INSTDIR\libgslcblas.dll
   Delete $INSTDIR\libgsl.dll
+  Delete $INSTDIR\tessdll.dll
   Delete $INSTDIR\Eyepatch.exe
   Delete $INSTDIR\uninstall.exe
 
