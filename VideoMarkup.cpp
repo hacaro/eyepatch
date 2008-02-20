@@ -438,6 +438,9 @@ LRESULT CVideoMarkup::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
 }
 
 LRESULT CVideoMarkup::OnLoadFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+
+	bool isAlreadyLoaded = (classifier == (Classifier*)lParam);
+
 	m_filterSelect.SelectFilter(wParam);
 	recognizerMode = wParam;
     switch(wParam) {
@@ -464,7 +467,7 @@ LRESULT CVideoMarkup::OnLoadFilter( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
             break;
     }
     InvalidateRgn(activeRgn, FALSE);
-    return 0;
+    return isAlreadyLoaded;
 }
 
 LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
