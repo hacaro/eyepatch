@@ -93,7 +93,10 @@ LRESULT CFilterSelect::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
         Classifier *classifier = (Classifier*) lvi.lParam;
 
         // need to replace current classifier with this one by calling ReplaceClassifier in parent
-        parent->SendMessage(WM_LOAD_FILTER, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+        bool isAlreadyLoaded = parent->SendMessage(WM_LOAD_FILTER, ((WPARAM)classifier->classifierType), ((LPARAM)classifier));
+		if (isAlreadyLoaded) {
+			ListView_EditLabel(listView, lvi.iItem);
+		}
     }
     return 0;
 }
