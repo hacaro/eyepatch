@@ -96,60 +96,63 @@ void FlowTracker::ProcessFrame() {
 	int nFeatures = FLOW_MAX_TRACK_FEATURES;
 	cvGoodFeaturesToTrack(grlastFrame, eigimage, tempimage, lastframe_features, &nFeatures, 0.01, 10);
 
-	cvFindCornerSubPix(grlastFrame, lastframe_features, nFeatures, cvSize(5,5), cvSize(-1,-1),
-		cvTermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03));
+	if (nFeatures > 0) {
 
-	// Run the optical flow algorithm
-	cvCalcOpticalFlowPyrLK(grlastFrame, grcurrentFrame, pyramid1, pyramid2,
-		lastframe_features, currframe_features, nFeatures,
-		cvSize(5,5), 3, found_features, feature_error,
-		cvTermCriteria( CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03 ), 0);
+		cvFindCornerSubPix(grlastFrame, lastframe_features, nFeatures, cvSize(5,5), cvSize(-1,-1),
+			cvTermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03));
 
-	cvFindCornerSubPix(grcurrentFrame, currframe_features, nFeatures, cvSize(5,5), cvSize(-1,-1),
-		cvTermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03));
+		// Run the optical flow algorithm
+		cvCalcOpticalFlowPyrLK(grlastFrame, grcurrentFrame, pyramid1, pyramid2,
+			lastframe_features, currframe_features, nFeatures,
+			cvSize(5,5), 3, found_features, feature_error,
+			cvTermCriteria( CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03 ), 0);
 
-	// Now there is a 1 in found_features wherever two features match up
-	// The feature positions are in lastframe_features and frame_features
-	// Draw the flow field and average all the flow vectors
-	double mvecx = 0, mvecy = 0, magnitude = 0, npoints = 0;
-	for (int i=0; i<nFeatures; i++) {
-		if ((found_features[i] == 0) || (feature_error[i]>FLOW_MAX_ERROR_THRESHOLD)) continue;
-		CvPoint p,q;
-		p.x = lastframe_features[i].x;
-		p.y = lastframe_features[i].y;
-		q.x = currframe_features[i].x;
-		q.y = currframe_features[i].y;
-		cvCircle(copyFrame, p, 2, CV_RGB(100,100,255)); 
-		cvLine(copyFrame, p, q, CV_RGB(100,100,255), 1, CV_AA);
-		mvecx += (currframe_features[i].x-lastframe_features[i].x);
-		mvecy += (currframe_features[i].y-lastframe_features[i].y);
-		npoints++;
+		cvFindCornerSubPix(grcurrentFrame, currframe_features, nFeatures, cvSize(5,5), cvSize(-1,-1),
+			cvTermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03));
+
+		// Now there is a 1 in found_features wherever two features match up
+		// The feature positions are in lastframe_features and frame_features
+		// Draw the flow field and average all the flow vectors
+		double mvecx = 0, mvecy = 0, magnitude = 0, npoints = 0;
+		for (int i=0; i<nFeatures; i++) {
+			if ((found_features[i] == 0) || (feature_error[i]>FLOW_MAX_ERROR_THRESHOLD)) continue;
+			CvPoint p,q;
+			p.x = lastframe_features[i].x;
+			p.y = lastframe_features[i].y;
+			q.x = currframe_features[i].x;
+			q.y = currframe_features[i].y;
+			cvCircle(copyFrame, p, 2, CV_RGB(100,100,255)); 
+			cvLine(copyFrame, p, q, CV_RGB(100,100,255), 1, CV_AA);
+			mvecx += (currframe_features[i].x-lastframe_features[i].x);
+			mvecy += (currframe_features[i].y-lastframe_features[i].y);
+			npoints++;
+		}
+		if (npoints>0) {
+			mvecx /= npoints;
+			mvecy /= npoints;
+		}
+		magnitude = _hypot(mvecx, mvecy);
+		if (magnitude < FLOW_MIN_MOTION_THRESHOLD/npoints) {
+			mvecx = 0;
+			mvecy = 0;
+			numInactiveFrames++;
+		} else {
+			numInactiveFrames = 0;
+		}
+
+		cvCircle(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2), 3, CV_RGB(255,255,255),-1,CV_AA);
+		cvLine(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2),
+			cvPoint(copyFrame->width/2+30*mvecx, copyFrame->height/2+30*mvecy), CV_RGB(255,255,255), 2, CV_AA);
+
+		currentX += mvecx;
+		currentY += mvecy;
+		OneDollarPoint pt(currentX, currentY);
+		trajectory.push_back(pt);
+
+		MotionTrack scaledpts = ScaleToSquare(trajectory, 2*GESTURE_SQUARE_SIZE/3);
+		scaledpts = TranslateToOrigin(scaledpts);
+		DrawTrack(copyFrame, scaledpts, CV_RGB(100,255,100), 3, GESTURE_SQUARE_SIZE, GESTURE_MAX_TRAJECTORY_LENGTH);
 	}
-	if (npoints>0) {
-		mvecx /= npoints;
-		mvecy /= npoints;
-	}
-	magnitude = _hypot(mvecx, mvecy);
-	if (magnitude < FLOW_MIN_MOTION_THRESHOLD/npoints) {
-		mvecx = 0;
-		mvecy = 0;
-		numInactiveFrames++;
-	} else {
-		numInactiveFrames = 0;
-	}
-
-	cvCircle(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2), 3, CV_RGB(255,255,255),-1,CV_AA);
-	cvLine(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2),
-		cvPoint(copyFrame->width/2+30*mvecx, copyFrame->height/2+30*mvecy), CV_RGB(255,255,255), 2, CV_AA);
-
-	currentX += mvecx;
-	currentY += mvecy;
-	OneDollarPoint pt(currentX, currentY);
-	trajectory.push_back(pt);
-
-	MotionTrack scaledpts = ScaleToSquare(trajectory, 2*GESTURE_SQUARE_SIZE/3);
-	scaledpts = TranslateToOrigin(scaledpts);
-	DrawTrack(copyFrame, scaledpts, CV_RGB(100,255,100), 3, GESTURE_SQUARE_SIZE, GESTURE_MAX_TRAJECTORY_LENGTH);
 
     // display color foreground image in window
     IplToBitmap(copyFrame, bmpVideo);
