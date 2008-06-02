@@ -2,7 +2,7 @@
 Functions for computing transforms from image feature correspondences
 
 Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
 
 #ifndef XFORM_H

@@ -11,7 +11,7 @@ pp. 1000--1006.
 
 Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
 
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
 #include "precomp.h"
 
@@ -23,6 +23,12 @@ Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
 #include <cxcore.h>
 
 #include <stdio.h>
+
+struct bbf_data
+{
+	double d;
+	void* old_data;
+};
 
 /************************* Local Function Prototypes *************************/
 
@@ -51,9 +57,9 @@ A function to build a k-d tree database from keypoints in an array.
 
 @return Returns the root of a kd tree built from features or NULL on error.
 */
-struct kd_root* kdtree_build( struct feature* features, int n )
+struct kd_node* kdtree_build( struct feature* features, int n )
 {
-	struct kd_root* kd_root;
+	struct kd_node* kd_root;
 
 	if( ! features  ||  n <= 0 )
 	{
@@ -62,9 +68,8 @@ struct kd_root* kdtree_build( struct feature* features, int n )
 		return NULL;
 	}
 
-	kd_root = (struct kd_root*)malloc( sizeof( struct kd_root ) );
-	kd_root->kd_node = kd_node_init( features, n );
-	expand_kd_node_subtree( kd_root_node( kd_root ) );
+	kd_root = kd_node_init( features, n );
+	expand_kd_node_subtree( kd_root );
 
 	return kd_root;
 }
@@ -85,12 +90,13 @@ Best Bin First search.
 @return Returns the number of neighbors found and stored in nbrs, or
 	-1 on error.
 */
-int kdtree_bbf_knn( struct kd_root* kd_root, struct feature* feat, int k,
+int kdtree_bbf_knn( struct kd_node* kd_root, struct feature* feat, int k,
 					struct feature*** nbrs, int max_nn_chks )
 {
 	struct kd_node* expl;
 	struct min_pq* min_pq;
 	struct feature* tree_feat, ** _nbrs;
+	struct bbf_data* bbf_data;
 	int i, t = 0, n = 0;
 
 	if( ! nbrs  ||  ! feat  ||  ! kd_root )
@@ -100,9 +106,9 @@ int kdtree_bbf_knn( struct kd_root* kd_root, struct feature* feat, int k,
 		return -1;
 	}
 
-	_nbrs = (struct feature**)calloc( k, sizeof( struct feature* ) );
+	_nbrs = (feature**) calloc( k, sizeof( struct feature* ) );
 	min_pq = minpq_init();
-	minpq_insert( min_pq, kd_root_node( kd_root ), 0 );
+	minpq_insert( min_pq, kd_root, 0 );
 	while( min_pq->n > 0  &&  t < max_nn_chks )
 	{
 		expl = (struct kd_node*)minpq_extract_min( min_pq );
@@ -124,8 +130,16 @@ int kdtree_bbf_knn( struct kd_root* kd_root, struct feature* feat, int k,
 		for( i = 0; i < expl->n; i++ )
 		{
 			tree_feat = &expl->features[i];
-			tree_feat->feature_data = malloc( sizeof( double ) );
-			*(double*)tree_feat->feature_data = descr_dist_sq( feat, tree_feat );
+			bbf_data = (struct bbf_data*) malloc( sizeof( struct bbf_data ) );
+			if( ! bbf_data )
+			{
+				fprintf( stderr, "Warning: unable to allocate memory,"
+					" %s line %d\n", __FILE__, __LINE__ );
+				goto fail;
+			}
+			bbf_data->old_data = tree_feat->feature_data;
+			bbf_data->d = descr_dist_sq(feat, tree_feat);
+			tree_feat->feature_data = bbf_data;
 			n += insert_into_nbr_array( tree_feat, _nbrs, n, k );
 		}
 		t++;
@@ -133,13 +147,22 @@ int kdtree_bbf_knn( struct kd_root* kd_root, struct feature* feat, int k,
 
 	minpq_release( &min_pq );
 	for( i = 0; i < n; i++ )
-		free( _nbrs[i]->feature_data );
+	{
+		bbf_data = (struct bbf_data*) _nbrs[i]->feature_data;
+		_nbrs[i]->feature_data = bbf_data->old_data;
+		free( bbf_data );
+	}
 	*nbrs = _nbrs;
 	return n;
 
 fail:
+	minpq_release( &min_pq );
 	for( i = 0; i < n; i++ )
-		free( _nbrs[i]->feature_data );
+	{
+		bbf_data = (struct bbf_data*) _nbrs[i]->feature_data;
+		_nbrs[i]->feature_data = bbf_data->old_data;
+		free( bbf_data );
+	}
 	free( _nbrs );
 	*nbrs = NULL;
 	return -1;
@@ -165,7 +188,7 @@ spatial region in a kd tree using Best Bin First search.
 	(in case \a k neighbors could not be found before examining
 	\a max_nn_checks keypoint entries).
 */
-int kdtree_bbf_spatial_knn( struct kd_root* kd_root, struct feature* feat,
+int kdtree_bbf_spatial_knn( struct kd_node* kd_root, struct feature* feat,
 						   int k, struct feature*** nbrs, int max_nn_chks,
 						   CvRect rect, int model )
 {
@@ -174,7 +197,7 @@ int kdtree_bbf_spatial_knn( struct kd_root* kd_root, struct feature* feat,
 	int i, n, t = 0;
 
 	n = kdtree_bbf_knn( kd_root, feat, max_nn_chks, &all_nbrs, max_nn_chks );
-	sp_nbrs = (struct feature**)calloc( k, sizeof( struct feature* ) );
+	sp_nbrs = (feature**) calloc( k, sizeof( struct feature* ) );
 	for( i = 0; i < n; i++ )
 	{
 		if( model )
@@ -202,19 +225,13 @@ De-allocates memory held by a kd tree
 
 @param kd_root pointer to the root of a kd tree
 */
-void kdtree_release( struct kd_root** kd_root )
+void kdtree_release( struct kd_node* kd_root )
 {
 	if( ! kd_root )
-	{
-		fprintf( stderr, "Warning: attempt to release NULL kd tree\n" );
 		return;
-	}
-	if( *kd_root &&  kd_root_node( *kd_root ) )
-	{
-		free( kd_root_node( *kd_root ) );
-		free( *kd_root );
-		*kd_root = NULL;
-	}
+	kdtree_release( kd_root->kd_left );
+	kdtree_release( kd_root->kd_right );
+	free( kd_root );
 }
 
 
@@ -234,7 +251,7 @@ struct kd_node* kd_node_init( struct feature* features, int n )
 {
 	struct kd_node* kd_node;
 
-	kd_node = (struct kd_node*)malloc( sizeof( struct kd_node ) );
+	kd_node = (struct kd_node*) malloc( sizeof( struct kd_node ) );
 	memset( kd_node, 0, sizeof( struct kd_node ) );
 	kd_node->ki = -1;
 	kd_node->features = features;
@@ -308,10 +325,9 @@ void assign_part_key( struct kd_node* kd_node )
 			var_max = var;
 		}
 	}
-	kd_node->ki = ki;
 
 	/* partition key value is median of descriptor values at ki */
-	tmp = (double*)calloc( n, sizeof( double ) );
+	tmp = (double*) calloc( n, sizeof( double ) );
 	for( i = 0; i < n; i++ )
 		tmp[i] = features[i].descr[ki];
 	kv = median_select( tmp, n );
@@ -372,7 +388,7 @@ double rank_select( double* array, int n, int r )
 	insertion_sort( tmp, rem_elts );
 
 	/* recursively find the median of the medians of the groups of 5 */
-	tmp = (double*)calloc( gr_tot, sizeof( double ) );
+	tmp = (double*) calloc( gr_tot, sizeof( double ) );
 	for( i = 0, j = 2; i < gr_5; i++, j += 5 )
 		tmp[i] = array[j];
 	if( rem_elts )
@@ -539,7 +555,7 @@ struct kd_node* explore_to_leaf( struct kd_node* kd_node, struct feature* feat,
 			expl = expl->kd_right;
 		}
 
-		if( minpq_insert( min_pq, unexpl, ABS( unexpl->kv - feat->descr[ki] ) ) )
+		if( minpq_insert( min_pq, unexpl, ABS( kv - feat->descr[ki] ) ) )
 		{
 			fprintf( stderr, "Warning: unable to insert into PQ, %s, line %d\n",
 					__FILE__, __LINE__ );
@@ -557,7 +573,7 @@ Inserts a feature into the nearest-neighbor array so that the array remains
 in order of increasing descriptor distance from the search feature.
 
 @param feat feature to be inderted into the array; it's feature_data field
-	should be a pointer to a double representing the squared descriptor
+	should be a pointer to a bbf_data with d equal to the squared descriptor
 	distance between feat and the search feature
 @param nbrs array of nearest neighbors neighbors
 @param n number of elements already in nbrs and
@@ -569,7 +585,8 @@ in order of increasing descriptor distance from the search feature.
 int insert_into_nbr_array( struct feature* feat, struct feature** nbrs,
 						  int n, int k )
 {
-	double dn, df = *(double*)(feat->feature_data);
+	struct bbf_data* fdata, * ndata;
+	double dn, df;
 	int i, ret = 0;
 
 	if( n == 0 )
@@ -579,13 +596,16 @@ int insert_into_nbr_array( struct feature* feat, struct feature** nbrs,
 	}
 
 	/* check at end of array */
-	dn = *(double*)(nbrs[n-1]->feature_data);
+	fdata = (struct bbf_data*)feat->feature_data;
+	df = fdata->d;
+	ndata = (struct bbf_data*)nbrs[n-1]->feature_data;
+	dn = ndata->d;
 	if( df >= dn )
 	{
 		if( n == k )
 		{
-			free( feat->feature_data );
-			feat->feature_data = NULL;
+			feat->feature_data = fdata->old_data;
+			free( fdata );
 			return 0;
 		}
 		nbrs[n] = feat;
@@ -600,13 +620,14 @@ int insert_into_nbr_array( struct feature* feat, struct feature** nbrs,
 	}
 	else
 	{
-		free( nbrs[n-1]->feature_data );
-		nbrs[n-1]->feature_data = NULL;
+		nbrs[n-1]->feature_data = ndata->old_data;
+		free( ndata );
 	}
 	i = n-2;
 	while( i >= 0 )
 	{
-		dn = *(double*)(nbrs[i]->feature_data);
+		ndata = (struct bbf_data*)nbrs[i]->feature_data;
+		dn = ndata->d;
 		if( dn <= df )
 			break;
 		nbrs[i+1] = nbrs[i];

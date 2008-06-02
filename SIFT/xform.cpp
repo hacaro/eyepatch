@@ -4,10 +4,9 @@ image feature correspondences
 
 Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
 
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
 #include "precomp.h"
-
 
 #include "xform.h"
 #include "imgfeatures.h"
@@ -325,11 +324,11 @@ struct feature*** matched )
 	struct ransac_data* rdata;
 	int i, m = 0;
 
-	_matched = (struct feature**)calloc( n, sizeof( struct feature* ) );
+	_matched = (feature**) calloc( n, sizeof( struct feature* ) );
 	for( i = 0; i < n; i++ )
 		if( get_match( features + i, mtype ) )
 		{
-			rdata = (struct ransac_data*)malloc( sizeof( struct ransac_data ) );
+			rdata = (ransac_data*) malloc( sizeof( struct ransac_data ) );
 			memset( rdata, 0, sizeof( struct ransac_data ) );
 			rdata->orig_feat_data = features[i].feature_data;
 			_matched[m] = features + i;
@@ -369,9 +368,9 @@ int calc_min_inliers( int n, int m, double p_badsupp, double p_badxform )
 		sum = 0;
 		for( i = j; i <= n; i++ )
 		{
-			pi = pow( p_badsupp, i - m ) * pow( 1.0 - p_badsupp, n - i + m ) *
-				gsl_sf_choose( n - m, i - m );
-			sum += pi;
+			pi = ( i - m ) * log( p_badsupp ) + ( n - i + m ) * log( 1.0 - p_badsupp ) +
+				gsl_sf_lnchoose( n - m, i - m );
+			sum += exp( pi );
 		}
 		if( sum < p_badxform )
 			break;
@@ -405,7 +404,7 @@ struct feature** draw_ransac_sample( struct feature** features, int n,
 		rdata->sampled = 0;
 	}
 
-	sample = (struct feature**)calloc( m, sizeof( struct feature* ) );
+	sample = (feature**) calloc( m, sizeof( struct feature* ) );
 	for( i = 0; i < m; i++ )
 	{
 		do
@@ -443,8 +442,8 @@ void extract_corresp_pts( struct feature** features, int n, int mtype,
 	CvPoint2D64f* _pts, * _mpts;
 	int i;
 
-	_pts = (CvPoint2D64f*)calloc( n, sizeof( CvPoint2D64f ) );
-	_mpts = (CvPoint2D64f*)calloc( n, sizeof( CvPoint2D64f ) );
+	_pts = (CvPoint2D64f*) calloc( n, sizeof( CvPoint2D64f ) );
+	_mpts = (CvPoint2D64f*) calloc( n, sizeof( CvPoint2D64f ) );
 
 	if( mtype == FEATURE_MDL_MATCH )
 		for( i = 0; i < n; i++ )
@@ -504,7 +503,7 @@ int find_consensus( struct feature** features, int n, int mtype,
 	double err;
 	int i, in = 0;
 
-	_consensus = (feature**)calloc( n, sizeof( struct feature* ) );
+	_consensus = (feature**) calloc( n, sizeof( struct feature* ) );
 
 	if( mtype == FEATURE_MDL_MATCH )
 		for( i = 0; i < n; i++ )

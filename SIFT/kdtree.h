@@ -11,7 +11,7 @@ pp. 1000--1006.
 
 Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
 
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
 
 
@@ -38,15 +38,6 @@ struct kd_node
 };
 
 
-/** root of a k-d tree */
-struct kd_root
-{
-	struct kd_node* kd_node;     /**< root node */
-};
-
-#define kd_root_node( root )  ( (root)->kd_node )
-
-
 /*************************** Function Prototypes *****************************/
 
 /**
@@ -57,7 +48,7 @@ A function to build a k-d tree database from keypoints in an array.
 
 @return Returns the root of a kd tree built from \a features.
 */
-extern struct kd_root* kdtree_build( struct feature* features, int n );
+extern struct kd_node* kdtree_build( struct feature* features, int n );
 
 
 
@@ -75,7 +66,7 @@ Best Bin First search.
 @return Returns the number of neighbors found and stored in \a nbrs, or
 	-1 on error.
 */
-extern int kdtree_bbf_knn( struct kd_root* kd_root, struct feature* feat,
+extern int kdtree_bbf_knn( struct kd_node* kd_root, struct feature* feat,
 						  int k, struct feature*** nbrs, int max_nn_chks );
 
 
@@ -97,7 +88,7 @@ spatial region in a kd tree using Best Bin First search.
 	(in case \a k neighbors could not be found before examining
 	\a max_nn_checks keypoint entries).
 */
-extern int kdtree_bbf_spatial_knn( struct kd_root* kd_root,
+extern int kdtree_bbf_spatial_knn( struct kd_node* kd_root,
 								struct feature* feat, int k,
 								struct feature*** nbrs, int max_nn_chks,
 								CvRect rect, int model );
@@ -108,7 +99,7 @@ De-allocates memory held by a kd tree
 
 @param kd_root pointer to the root of a kd tree
 */
-extern void kdtree_release( struct kd_root** kd_root );
+extern void kdtree_release( struct kd_node* kd_root );
 
 
 #endif

@@ -3,7 +3,7 @@ Functions and structures for dealing with image features
 
 Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
 
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
 #include "precomp.h"
 
@@ -225,7 +225,7 @@ int import_oxfd_features( char* filename, struct feature** features )
 	}
 
 
-	f = (struct feature*)calloc( n, sizeof(struct feature) );
+	f = (feature*) calloc( n, sizeof(struct feature) );
 	for( i = 0; i < n; i++ )
 	{
 		/* read affine region parameters */
@@ -258,7 +258,7 @@ int import_oxfd_features( char* filename, struct feature** features )
 		}
 
 		f[i].scl = f[i].ori = 0;
-		f[i].featureclass = 0;
+		f[i].category = 0;
 		f[i].fwd_match = f[i].bck_match = f[i].mdl_match = NULL;
 		f[i].mdl_pt.x = f[i].mdl_pt.y = -1;
 		f[i].feature_data = NULL;
@@ -431,7 +431,7 @@ int import_lowe_features( char* filename, struct feature** features )
 		return -1;
 	}
 
-	f = (struct feature*)calloc( n, sizeof(struct feature) );
+	f = (feature*) calloc( n, sizeof(struct feature) );
 	for( i = 0; i < n; i++ )
 	{
 		/* read affine region parameters */
@@ -463,7 +463,7 @@ int import_lowe_features( char* filename, struct feature** features )
 		}
 
 		f[i].a = f[i].b = f[i].c = 0;
-		f[i].featureclass = 0;
+		f[i].category = 0;
 		f[i].fwd_match = f[i].bck_match = f[i].mdl_match = NULL;
 		f[i].mdl_pt.x = f[i].mdl_pt.y = -1;
 	}
@@ -597,3 +597,5 @@ void draw_lowe_feature( IplImage* img, struct feature* feat, CvScalar color )
 	cvLine( img, end, h1, color, 1, 8, 0 );
 	cvLine( img, end, h2, color, 1, 8, 0 );
 }
+
+

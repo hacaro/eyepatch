@@ -13,7 +13,7 @@ used in commercial products without a license from the University of
 British Columbia.  For more information, refer to the file LICENSE.ubc
 that accompanied this distribution.
 
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
 
 #ifndef SIFT_H
