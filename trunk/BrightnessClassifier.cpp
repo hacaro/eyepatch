@@ -67,6 +67,8 @@ BOOL BrightnessClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
 }
 
 void BrightnessClassifier::StartTraining(TrainingSet *sampleSet) {
+	// Make a copy of the set used for training (we'll want to save it later)
+	sampleSet->CopyTo(&trainSet);
 
 	// clear out the histogram
 	cvClearHist(hist);

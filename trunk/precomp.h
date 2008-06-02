@@ -5,6 +5,7 @@
 #define _WIN32_IE 0x0700
 #define UNICODE
 #define _CRT_SECURE_NO_WARNINGS
+#define __MSW32__
 
 // Windows includes
 #include <winsock2.h>   // this must come first to prevent errors with MSVC7
@@ -74,6 +75,8 @@ void DrawArrow(IplImage *img, CvPoint center, double angleDegrees, double magnit
 void DrawTrack(IplImage *img, MotionTrack mt, CvScalar color, int thickness, float squareSize, int maxPointsToDraw=0);
 void DrawTrack(Graphics *graphics, MotionTrack mt, float width, float height, float squareSize);
 bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin);
+void SaveTrackToFile(MotionTrack mt, WCHAR *filename);
+MotionTrack ReadTrackFromFile (WCHAR* filename);
 
 // swatch of "nice" colors
 #define COLOR_SWATCH_SIZE 16

@@ -9,7 +9,7 @@ GestureClassifier::GestureClassifier() :
 	Classifier() {
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Gesture Filter");
+    wcscpy(friendlyName, L"Gesture Recognizer");
     classifierType = GESTURE_FILTER;
 
     // append identifier to directory name
@@ -57,7 +57,10 @@ GestureClassifier::~GestureClassifier() {
 }
 
 void GestureClassifier::StartTraining(TrainingSet *sampleSet) {
-    if (isTrained) { // delete the old models
+	// Make a copy of the set used for training (we'll want to save it later)
+	sampleSet->CopyTo(&trainSet);
+	
+	if (isTrained) { // delete the old models
 		rec.DeleteUserTemplates();
     }
     maxTemplateLength = 0;

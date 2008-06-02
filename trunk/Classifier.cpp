@@ -14,7 +14,7 @@ LRESULT CClassifierDialog::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam,
 
 	ShowWindow(FALSE);	// start with window hidden
 	WCHAR label[MAX_PATH];
-	wsprintf(label, L"Select which data should be output from the \"%s\" classifier:", parent->GetName());
+	wsprintf(label, L"Select which data should be output from the \"%s\" recognizer:", parent->GetName());
 	GetDlgItem(IDC_TOP_LABEL).SetWindowText(label);
 
 	int nVariables = parent->outputData.NumVariables();
@@ -138,6 +138,14 @@ Classifier::Classifier(LPCWSTR pathname) :
 	fread(&threshold, sizeof(float), 1, threshfile);
 	fclose(threshfile);
 
+	// load the filter sample image
+    wcscpy(filename, pathname);
+    wcscat(filename, FILE_DEMOIMAGE_NAME);
+    IplImage *filterImageCopy = cvLoadImage(W2A(filename));
+    cvCopy(filterImageCopy, filterImage);
+    cvReleaseImage(&filterImageCopy);
+    IplToBitmap(filterImage, filterBitmap);
+
 	// Initialize contour storage
 	contourStorage = cvCreateMemStorage(0);
 
@@ -181,6 +189,14 @@ void Classifier::Save() {
 	FILE *threshfile  = fopen(W2A(filename), "w");
 	fwrite(&threshold, sizeof(float), 1, threshfile);
 	fclose(threshfile);
+
+	// Save the positive and negative training examples along with the classifier
+	trainSet.Save(directoryName);
+
+	// save the filter sample image
+    wcscpy(filename, directoryName);
+    wcscat(filename, FILE_DEMOIMAGE_NAME);
+	cvSaveImage(W2A(filename), filterImage);
 
 	isOnDisk = true;
 }

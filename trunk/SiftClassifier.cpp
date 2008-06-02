@@ -14,7 +14,7 @@ SiftClassifier::SiftClassifier() :
     sampleFeatures = NULL;
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"SIFT Filter");
+    wcscpy(friendlyName, L"SIFT Recognizer");
     classifierType = SIFT_FILTER;
 
     // append identifier to directory name
@@ -37,7 +37,7 @@ SiftClassifier::SiftClassifier(LPCWSTR pathname) :
 
 	// load the filter sample image
     wcscpy(filename, pathname);
-    wcscat(filename, FILE_IMAGE_NAME);
+    wcscat(filename, FILE_SIFTIMAGE_NAME);
     sampleCopy = cvLoadImage(W2A(filename));
     sampleWidth = sampleCopy->width;
     sampleHeight = sampleCopy->height;
@@ -58,6 +58,8 @@ BOOL SiftClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
 }
 
 void SiftClassifier::StartTraining(TrainingSet *sampleSet) {
+	// Make a copy of the set used for training (we'll want to save it later)
+	sampleSet->CopyTo(&trainSet);
 
     if (sampleCopy) cvReleaseImage(&sampleCopy);
     if (numSampleFeatures > 0) free(sampleFeatures);
@@ -229,6 +231,6 @@ void SiftClassifier::Save() {
 
 	// save the SIFT source sample image
     wcscpy(filename, directoryName);
-    wcscat(filename, FILE_IMAGE_NAME);
+    wcscat(filename, FILE_SIFTIMAGE_NAME);
 	cvSaveImage(W2A(filename), sampleCopy);
 }
