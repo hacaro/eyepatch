@@ -124,15 +124,15 @@ LRESULT CVideoMarkup::OnPaint( UINT, WPARAM, LPARAM, BOOL& ) {
     graphicsExamples->FillRectangle(&ltgrayBrush, Rect(0,0,EXAMPLEWINDOW_WIDTH,EXAMPLEWINDOW_HEIGHT));
     if (classifier->isTrained) {
         graphicsExamples->DrawImage(classifier->GetFilterImage(),10,0);
-	    graphicsExamples->DrawString(L"FILTER MODEL", 12, &labelFont, PointF(15,5), &whiteBrush);
+	    graphicsExamples->DrawString(L"RECOGNIZER MODEL", 16, &labelFont, PointF(15,5), &whiteBrush);
 	}
     if (showGuesses) {
         graphicsExamples->DrawImage(classifier->GetApplyImage(),FILTERIMAGE_WIDTH+20, 0);
-	    graphicsExamples->DrawString(L"FILTER OUTPUT", 13, &labelFont, PointF(FILTERIMAGE_WIDTH+25,5), &whiteBrush);
+	    graphicsExamples->DrawString(L"RECOGNIZER OUTPUT", 17, &labelFont, PointF(FILTERIMAGE_WIDTH+25,5), &whiteBrush);
     }
 	if (classifier->isOnDisk) {
 		LPWSTR name = classifier->GetName();
-		graphicsExamples->DrawString(L"Active Filter:", 14, &labelFont, PointF(2*FILTERIMAGE_WIDTH+30,10), &blackBrush);
+		graphicsExamples->DrawString(L"Currently\nActive:", 17, &labelFont, PointF(2*FILTERIMAGE_WIDTH+30,10), &blackBrush);
 	    graphicsExamples->DrawString(name, wcslen(name), &bigFont,
 			RectF(2*FILTERIMAGE_WIDTH+30,50,EXAMPLEWINDOW_WIDTH-(2*FILTERIMAGE_WIDTH+30),EXAMPLEWINDOW_HEIGHT-50),
 			&stringFormat, &blackBrush);
@@ -195,9 +195,11 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
             ClientToScreen(&lvhti.pt);
             ::ScreenToClient(m_sampleListView, &lvhti.pt);
             ListView_HitTestEx(m_sampleListView, &lvhti);
-            CRect posRect, negRect;
+            CRect posRect, negRect, motionRect, rangeRect;
             ListView_GetGroupRect(m_sampleListView, GROUPID_POSSAMPLES, LVGGR_GROUP, &posRect);
             ListView_GetGroupRect(m_sampleListView, GROUPID_NEGSAMPLES, LVGGR_GROUP, &negRect);
+            ListView_GetGroupRect(m_sampleListView, GROUPID_MOTIONSAMPLES, LVGGR_GROUP, &motionRect);
+            ListView_GetGroupRect(m_sampleListView, GROUPID_RANGESAMPLES, LVGGR_GROUP, &rangeRect);
             if (posRect.PtInRect(lvhti.pt)) { // highlight positive group
                 SetCursor(hDropCursor);
                 dragHover = true;
@@ -208,6 +210,16 @@ LRESULT CVideoMarkup::OnMouseMove( UINT, WPARAM wParam, LPARAM lParam, BOOL& )
                 dragHover = true;
                 hoverRect.X = negRect.left; hoverRect.Y = negRect.top;
                 hoverRect.Width = negRect.Width();  hoverRect.Height = negRect.Height();
+            } else if (motionRect.PtInRect(lvhti.pt)) { // highlight motion group
+                SetCursor(hDropCursor);
+                dragHover = true;
+                hoverRect.X = motionRect.left; hoverRect.Y = motionRect.top;
+                hoverRect.Width = motionRect.Width();  hoverRect.Height = motionRect.Height();
+            } else if (rangeRect.PtInRect(lvhti.pt)) { // highlight gesture group
+                SetCursor(hDropCursor);
+                dragHover = true;
+                hoverRect.X = rangeRect.left; hoverRect.Y = rangeRect.top;
+                hoverRect.Width = rangeRect.Width();  hoverRect.Height = rangeRect.Height();
             } else {
                 SetCursor(hTrashCursor);
                 dragHover = false;
@@ -253,13 +265,17 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         ClientToScreen(&lvhti.pt);
         ::ScreenToClient(m_sampleListView, &lvhti.pt);
         ListView_HitTestEx(m_sampleListView, &lvhti);
-        CRect posRect, negRect;
+        CRect posRect, negRect, motionRect, rangeRect;
         ListView_GetGroupRect(m_sampleListView, GROUPID_POSSAMPLES, LVGGR_GROUP, &posRect);
         ListView_GetGroupRect(m_sampleListView, GROUPID_NEGSAMPLES, LVGGR_GROUP, &negRect);
+        ListView_GetGroupRect(m_sampleListView, GROUPID_MOTIONSAMPLES, LVGGR_GROUP, &motionRect);
+        ListView_GetGroupRect(m_sampleListView, GROUPID_RANGESAMPLES, LVGGR_GROUP, &rangeRect);
 
         int newGroupId;
         if (posRect.PtInRect(lvhti.pt)) newGroupId = GROUPID_POSSAMPLES;
         else if (negRect.PtInRect(lvhti.pt)) newGroupId = GROUPID_NEGSAMPLES;
+        else if (motionRect.PtInRect(lvhti.pt)) newGroupId = GROUPID_MOTIONSAMPLES;
+        else if (rangeRect.PtInRect(lvhti.pt)) newGroupId = GROUPID_RANGESAMPLES;
         else newGroupId = GROUPID_TRASH;
 
         // update group membership of selected items based on drop location
@@ -267,7 +283,7 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
         int iSelection = -1;
         for (int iIndex=0; iIndex<numSelected; iIndex++) {
 
-            // retrieve the selected item and update its group id
+            // retrieve the selected item 
             LVITEM lvi;
             iSelection = ListView_GetNextItem(m_sampleListView, iSelection, LVNI_SELECTED);
             lvi.mask = LVIF_IMAGE | LVIF_STATE | LVIF_GROUPID;
@@ -276,13 +292,22 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
             lvi.iItem = iSelection;
             lvi.iSubItem = 0;
             ListView_GetItem(m_sampleListView, &lvi);
-            lvi.iGroupId = newGroupId;
+
+			// Get the ID of this selected item
+            UINT sampleId = ListView_MapIndexToID(m_sampleListView, iSelection);
+
+			// test if this is an allowable group membership change
+			int origGroupId = sampleSet.GetOriginalSampleGroup(sampleId);
+			if (!GroupTransitionIsAllowed(origGroupId, newGroupId)) {
+				// this is not a valid change so we'll move to the next item
+				continue;
+			}
 
             // update sample group in training set
-            UINT sampleId = ListView_MapIndexToID(m_sampleListView, iSelection);
             sampleSet.SetSampleGroup(sampleId, newGroupId);
 
             // Update item in list view with new group id
+			lvi.iGroupId = newGroupId;
             ListView_SetItem(m_sampleListView, &lvi);
         }
         m_sampleListView.Invalidate(FALSE);
@@ -312,7 +337,13 @@ LRESULT CVideoMarkup::OnButtonUp( UINT, WPARAM, LPARAM lParam, BOOL&)
 
         // discard tiny samples since they won't help
         if ((selectRect.Width > 10) && (selectRect.Height > 10)) {
-            TrainingSample *sample = new TrainingSample(m_videoLoader.copyFrame, m_videoLoader.GetMotionHistory(), m_sampleListView, m_hImageList, selectRect, currentGroupId);
+			TrainingSample *sample;
+			// if we're in motion mode, the behavior is a little special
+			if (recognizerMode == MOTION_FILTER) {
+				sample = new TrainingSample(m_videoLoader.copyFrame, m_videoLoader.GetMotionHistory(), m_sampleListView, m_hImageList, selectRect, GROUPID_MOTIONSAMPLES);
+			} else {
+				sample = new TrainingSample(m_videoLoader.copyFrame, m_sampleListView, m_hImageList, selectRect, currentGroupId);
+			}
             sampleSet.AddSample(sample);
         }
         InvalidateRect(&m_videoRect, FALSE);
@@ -393,6 +424,7 @@ LRESULT CVideoMarkup::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     // add the "positive" and "negative" groups
     AddListViewGroup(m_sampleListView, L"Positive Image Examples", GROUPID_POSSAMPLES);
     AddListViewGroup(m_sampleListView, L"Negative Image Examples", GROUPID_NEGSAMPLES);
+    AddListViewGroup(m_sampleListView, L"Motion Examples", GROUPID_MOTIONSAMPLES);
     AddListViewGroup(m_sampleListView, L"Video Range Examples", GROUPID_RANGESAMPLES);
     AddListViewGroup(m_sampleListView, L"Trash", GROUPID_TRASH);
 
@@ -481,6 +513,8 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
                 if (!classifier->ContainsSufficientSamples(&sampleSet)) {
                     if (recognizerMode == ADABOOST_FILTER) {
                         wcscat(errorMessage, L"To build an Adaboost recognizer you need at least 3 positive and 3 negative examples.");
+                    } else if (recognizerMode == MOTION_FILTER) {
+                        wcscat(errorMessage, L"To build a Motion recognizer you need to to create one or more 'Motion Examples' by making selections while in the current recognizer mode.");
                     } else if (recognizerMode == GESTURE_FILTER) {
                         wcscat(errorMessage, L"To build a gesture recognizer you need to to select a range of frames using the 'Mark In' and 'Mark Out' buttons.");
                     }
@@ -818,4 +852,24 @@ void CVideoMarkup::RunClassifierOnCurrentFrame() {
 	}
 
     SetCursor(hOld);
+}
+
+bool CVideoMarkup::GroupTransitionIsAllowed(int origId, int newId) {
+	switch (newId) {
+		case GROUPID_TRASH:	// always OK to trash something
+			return true;
+			break;
+		case GROUPID_POSSAMPLES:
+		case GROUPID_NEGSAMPLES:
+			if (origId == GROUPID_POSSAMPLES) return true;
+			if (origId == GROUPID_NEGSAMPLES) return true;
+			break;
+		case GROUPID_MOTIONSAMPLES:
+			if (origId == GROUPID_MOTIONSAMPLES) return true;
+			break;
+		case GROUPID_RANGESAMPLES:
+			if (origId == GROUPID_RANGESAMPLES) return true;
+			break;
+	}
+	return false;
 }

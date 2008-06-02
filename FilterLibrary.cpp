@@ -42,24 +42,6 @@ LRESULT CFilterLibrary::OnTextCallback(int idCtrl, LPNMHDR pnmh, BOOL&) {
 
     return 0;
 }
-/*
-// TODO: disallow label editing
-LRESULT CFilterLibrary::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
-    NMLVDISPINFO* plvdi = (NMLVDISPINFO*)pnmh;
-    LVITEM item = plvdi->item;
-	if (item.pszText != NULL) {
-		switch (item.iSubItem) {
-			case 0:
-				((Classifier*)item.lParam)->SetName(item.pszText);
-				break;
-			default:
-				break;
-		}
-		((Classifier*)item.lParam)->Save();
-	}
-    return 0;
-}
-*/
 
 LRESULT CFilterLibrary::OnItemActivate(int idCtrl, LPNMHDR pnmh, BOOL&) {
     

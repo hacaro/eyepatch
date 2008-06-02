@@ -61,7 +61,7 @@ HaarClassifier::HaarClassifier() :
 	nStagesCompleted = 0;
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Adaboost Filter");
+    wcscpy(friendlyName, L"Adaboost Recognizer");
     classifierType = ADABOOST_FILTER;        
 
     // append identifier to directory name
@@ -90,14 +90,6 @@ HaarClassifier::HaarClassifier(LPCWSTR pathname) :
 		isTrained = true;
 		isOnDisk = true;
 	}
-
-	// load the filter sample image
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_IMAGE_NAME);
-    IplImage *filterImageCopy = cvLoadImage(W2A(filename));
-    cvCopy(filterImageCopy, filterImage);
-    cvReleaseImage(&filterImageCopy);
-    IplToBitmap(filterImage, filterBitmap);
 
 	// set the type
     classifierType = ADABOOST_FILTER;
@@ -201,6 +193,9 @@ void HaarClassifier::PrepareData(TrainingSet *sampleSet) {
 }
 
 void HaarClassifier::StartTraining(TrainingSet* sampleSet) {
+	// Make a copy of the set used for training (we'll want to save it later)
+	sampleSet->CopyTo(&trainSet);
+
 	PrepareData(sampleSet);
 	m_progressDlg.DoModal();
 }
@@ -260,9 +255,4 @@ void HaarClassifier::Save() {
     wcscpy(filename,directoryName);
     wcscat(filename, FILE_CASCADE_NAME);
 	cvSave(W2A(filename), cascade, 0, 0, cvAttrList(0,0));
-
-	// save the filter sample image
-    wcscpy(filename, directoryName);
-    wcscat(filename, FILE_IMAGE_NAME);
-	cvSaveImage(W2A(filename), filterImage);
 }

@@ -16,7 +16,7 @@ ColorClassifier::ColorClassifier() :
 	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Color Filter");
+    wcscpy(friendlyName, L"Color Recognizer");
     classifierType = COLOR_FILTER;        
     
     // append identifier to directory name
@@ -64,6 +64,8 @@ BOOL ColorClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
 }
 
 void ColorClassifier::StartTraining(TrainingSet *sampleSet) {
+	// Make a copy of the set used for training (we'll want to save it later)
+	sampleSet->CopyTo(&trainSet);
 
 	// clear out the histogram
 	cvClearHist(hist);

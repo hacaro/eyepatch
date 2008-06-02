@@ -71,11 +71,6 @@ Section "Eyepatch (required)"
   File "tessdata\eng.unicharset"
   File "tessdata\eng.user-words"
   File "tessdata\eng.word-dawg"
-
-  CreateDirectory "$INSTDIR\tessdata\configs"
-  SetOutPath "$INSTDIR\tessdata\configs"
-  File "tessdata\configs\api_config"
-
   
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\Eyepatch "Install_Dir" "$INSTDIR"

@@ -10,7 +10,7 @@ MotionClassifier::MotionClassifier() :
     motionAngles.clear();
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Motion Filter");
+    wcscpy(friendlyName, L"Motion Recognizer");
     classifierType = MOTION_FILTER;        
 
     // append identifier to directory name
@@ -37,14 +37,6 @@ MotionClassifier::MotionClassifier(LPCWSTR pathname) :
     }
     fclose(datafile);
 
-	// load the filter sample image
-    wcscpy(filename, pathname);
-    wcscat(filename, FILE_IMAGE_NAME);
-    IplImage *filterImageCopy = cvLoadImage(W2A(filename));
-    cvCopy(filterImageCopy, filterImage);
-    cvReleaseImage(&filterImageCopy);
-    IplToBitmap(filterImage, filterBitmap);
-
     // set the type
     classifierType = MOTION_FILTER;
 }
@@ -53,10 +45,12 @@ MotionClassifier::~MotionClassifier() {
 }
 
 BOOL MotionClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
-    return (sampleSet->posSampleCount > 0);
+    return (sampleSet->motionSampleCount > 0);
 }
 
 void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
+	// Make a copy of the set used for training (we'll want to save it later)
+	sampleSet->CopyTo(&trainSet);
 
     // clear list of motion directions
     motionAngles.clear();
@@ -70,7 +64,7 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
     // TODO: call into trainingset class to do this instead of accessing samplemap
     for (map<UINT, TrainingSample*>::iterator i = sampleSet->sampleMap.begin(); i != sampleSet->sampleMap.end(); i++) {
         TrainingSample *sample = (*i).second;
-        if (sample->iGroupId == GROUPID_POSSAMPLES) { // positive sample
+        if (sample->iGroupId == GROUPID_MOTIONSAMPLES) { // motion sample
             if (sample->motionHistory == NULL) {
                 // no motion history associated with this sample so we skip to the next one
                 continue;
@@ -132,7 +126,7 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
 			cvSetImageROI(dst, cvRect(sample->selectBounds.X, sample->selectBounds.Y,
 				sample->selectBounds.Width, sample->selectBounds.Height));
 			cvResize(dst, filterImageMotion);
-            cvAddWeighted(filterImageMotion, 1.0/((float)sampleSet->posSampleCount), filterImage, 1.0, 0, filterImage);
+            cvAddWeighted(filterImageMotion, 1.0/((float)sampleSet->motionSampleCount), filterImage, 1.0, 0, filterImage);
 			cvResetImageROI(dst);
 
             cvReleaseImage(&orient);
@@ -141,9 +135,8 @@ void MotionClassifier::StartTraining(TrainingSet *sampleSet) {
             cvReleaseImage(&dst);
             cvReleaseMemStorage(&storage);
 
-		} else if (sample->iGroupId == GROUPID_NEGSAMPLES) { // negative sample
-        }
-    }
+		}
+	}
 
     // copy arrows to demo image
     cvAdd(filterImageArrows, filterImage, filterImage);
@@ -283,9 +276,4 @@ void MotionClassifier::Save() {
         fwrite(&angle, sizeof(double), 1, datafile);
     }
     fclose(datafile);
-
-	// save the filter sample image
-    wcscpy(filename, directoryName);
-    wcscat(filename, FILE_IMAGE_NAME);
-	cvSaveImage(W2A(filename), filterImage);
 }

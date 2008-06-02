@@ -115,7 +115,7 @@ END
 
 IDD_HAAR_DIALOG DIALOGEX 0, 0, 186, 89
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Creating Filter"
+CAPTION "Creating Recognizer"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     PUSHBUTTON      "Stop Learning",IDCANCEL,67,68,50,14
@@ -129,12 +129,12 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     PUSHBUTTON      "Learn from Examples",IDC_TRAINBUTTON,6,66,78,18
     CONTROL         "Show Guesses",IDC_SHOWBUTTON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,96,66,60,18
-    PUSHBUTTON      "Save Filter",IDC_SAVEFILTER,168,66,78,18
-    LTEXT           "Saved Filters:",IDC_STATIC,6,90,66,8
+    PUSHBUTTON      "Save Recognizer",IDC_SAVEFILTER,168,66,78,18
+    LTEXT           "Saved Recognizers:",IDC_STATIC,6,90,66,8
     CONTROL         "",IDC_FILTER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,6,102,240,72
     COMBOBOX        IDC_FILTER_COMBO,73,3,118,20,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Filter Type:",IDC_STATIC,7,6,66,8
-    LTEXT           "Filter Threshold:",IDC_STATIC,7,29,56,8
+    LTEXT           "Recognizer Type:",IDC_STATIC,7,6,66,8
+    LTEXT           "Threshold:",IDC_STATIC,7,29,56,8
     CONTROL         "",IDC_FILTER_THRESHOLD,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,71,26,164,16
     LTEXT           "Low",IDC_STATIC,76,46,15,8
     LTEXT           "High",IDC_STATIC,217,47,18,8
@@ -167,19 +167,19 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     PUSHBUTTON      "Run on Live Video!",IDC_RUNLIVE,12,402,114,36
     PUSHBUTTON      "Run on Recorded Video...",IDC_RUNRECORDED,132,402,114,36
-    LTEXT           "Custom Filters: Double Click to Activate",IDC_STATIC,12,24,171,8
+    LTEXT           "Custom Recognizers: Double Click to Activate",IDC_STATIC,12,24,171,8
     CONTROL         "",IDC_MY_FILTER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,12,38,234,99
-    LTEXT           "Standard Filters: Double Click to Activate",IDC_STATIC,12,146,195,8
+    LTEXT           "Standard Recognizers: Double Click to Activate",IDC_STATIC,12,146,195,8
     CONTROL         "",IDC_STD_FILTER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,12,161,234,99
     CONTROL         "",IDC_OUTPUT_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,12,293,234,96
     CONTROL         "",IDC_ACTIVE_FILTER_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,270,39,156,136
     CONTROL         "",IDC_ACTIVE_OUTPUT_LIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_EDITLABELS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,270,253,156,136
-    PUSHBUTTON      "Reset Chain",IDC_RESET,270,402,156,36
-    LTEXT           "Active Filters: Double Click to Configure",IDC_STATIC,270,24,151,8
+    PUSHBUTTON      "Clear All",IDC_RESET,270,402,156,36
+    LTEXT           "Active Recognizers: Double Click to Configure",IDC_STATIC,270,24,151,8
     LTEXT           "Active Outputs:",IDC_STATIC,270,236,114,8
-    GROUPBOX        "Active Filter Chain",IDC_STATIC,264,6,168,438
+    GROUPBOX        "Active Regognizers",IDC_STATIC,264,6,168,438
     CONTROL         122,IDC_STATIC,"Static",SS_BITMAP,337,192,27,26
-    GROUPBOX        "Filter Library",IDC_STATIC,6,6,246,261
+    GROUPBOX        "Recognizer Library",IDC_STATIC,6,6,246,261
     GROUPBOX        "Outputs: Double Click to Activate",IDC_STATIC,7,278,244,118
 END
 
@@ -194,11 +194,11 @@ END
 
 IDD_CLASSIFIER_DIALOG DIALOGEX 0, 0, 201, 195
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Classifier Settings"
+CAPTION "Recognizer Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,56,163,89,25
-    LTEXT           "Select which data should be output from this classifier:",IDC_TOP_LABEL,7,7,187,27
+    LTEXT           "Select which data should be output from this Recognizer:",IDC_TOP_LABEL,7,7,187,27
 END
 
 

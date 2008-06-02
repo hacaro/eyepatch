@@ -133,6 +133,34 @@ void DrawTrack(Graphics *graphics, MotionTrack mt, float width, float height, fl
     delete[] trackPoints;
 }
 
+void SaveTrackToFile(MotionTrack mt, WCHAR *filename) {
+	USES_CONVERSION;
+	FILE *datafile = fopen(W2A(filename), "wb");
+	int nPoints = (int) mt.size();
+	fwrite(&nPoints, sizeof(int), 1, datafile);
+    for (int i = 0; i<nPoints; i++) {
+		fwrite(&(mt[i].m_x), sizeof(double), 1, datafile);
+		fwrite(&(mt[i].m_y), sizeof(double), 1, datafile);
+	}
+	fclose(datafile);
+}
+
+MotionTrack ReadTrackFromFile(WCHAR *filename) {
+	USES_CONVERSION;
+	FILE *datafile = fopen(W2A(filename), "rb");
+	MotionTrack mt;
+	int nPoints = 0;
+	fread(&nPoints, sizeof(int), 1, datafile);
+    for (int i = 0; i<nPoints; i++) {
+		OneDollarPoint pt(0,0);
+		fread(&(pt.m_x), sizeof(double), 1, datafile);
+		fread(&(pt.m_y), sizeof(double), 1, datafile);
+		mt.push_back(pt);
+	}
+	fclose(datafile);
+	return mt;
+}
+
 bool DeleteDirectory(LPCTSTR lpszDir, bool useRecycleBin = true) {
     int len = (int) _tcslen(lpszDir);
     TCHAR *pszFrom = new TCHAR[len+2];

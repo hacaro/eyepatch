@@ -65,6 +65,7 @@ protected:
     IplImage *filterImage, *applyImage, *guessMask;
 	CvMemStorage *contourStorage;
 	vector<Rect> boundingBoxes;
+	TrainingSet trainSet;	// samples last used to train classifier
 
 	friend class CClassifierDialog;
 	CClassifierDialog m_ClassifierDialog;

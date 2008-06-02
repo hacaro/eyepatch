@@ -102,8 +102,16 @@
 #define FILE_THRESHOLD_NAME L"\\threshold.dat"
 #define FILE_CONTOUR_NAME L"\\data.xml"
 #define FILE_CASCADE_NAME L"\\classifier.xml"
-#define FILE_IMAGE_NAME L"\\image.jpg"
+#define FILE_DEMOIMAGE_NAME L"\\demo-image.jpg"
+#define FILE_SIFTIMAGE_NAME L"\\sift-image.jpg"
 #define FILE_CLASSIFIER_PREFIX L"epc"
+#define FILE_POSIMAGE_PREFIX L"\\pos"
+#define FILE_NEGIMAGE_PREFIX L"\\neg"
+#define FILE_MOTIMAGE_PREFIX L"\\mot"
+#define FILE_RNGIMAGE_PREFIX L"\\rng"
+#define FILE_IMAGE_EXT L".jpg"
+#define FILE_MOTIONIMAGE_EXT L".yml"
+#define FILE_MOTIONTRACK_EXT L".mtd"
 
 // save recognizer: folder suffixes
 #define FILE_BRIGHTNESS_SUFFIX L"_BRI"
@@ -145,6 +153,7 @@
 typedef enum {
     GROUPID_POSSAMPLES = 0,
     GROUPID_NEGSAMPLES,
+	GROUPID_MOTIONSAMPLES,
     GROUPID_RANGESAMPLES,
     GROUPID_TRASH
 } ListviewGroupId;

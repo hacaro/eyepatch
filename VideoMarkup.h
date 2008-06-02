@@ -29,6 +29,7 @@ public:
     void ReplaceClassifier(Classifier *newClassifier);
     void EmptyTrash();
 	void RunClassifierOnCurrentFrame();
+	bool GroupTransitionIsAllowed(int origId, int newId);
 
     static CWndClassInfo& GetWndClassInfo()
     {

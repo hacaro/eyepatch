@@ -74,6 +74,7 @@ LRESULT CFilterSelect::OnNameChange(int idCtrl, LPNMHDR pnmh, BOOL&) {
 				break;
 		}
 		((Classifier*)item.lParam)->Save();
+		parent->InvalidateRect(NULL, FALSE);
 	}
     return 0;
 }

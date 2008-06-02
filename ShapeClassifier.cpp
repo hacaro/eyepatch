@@ -26,7 +26,7 @@ ShapeClassifier::ShapeClassifier() :
     templateStorage = cvCreateMemStorage(0);
 
     // set the default "friendly name" and type
-    wcscpy(friendlyName, L"Shape Filter");
+    wcscpy(friendlyName, L"Shape Recognizer");
     classifierType = SHAPE_FILTER;        
 
     // append identifier to directory name
@@ -61,7 +61,10 @@ BOOL ShapeClassifier::ContainsSufficientSamples(TrainingSet *sampleSet) {
 }
 
 void ShapeClassifier::StartTraining(TrainingSet *sampleSet) {
-    cvClearMemStorage(templateStorage);
+	// Make a copy of the set used for training (we'll want to save it later)
+	sampleSet->CopyTo(&trainSet);
+
+	cvClearMemStorage(templateStorage);
     templateContours = NULL;
 
     // TODO: call into trainingset class to do this instead of accessing samplemap
