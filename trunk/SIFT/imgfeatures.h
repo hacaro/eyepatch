@@ -3,7 +3,7 @@ Functions and structures for dealing with image features
 
 Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
 
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
 
 #ifndef IMGFEATURES_H
@@ -53,7 +53,7 @@ struct feature
 	int d;                         /**< descriptor length */
 	double descr[FEATURE_MAX_D];   /**< descriptor */
 	int type;                      /**< feature type, OXFD or LOWE */
-	int featureclass;                     /**< all-purpose feature class */
+	int category;                  /**< all-purpose feature category */
 	struct feature* fwd_match;     /**< matching feature from forward image */
 	struct feature* bck_match;     /**< matching feature from backmward image */
 	struct feature* mdl_match;     /**< matching feature from model */
@@ -72,14 +72,10 @@ code provided by David Lowe.
 @param filename location of a file containing image features
 @param type determines how features are input.  If \a type is FEATURE_OXFD,
 	the input file is treated as if it is from the code provided by the VGG
-	at Oxford:
-
-	http://www.robots.ox.ac.uk:5000/~vgg/research/affine/index.html
-
+	at Oxford: http://www.robots.ox.ac.uk:5000/~vgg/research/affine/index.html
+	<BR><BR>
 	If \a type is FEATURE_LOWE, the input file is treated as if it is from
-	David Lowe's SIFT code:
-
-	http://www.cs.ubc.ca/~lowe/keypoints  
+	David Lowe's SIFT code: http://www.cs.ubc.ca/~lowe/keypoints  
 @param feat pointer to an array in which to store imported features
 
 @return Returns the number of features imported from filename or -1 on error

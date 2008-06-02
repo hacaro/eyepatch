@@ -3,9 +3,8 @@ Miscellaneous utility functions.
 
 Copyright (C) 2006  Rob Hess <hess@eecs.oregonstate.edu>
 
-@version 1.1.0-20061115
+@version 1.1.1-20070913
 */
-
 #include "precomp.h"
 
 #include "utils.h"
@@ -61,7 +60,7 @@ char* replace_extension( const char* file, const char* extn )
 {
 	char* new_file, * lastdot;
 
-	new_file = (char*)calloc( strlen( file ) + strlen( extn ) + 2,  sizeof( char ) );
+	new_file = (char*) calloc( strlen( file ) + strlen( extn ) + 2,  sizeof( char ) );
 	strcpy( new_file, file );
 	lastdot = strrchr( new_file, '.' );
 	if( lastdot )
@@ -85,17 +84,17 @@ basename command.
 */
 char* basename( const char* pathname )
 {
-	char* base, * last_slash;
+	char* base;
 
-	last_slash = (char*)strrchr( pathname, '/' );
+	const char* last_slash = strrchr( pathname, '/' );
 	if( ! last_slash )
 	{
-		base = (char*)calloc( strlen( pathname ) + 1, sizeof( char ) );
+		base = (char*) calloc( strlen( pathname ) + 1, sizeof( char ) );
 		strcpy( base, pathname );
 	}
 	else
 	{
-		base = (char*)calloc( strlen( last_slash++ ), sizeof( char ) );
+		base = (char*) calloc( strlen( last_slash++ ), sizeof( char ) );
 		strcpy( base, last_slash );
 	}
 

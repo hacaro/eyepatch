@@ -116,7 +116,7 @@ ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
         ptMin.x = frameCopy->width;
         ptMin.y = frameCopy->height;
 
-        struct kd_root* kd_root = kdtree_build(frameFeatures, nFeatures);
+        struct kd_node* kd_root = kdtree_build(frameFeatures, nFeatures);
         struct feature** nbrs;
         numFeatureMatches = 0;
         for(int i=0; i<numSampleFeatures; i++)
@@ -187,7 +187,7 @@ ClassifierOutputData SiftClassifier::ClassifyFrame(IplImage *frame) {
                 cvScalar(0xFF), CV_FILLED, 8); 
         }
 
-        kdtree_release( &kd_root );
+        kdtree_release( kd_root );
         free(frameFeatures);
     }
 
