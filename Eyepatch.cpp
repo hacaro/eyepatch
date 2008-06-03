@@ -9,6 +9,7 @@
 #include "OutputSink.h"
 #include "FilterSelect.h"
 #include "VideoControl.h"
+#include "ClassifierTester.h"
 #include "VideoMarkup.h"
 #include "VideoRunner.h"
 #include "FilterLibrary.h"

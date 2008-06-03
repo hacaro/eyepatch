@@ -22,6 +22,8 @@
 #define IDB_ARROW                       122
 #define IDD_FLOWTRACKER_DIALOG          122
 #define IDD_CLASSIFIER_DIALOG           123
+#define IDD_DIALOG1                     124
+#define IDD_QUICKTEST_DIALOG            124
 #define IDC_TRAINBUTTON                 1002
 #define IDC_HAAR_PROGRESS               1003
 #define IDC_SHOWBUTTON                  1004
@@ -50,6 +52,7 @@
 #define IDC_TOP_LABEL                   1028
 #define IDC_ACTIVE_OUTPUTS              1029
 #define IDC_ACTIVE_OUTPUT_LIST          1029
+#define IDC_QUICKTEST                   1029
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003
@@ -67,9 +70,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        124
+#define _APS_NEXT_RESOURCE_VALUE        125
 #define _APS_NEXT_COMMAND_VALUE         40013
-#define _APS_NEXT_CONTROL_VALUE         1029
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

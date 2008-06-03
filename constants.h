@@ -4,6 +4,10 @@
 #define LISTVIEW_SAMPLE_X 64
 #define LISTVIEW_SAMPLE_Y 64
 
+// Quicktest Window Size (in images)
+#define QUICKTEST_X 6
+#define QUICKTEST_Y 5
+
 // Haar Training parameters
 #define HAAR_SAMPLE_X 24
 #define HAAR_SAMPLE_Y 24
