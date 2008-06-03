@@ -1,3 +1,5 @@
+#define EYEPATCH_VERSION L"0.75"
+
 // Listview Icon size
 #define LISTVIEW_SAMPLE_X 64
 #define LISTVIEW_SAMPLE_Y 64

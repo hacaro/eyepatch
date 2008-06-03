@@ -7,6 +7,7 @@ class CEyepatch: public CWindowImpl<CEyepatch,CWindow,EyepatchTraits>
 public:
     CEyepatch();
     ~CEyepatch();
+	HINSTANCE m_hInstance;
 
 	LRESULT OnCreate(UINT, WPARAM, LPARAM, BOOL& );
 	LRESULT OnDestroy( UINT, WPARAM, LPARAM, BOOL& );
@@ -14,6 +15,7 @@ public:
     void LoadSampleFromFile();
     void LoadCreateModeClassifiers();
     void LoadComposeModeClassifiers();
+	void DisplayVersionInfo();
 
 	static CWndClassInfo& GetWndClassInfo()
 	{

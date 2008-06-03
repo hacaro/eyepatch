@@ -49,6 +49,9 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
                 cvSetCaptureProperty(capture, CV_CAP_PROP_DIALOG_FORMAT, 0 );
                 cvReleaseCapture(&capture);
                 break;
+            case ID_SETTINGS_VERSIONINFO:
+				this->DisplayVersionInfo();
+				break;
             case ID_FILE_EXIT:
                 PostMessage(WM_CLOSE, 0, 0);
                 break;
@@ -117,6 +120,32 @@ LRESULT CEyepatch::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
     DestroyMenu(hMenu);
     PostQuitMessage( 0 );
 	return 0;
+}
+
+void CEyepatch::DisplayVersionInfo() {
+	USES_CONVERSION;
+	WCHAR versionInfo[1024];
+    const char* opencv_libraries = 0;
+    const char* addon_modules = 0;
+    cvGetModuleInfo( 0, &opencv_libraries, &addon_modules );
+	wsprintf(versionInfo, L"Eyepatch Version: %s\n", EYEPATCH_VERSION);
+	wcscat(versionInfo, L"\nOpenCV Libraries: "); 
+	wcscat(versionInfo, A2W(opencv_libraries)); 
+	wcscat(versionInfo, L"\nAdd-On Modules: "); 
+	wcscat(versionInfo, A2W(addon_modules));
+
+	MSGBOXPARAMS mbp;
+	mbp.hwndOwner = this->m_hWnd;
+	mbp.hInstance = this->m_hInstance;
+	mbp.dwStyle = MB_USERICON;
+	mbp.lpszIcon = MAKEINTRESOURCE(IDI_EYEPATCH);
+	mbp.dwContextHelpId = NULL;
+	mbp.lpfnMsgBoxCallback = NULL;
+	mbp.dwLanguageId = NULL;
+	mbp.lpszCaption = L"Eyepatch Version Information";
+	mbp.lpszText = versionInfo;
+
+	::MessageBoxIndirect(&mbp);
 }
 
 void CEyepatch::LoadSampleFromFile() {
@@ -234,6 +263,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
 	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	CEyepatch *wnd = new CEyepatch();
+	wnd->m_hInstance = hInstance;
+
 	wnd->Create(NULL, CRect(0,0,WINDOW_X,WINDOW_Y), APP_CLASS,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE);
 	while( GetMessage( &msg, NULL, 0, 0 ) ){

@@ -59,6 +59,8 @@
 #define ID_SETTINGS_CAPTUREFORMAT       40008
 #define ID_MODE_CREATERECOGNIZERS       40009
 #define ID_MODE_RUNRECOGNIZERS          40010
+#define ID_SETTINGS_VERSIONINFORMATION  40011
+#define ID_SETTINGS_VERSIONINFO         40012
 #define IDC_PROGRESS_LABEL              -1
 
 // Next default values for new objects
@@ -66,7 +68,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        124
-#define _APS_NEXT_COMMAND_VALUE         40011
+#define _APS_NEXT_COMMAND_VALUE         40013
 #define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

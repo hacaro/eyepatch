@@ -90,6 +90,7 @@ BEGIN
     BEGIN
         MENUITEM "Capture &Source...",          ID_SETTINGS_CAPTURESOURCE
         MENUITEM "Capture &Format...",          ID_SETTINGS_CAPTUREFORMAT
+        MENUITEM "&Version Information...",     ID_SETTINGS_VERSIONINFO
     END
     POPUP "&Mode"
     BEGIN
