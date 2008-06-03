@@ -13,6 +13,7 @@
 #include "GestureClassifier.h"
 #include "FilterSelect.h"
 #include "VideoControl.h"
+#include "ClassifierTester.h"
 #include "VideoMarkup.h"
 
 void AddListViewGroup(HWND hwndList, WCHAR *szText, int iGroupId) {
@@ -74,6 +75,7 @@ void CVideoMarkup::EnableControls(BOOL enabled) {
     m_filterSelect.EnableWindow(enabled);
     if ((!m_videoLoader.videoLoaded) || (enabled && !classifier->isTrained)) {
         m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(FALSE);
+        m_filterSelect.GetDlgItem(IDC_QUICKTEST).EnableWindow(FALSE);
         m_filterSelect.GetDlgItem(IDC_SAVEFILTER).EnableWindow(FALSE);
     }
     if (!m_videoLoader.videoLoaded) {
@@ -570,6 +572,9 @@ LRESULT CVideoMarkup::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHand
             showGuesses = !showGuesses;
 			needToRerunClassifier = true;
             break;
+		case IDC_QUICKTEST:
+			m_classifierTester.TestClassifierOnVideo(classifier, &m_videoLoader, recognizerMode);
+			break;
         case IDC_SAVEFILTER:
             {
                 classifier->Save();
@@ -762,6 +767,7 @@ void CVideoMarkup::ReplaceClassifier(Classifier *newClassifier) {
 	// update the filter controls
 	m_filterSelect.CheckDlgButton(IDC_SHOWBUTTON, FALSE);
     m_filterSelect.GetDlgItem(IDC_SHOWBUTTON).EnableWindow(classifier->isTrained);
+    m_filterSelect.GetDlgItem(IDC_QUICKTEST).EnableWindow(classifier->isTrained);
     m_filterSelect.GetDlgItem(IDC_TRAINBUTTON).EnableWindow(!classifier->isOnDisk);
 	m_filterSelect.SelectFilter(classifier->classifierType);
 	m_filterSelect.SetThreshold(classifier->threshold);

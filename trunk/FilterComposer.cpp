@@ -191,7 +191,6 @@ LRESULT CFilterComposer::OnAddOutputSink( UINT, WPARAM wParam, LPARAM lParam, BO
 
 
 LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
-    HWND listView;
     HMENU hMenu;
     switch(wParam) {
         case IDC_RUNLIVE:

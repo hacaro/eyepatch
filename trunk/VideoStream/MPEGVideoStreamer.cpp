@@ -6,7 +6,7 @@ DWORD WINAPI MPEGVideoStreamer::ThreadCallback(LPVOID img) {
 	ULONG startTime = GetTickCount();
 	ULONG framesSent = 0;
 
-	CvVideoWriter *writer = cvCreateStreamingVideoWriter("rtp://127.0.0.1:9000?localport=9001", CV_FOURCC('M','P','G','2'), 24, cvSize(176, 144));
+	CvVideoWriter *writer = cvCreateStreamingVideoWriter("rtp://127.0.0.1:9000?localport=9001", CV_FOURCC('M','P','G','2'), 24, cvSize(176, 144), 1);
 	while(1) {
 		ULONG timeElapsed = GetTickCount()-startTime;
 		ULONG targetFramesSent = (ULONG)(24.0*timeElapsed)/1000.0;

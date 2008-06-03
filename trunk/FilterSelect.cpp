@@ -42,6 +42,7 @@ LRESULT CFilterSelect::OnTrack(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 LRESULT CFilterSelect::OnEnable(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
     GetDlgItem(IDC_TRAINBUTTON).EnableWindow(wParam);
     GetDlgItem(IDC_SHOWBUTTON).EnableWindow(wParam);
+    GetDlgItem(IDC_QUICKTEST).EnableWindow(wParam);
     GetDlgItem(IDC_SAVEFILTER).EnableWindow(wParam);
     GetDlgItem(IDC_FILTER_LIST).EnableWindow(wParam);
     GetDlgItem(IDC_FILTER_THRESHOLD).EnableWindow(wParam);

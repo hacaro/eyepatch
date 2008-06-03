@@ -82,6 +82,7 @@ private:
 	CVideoLoader m_videoLoader;
 	CVideoRecorder m_videoRecorder;
     TrainingSet sampleSet;
+	ClassifierTester m_classifierTester;
     CContainedWindow m_sampleListView;
     CFilterSelect m_filterSelect;
     CVideoControl m_videoControl;
