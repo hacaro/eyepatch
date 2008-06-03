@@ -5,8 +5,8 @@
 #define LISTVIEW_SAMPLE_Y 64
 
 // Haar Training parameters
-#define HAAR_SAMPLE_X 26
-#define HAAR_SAMPLE_Y 26
+#define HAAR_SAMPLE_X 24
+#define HAAR_SAMPLE_Y 24
 #define MAX_SAMPLES 100
 #define MIN_HAAR_STAGES 4
 #define START_HAAR_STAGES 10
