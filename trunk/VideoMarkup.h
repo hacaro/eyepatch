@@ -39,7 +39,7 @@ public:
             StartWindowProc,
             0, 0, NULL, NULL, NULL, (HBRUSH)(WHITE_BRUSH), NULL, 
             FILTER_CREATE_CLASS, LoadIcon(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDI_EYEPATCH)) },
-            NULL, NULL, IDC_CROSS, TRUE, 0, FILTER_CREATE_CLASS
+            NULL, NULL, IDC_ARROW, TRUE, 0, FILTER_CREATE_CLASS
         };
         return wc;
     }

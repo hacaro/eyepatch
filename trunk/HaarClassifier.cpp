@@ -44,7 +44,7 @@ DWORD WINAPI HaarClassifierDialog::ThreadCallback(HaarClassifierDialog* instance
 void HaarClassifierDialog::Train() {
     cvCreateCascadeClassifier(parent->classifierPathname,  parent->vecFilename, parent->negFilename, 
         parent->nPosSamples, parent->nNegSamples, parent->nStages,
-		0, 2, .99, .5, .95, 0, 0, 1, HAAR_SAMPLE_X, HAAR_SAMPLE_Y, 3, 0,
+		0, 2, .99, .5, .95, 3, 0, 1, HAAR_SAMPLE_X, HAAR_SAMPLE_Y, 3, 0,
 		GetDlgItem(IDC_HAAR_PROGRESS), &(parent->nStagesCompleted));
 	::EndDialog(m_hWnd, IDOK);
 }
