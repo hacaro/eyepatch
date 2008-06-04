@@ -482,7 +482,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="avformat-51.lib avcodec-51.lib avutil-49.lib swscale-0.lib cv.lib cxcore.lib comctl32.lib libjpeg.lib libjasper.lib libpng.lib libtiff.lib zlib.lib vfw32.lib"
+				AdditionalDependencies="avformat-52.lib avcodec-51.lib avutil-49.lib swscale-0.lib cv.lib cxcore.lib comctl32.lib libjpeg.lib libjasper.lib libpng.lib libtiff.lib zlib.lib vfw32.lib"
 				OutputFile="..\..\bin/highgui100.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
