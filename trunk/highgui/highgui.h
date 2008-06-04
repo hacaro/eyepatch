@@ -307,7 +307,7 @@ CVAPI(void) cvReleaseVideoWriter( CvVideoWriter** writer );
 
 
 /* RTP video streaming output support, added by Monzy for Eyepatch */
-CVAPI(CvVideoWriter*) cvCreateStreamingVideoWriter( const char * filename, int fourcc, double fps, CvSize frameSize, int is_color=1 );
+CVAPI(CvVideoWriter*) cvCreateStreamingVideoWriter( const char * filename, int fourcc, double fps, CvSize frameSize, int is_color );
 CVAPI(int) cvWriteStreamingFrame( CvVideoWriter * writer, const IplImage * image);
 
 

@@ -45,8 +45,8 @@
 #define snprintf _snprintf
 
 extern "C" {
-#include <ffmpeg/avformat.h>
-#include <ffmpeg/swscale.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 }
 
 #ifdef NDEBUG
@@ -816,7 +816,7 @@ CV_IMPL void cvReleaseVideoWriter( CvVideoWriter ** writer )
 
 	if (!(mywriter->fmt->flags & AVFMT_NOFILE)) {
 		/* close the output file */
-		url_fclose(&mywriter->oc->pb);
+		url_fclose(mywriter->oc->pb);
 	}
 
 	/* free the stream */
