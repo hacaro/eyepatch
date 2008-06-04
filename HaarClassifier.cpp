@@ -238,6 +238,7 @@ ClassifierOutputData HaarClassifier::ClassifyFrame(IplImage *frame) {
     cvResize(frameCopy, applyImage);
     IplToBitmap(applyImage, applyBitmap);
 	cvReleaseImage(&newMask);
+	cvReleaseImage(&frameCopy);
 
 	UpdateStandardOutputData();
 	return outputData;
