@@ -5,8 +5,8 @@
 #define LISTVIEW_SAMPLE_Y 64
 
 // Quicktest Window Size (in images)
-#define QUICKTEST_X 6
-#define QUICKTEST_Y 5
+#define QUICKTEST_X 3
+#define QUICKTEST_Y 3
 
 // Haar Training parameters
 #define HAAR_SAMPLE_X 24
@@ -37,12 +37,12 @@
 
 // Motion parameters
 /* history image and deltas are in frames, not seconds */
-#define MOTION_MHI_DURATION 15.0
-#define MOTION_MAX_TIME_DELTA 7.0
+#define MOTION_MHI_DURATION 10.0
+#define MOTION_MAX_TIME_DELTA 5.0
 #define MOTION_MIN_TIME_DELTA 1.0
 /* number of images used to compute silhouette */
 #define MOTION_NUM_IMAGES 4
-#define MOTION_NUM_HISTORY_FRAMES 15
+#define MOTION_NUM_HISTORY_FRAMES 10
 /* amount of pixel difference considered motion */
 #define MOTION_DIFF_THRESHOLD 30
 
@@ -54,8 +54,8 @@
 // optical flow constants
 #define FLOW_MAX_TRACK_FEATURES 200
 #define FLOW_MAX_ERROR_THRESHOLD 200
-// reduce motion from pixel jitter by ignoring motion less than this threshold (divided by the number of trackpoints)
-#define FLOW_MIN_MOTION_THRESHOLD 12.0
+// reduce motion from pixel jitter by ignoring motion less than this threshold
+#define FLOW_MIN_MOTION_THRESHOLD 1.2
 // clear out the trajectory after this many frames with no motion
 #define FLOW_INACTIVE_THRESHOLD 20
 
@@ -98,8 +98,8 @@
 #define EXAMPLEWINDOW_HEIGHT 185
 #define FILTERIMAGE_WIDTH 240
 #define FILTERIMAGE_HEIGHT 180
-#define GUESSMASK_WIDTH 160
-#define GUESSMASK_HEIGHT 120
+#define GUESSMASK_WIDTH 320
+#define GUESSMASK_HEIGHT 240
 #define FILTERLIBRARY_WIDTH 670
 
 // save recognizer: folder prefixes and file names

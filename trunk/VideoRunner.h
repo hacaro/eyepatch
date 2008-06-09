@@ -12,7 +12,9 @@ public:
     static DWORD WINAPI ThreadCallback(CVideoRunner*);
     void StartProcessing(bool isLive);
     void StopProcessing();
+	void ApplyFilterChain();
 	void ProcessFrame();
+	ClassifierOutputData GetStandardOutputData();
 
     bool AddActiveFilter(Classifier*);
     void ClearActiveFilters();
@@ -34,9 +36,15 @@ public:
     int trackingMotion;
     int trackingGesture;
 
+	// we can combine filters as LIST, AND, OR, or CASCADE
+	int filterCombineMode;
+
+	// for the bounding boxes output from a combination of filters
+	vector<Rect> boundingBoxes;
+
 private:
     CvCapture *videoCapture;
-    IplImage *currentFrame, *guessMask, *motionHistory;
+    IplImage *currentFrame, *guessMask, *combineMask, *combineMaskOutput, *motionHistory;
     IplImage* motionBuf[MOTION_NUM_IMAGES];
 
     // functions that may be called by ProcessFrame (if motion/gesture filters are active)
@@ -54,6 +62,9 @@ private:
 
     // list of outputs to which we will send video data
     list<OutputSink*> activeOutputs;
+
+	// memory storage for contours of combine mask
+	CvMemStorage *contourStorage;
 
 	DWORD threadID;
 	HANDLE m_hMutex;

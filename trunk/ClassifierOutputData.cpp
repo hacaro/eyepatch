@@ -191,3 +191,14 @@ string ClassifierOutputData::GetNameOfIndex(int i) {
 ClassifierVariableType ClassifierOutputData::GetTypeOfIndex(int i) {
 	return data[i].GetType();
 }
+
+void ClassifierOutputData::MergeWith(ClassifierOutputData mergeData) {
+	for (int i=0; i<mergeData.data.size(); i++) {
+		ClassifierOutputVariable var = mergeData.data[i];
+		if (this->HasVariable(var.GetName())) {	// this variable is already present, so we'll overwrite it
+			this->SetVariable(var);
+		} else {	// it's missing, so we'll add it
+			this->AddVariable(var);
+		}
+	}
+}
