@@ -114,6 +114,8 @@ public:
 	void SetVariableState(string name, bool state);
 	bool GetVariableState(string name);
 
+	void MergeWith(ClassifierOutputData mergeData);
+
 	ClassifierOutputVariable GetVariable(string name);
 	int GetIntData(string name);
 	float GetFloatData(string name);

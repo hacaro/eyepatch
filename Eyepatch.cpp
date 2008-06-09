@@ -80,6 +80,7 @@ LRESULT CEyepatch::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& ) {
                 EnableMenuItem(hMenu, ID_FILE_OPENSAMPLE, MF_ENABLED);
                 EnableMenuItem(hMenu, ID_FILE_RECORDVIDEO, MF_ENABLED);
                 EnableMenuItem(hMenu, ID_FILE_EMPTYTRASH, MF_ENABLED);
+				m_filterComposer.ResetState();
                 m_filterComposer.EnableWindow(FALSE);
                 m_filterComposer.SetWindowPos(HWND_BOTTOM, 0, 0, WINDOW_X, WINDOW_Y, SWP_HIDEWINDOW);
                 m_videoMarkup.SetWindowPos(HWND_TOP, 0, 0, WINDOW_X, WINDOW_Y, SWP_SHOWWINDOW);

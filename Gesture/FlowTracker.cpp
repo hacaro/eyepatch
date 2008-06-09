@@ -96,6 +96,7 @@ void FlowTracker::ProcessFrame() {
 	int nFeatures = FLOW_MAX_TRACK_FEATURES;
 	cvGoodFeaturesToTrack(grlastFrame, eigimage, tempimage, lastframe_features, &nFeatures, 0.01, 10);
 
+	double mvecx = 0, mvecy = 0, magnitude = 0, npoints = 0;
 	if (nFeatures > 0) {
 
 		cvFindCornerSubPix(grlastFrame, lastframe_features, nFeatures, cvSize(5,5), cvSize(-1,-1),
@@ -113,7 +114,6 @@ void FlowTracker::ProcessFrame() {
 		// Now there is a 1 in found_features wherever two features match up
 		// The feature positions are in lastframe_features and frame_features
 		// Draw the flow field and average all the flow vectors
-		double mvecx = 0, mvecy = 0, magnitude = 0, npoints = 0;
 		for (int i=0; i<nFeatures; i++) {
 			if ((found_features[i] == 0) || (feature_error[i]>FLOW_MAX_ERROR_THRESHOLD)) continue;
 			CvPoint p,q;
@@ -132,7 +132,7 @@ void FlowTracker::ProcessFrame() {
 			mvecy /= npoints;
 		}
 		magnitude = _hypot(mvecx, mvecy);
-		if (magnitude < FLOW_MIN_MOTION_THRESHOLD/npoints) {
+		if (magnitude < FLOW_MIN_MOTION_THRESHOLD) {
 			mvecx = 0;
 			mvecy = 0;
 			numInactiveFrames++;
@@ -140,19 +140,22 @@ void FlowTracker::ProcessFrame() {
 			numInactiveFrames = 0;
 		}
 
-		cvCircle(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2), 3, CV_RGB(255,255,255),-1,CV_AA);
-		cvLine(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2),
-			cvPoint(copyFrame->width/2+30*mvecx, copyFrame->height/2+30*mvecy), CV_RGB(255,255,255), 2, CV_AA);
-
-		currentX += mvecx;
-		currentY += mvecy;
-		OneDollarPoint pt(currentX, currentY);
-		trajectory.push_back(pt);
-
-		MotionTrack scaledpts = ScaleToSquare(trajectory, 2*GESTURE_SQUARE_SIZE/3);
-		scaledpts = TranslateToOrigin(scaledpts);
-		DrawTrack(copyFrame, scaledpts, CV_RGB(100,255,100), 3, GESTURE_SQUARE_SIZE, GESTURE_MAX_TRAJECTORY_LENGTH);
+	} else {	// no trackable features were detected (similar to case when motion level is below threshold)
+		numInactiveFrames++;
 	}
+
+	cvCircle(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2), 3, CV_RGB(255,255,255),-1,CV_AA);
+	cvLine(copyFrame, cvPoint(copyFrame->width/2, copyFrame->height/2),
+		cvPoint(copyFrame->width/2+30*mvecx, copyFrame->height/2+30*mvecy), CV_RGB(255,255,255), 2, CV_AA);
+
+	currentX += mvecx;
+	currentY += mvecy;
+	OneDollarPoint pt(currentX, currentY);
+	trajectory.push_back(pt);
+
+	MotionTrack scaledpts = ScaleToSquare(trajectory, 2*GESTURE_SQUARE_SIZE/3);
+	scaledpts = TranslateToOrigin(scaledpts);
+	DrawTrack(copyFrame, scaledpts, CV_RGB(100,255,100), 3, GESTURE_SQUARE_SIZE, GESTURE_MAX_TRAJECTORY_LENGTH);
 
     // display color foreground image in window
     IplToBitmap(copyFrame, bmpVideo);

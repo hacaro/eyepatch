@@ -53,6 +53,11 @@
 #define IDC_ACTIVE_OUTPUTS              1029
 #define IDC_ACTIVE_OUTPUT_LIST          1029
 #define IDC_QUICKTEST                   1029
+#define IDC_COMBINE_LIST                1030
+#define IDC_COMBINE_AND                 1031
+#define IDC_COMBINE_OR                  1032
+#define IDC_COMBINE_OR2                 1033
+#define IDC_COMBINE_CASCADE             1033
 #define ID_FILE_OPENVIDEO               40001
 #define ID_FILE_RECORDVIDEO             40002
 #define ID_FILE_EXIT                    40003
@@ -72,7 +77,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        125
 #define _APS_NEXT_COMMAND_VALUE         40013
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

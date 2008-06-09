@@ -24,12 +24,13 @@ public:
 
     void LoadStandardClassifiers();
     void ClearStandardClassifiers();
-
     void ClearActiveClassifiers();
 
     void LoadOutputs();
     void ClearOutputs();
     void ClearActiveOutputs();
+
+	void ResetState();
 
     static CWndClassInfo& GetWndClassInfo()
     {

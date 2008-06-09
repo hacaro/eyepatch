@@ -122,7 +122,10 @@ LRESULT CFilterComposer::OnCreate(UINT, WPARAM, LPARAM, BOOL& )
     m_filterLibrary.MoveWindow(0, 0, FILTERLIBRARY_WIDTH, WINDOW_Y);
     m_filterLibrary.ShowWindow(TRUE);
 
-    return 0;
+	// Set the starting combine mode to "LIST"
+	m_videoRunner.filterCombineMode = IDC_COMBINE_LIST;
+	m_filterLibrary.CheckRadioButton(IDC_COMBINE_LIST,IDC_COMBINE_CASCADE,IDC_COMBINE_LIST);
+	return 0;
 }
 
 LRESULT CFilterComposer::OnDestroy( UINT, WPARAM, LPARAM, BOOL& ) {
@@ -248,13 +251,26 @@ LRESULT CFilterComposer::OnCommand( UINT, WPARAM wParam, LPARAM lParam, BOOL& bH
             }
 			break;
         case IDC_RESET:
-            ClearActiveClassifiers();
-            ClearActiveOutputs();
+			ResetState();
             break;
+		case IDC_COMBINE_LIST:
+		case IDC_COMBINE_AND:
+		case IDC_COMBINE_OR:
+		case IDC_COMBINE_CASCADE:
+			m_videoRunner.filterCombineMode = wParam;
+			break;
         default:
             break;
     }
     return 0;
+}
+
+void CFilterComposer::ResetState() {
+    ClearActiveClassifiers();
+    ClearActiveOutputs();
+	// Set the combine mode back to "LIST"
+	m_videoRunner.filterCombineMode = IDC_COMBINE_LIST;
+	m_filterLibrary.CheckRadioButton(IDC_COMBINE_LIST,IDC_COMBINE_CASCADE,IDC_COMBINE_LIST);
 }
 
 void CFilterComposer::LoadCustomClassifier(LPWSTR pathname) {

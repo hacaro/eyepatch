@@ -36,6 +36,176 @@ CVideoRunner::~CVideoRunner(void) {
 	if (m_hMutex) CloseHandle(m_hMutex);
 }
 
+ClassifierOutputData CVideoRunner::GetStandardOutputData() {
+	ClassifierOutputData outputData;
+	cvResize(combineMask, combineMaskOutput);
+	outputData.AddVariable("Mask", combineMaskOutput);
+
+	// reset the contour storage
+    cvClearMemStorage(contourStorage);
+	// find the contours in the combineMask
+    CvSeq* contours = NULL;
+	cvFindContours(combineMaskOutput, contourStorage, &contours, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+	if (contours != NULL) {
+        contours = cvApproxPoly(contours, sizeof(CvContour), contourStorage, CV_POLY_APPROX_DP, 3, 1 );
+	}
+	outputData.AddVariable("Contours", contours);
+
+	// compute bounding boxes of mask contours, along with area and centroid, and count # of regions
+	boundingBoxes.clear();
+	Point centroid(0,0);
+	int nRegions = 0;
+	int totalArea = 0;
+	if (contours != NULL){
+		for (CvSeq *contour = contours; contour != NULL; contour = contour->h_next) {
+			CvRect cvr = cvBoundingRect(contour, 1);
+			totalArea += fabs(cvContourArea(contour));
+			Rect r(cvr.x, cvr.y, cvr.width, cvr.height);
+			boundingBoxes.push_back(r);
+			centroid.X += (cvr.x+cvr.width/2);
+			centroid.Y += (cvr.y+cvr.height/2);
+			nRegions++;
+		}
+		if (nRegions > 0) {
+			centroid.X /= nRegions;
+			centroid.Y /= nRegions;
+		}
+	}
+	outputData.AddVariable("BoundingBoxes", &boundingBoxes);
+	outputData.AddVariable("NumRegions", nRegions);
+	outputData.AddVariable("TotalArea", totalArea);
+	outputData.AddVariable("Centroid", centroid);
+	return outputData;
+}
+
+void CVideoRunner::ApplyFilterChain() {
+	USES_CONVERSION;
+
+	bool processedMotion = false, processedGesture = false;
+	ClassifierOutputData combinedata;	// used for combining data across multiple classifiers
+
+	int nCurrentFilter = 0;
+    int nFiltersInChain = activeClassifiers.size();
+
+	// initialize the "combineMask" appropriately depending upon our combine mode
+	if (filterCombineMode == IDC_COMBINE_AND) {
+		if (nFiltersInChain > 0) cvSet(combineMask, cvScalar(0xFF));
+		else cvZero(combineMask);
+	} else if (filterCombineMode == IDC_COMBINE_OR) {
+		cvZero(combineMask);
+	}
+
+	// step through each active classifier in turn
+    for (list<Classifier*>::iterator i=activeClassifiers.begin(); i!=activeClassifiers.end(); i++) {
+
+		// get the output of the classifier and store it in "outdata"
+		ClassifierOutputData outdata;
+
+        if ((*i)->classifierType == MOTION_FILTER) {
+			if (!processedMotion) {	// this is the first motion filter in the chain, so we'll update the motion image now
+				ProcessMotionFrame();
+				processedMotion = true;
+			}
+            outdata = ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames);
+        } else if ((*i)->classifierType == GESTURE_FILTER) {
+			if (!processedGesture) {	// this is the first gesture filter in the chain, so we'll update the motion trails now
+				ProcessGestureFrame();
+				processedGesture = true;
+			}
+
+			MotionTrack mt = m_flowTracker.GetCurrentTrajectory();
+            outdata = ((GestureClassifier*)(*i))->ClassifyTrack(mt);
+			if (outdata.HasVariable("IsMatch")) {
+				if (outdata.GetIntData("IsMatch") != 0) {
+					m_flowTracker.ClearCurrentTrajectory();
+				}
+			}
+        } else {
+            outdata = (*i)->ClassifyFrame(copyFrame);
+        } 
+
+		// pull the mask out of the returned data and store it in "guessMask"
+		if (outdata.HasVariable("Mask")) {
+			IplImage *mask = outdata.GetImageData("Mask");
+			cvResize(mask, guessMask);
+		} else {
+			cvZero(guessMask);
+		}
+
+		if (filterCombineMode == IDC_COMBINE_LIST) {
+			// in LIST mode we draw each filter outlined separately in the accumulator frame
+
+			// Copy the masked output of this filter to accumulator frame
+			cvZero(outputAccImage);
+			cvCopy(copyFrame, outputAccImage, guessMask);
+
+			// Trace contours in accumulator frame
+			CvSeq *contours = outdata.GetSequenceData("Contours");
+			if (contours != NULL) {
+				cvZero(contourMask);
+				cvDrawContours(contourMask, contours, cvScalar(0xFF), cvScalar(0x00), 1, 1, CV_AA);
+				cvResize(contourMask, guessMask);
+				cvSet(outputAccImage, colorSwatch[nCurrentFilter%COLOR_SWATCH_SIZE], guessMask);
+			}
+
+			// Add masked accumulator frame to output frame
+			cvAddWeighted(outputAccImage, (1.0/nFiltersInChain), outputFrame, 1.0, 0, outputFrame);
+
+			// in LIST mode we apply output chain to each filter output separately
+			for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
+				(*j)->ProcessOutput(copyFrame, outdata, W2A((*i)->GetName()));
+			}
+		} else if (filterCombineMode == IDC_COMBINE_AND){
+			// In AND mode we don't draw anything until the end, once we've combined all the outputs.
+			// We combine the "guessMask" from each filter into the "combineMask" and draw that.
+			cvAnd(guessMask, combineMask, combineMask);
+			combinedata.MergeWith(outdata);
+		} else if (filterCombineMode == IDC_COMBINE_OR){
+			// In OR mode we don't draw anything until the end, once we've combined all the outputs.
+			// We combine the "guessMask" from each filter into the "combineMask" and draw that.
+			cvOr(guessMask, combineMask, combineMask);
+			combinedata.MergeWith(outdata);
+		} else if (filterCombineMode == IDC_COMBINE_CASCADE){
+			// In CASCADE mode we actually modify the input frame so that the input of the next
+			// filter in the chain will include only the regions of the input image that have passed through
+			// the earlier filters in the chain.  The final mask is the output of the last filter in the chain.
+			cvCopy(copyFrame, outputAccImage);
+			cvZero(copyFrame);
+			cvCopy(outputAccImage, copyFrame, guessMask);
+			cvCopy(guessMask, combineMask);
+			combinedata.MergeWith(outdata);
+		}
+        nCurrentFilter++;
+	}
+
+	// If we are in a mode where outputs get combined, we need to output the final result
+	// now that we have run all the filters.
+	if (filterCombineMode != IDC_COMBINE_LIST) {
+		ClassifierOutputData combinemaskdata = GetStandardOutputData();
+		combinedata.MergeWith(combinemaskdata);
+
+		cvZero(outputAccImage);
+		cvCopy(copyFrame, outputAccImage, combineMask);
+
+		// Trace contours in accumulator frame
+		CvSeq *contours = combinedata.GetSequenceData("Contours");
+		if (contours != NULL) {
+			cvZero(contourMask);
+			cvDrawContours(contourMask, contours, cvScalar(0xFF), cvScalar(0x00), 1, 1, CV_AA);
+			cvResize(contourMask, guessMask);
+			cvSet(outputAccImage, colorSwatch[0], guessMask);
+		}
+
+		// copy accumulator frame to output frame
+		cvCopy(outputAccImage, outputFrame);
+
+		// now we apply the output chain to the combined output data
+		for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
+			(*j)->ProcessOutput(copyFrame, combinedata, "Combination");
+		}
+	}
+}
+
 void CVideoRunner::ProcessFrame() {
     USES_CONVERSION;
 	if (currentFrame == NULL) return;
@@ -49,14 +219,6 @@ void CVideoRunner::ProcessFrame() {
 		cvFlip(currentFrame,copyFrame);
 	}
 
-    if (trackingMotion) { // we have a motion filter in the chain, so compute motion
-        ProcessMotionFrame();
-    }
-
-    if (trackingGesture) { // we have a gesture filter in the chain, so grab trajectories
-        ProcessGestureFrame();
-    }
-
     // some outputs run on the original (unfiltered) frame
 	// we apply these before applying any of the filters
     for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
@@ -65,58 +227,9 @@ void CVideoRunner::ProcessFrame() {
 
     // First black out the output frame
     cvZero(outputFrame);
-    int nFiltersInChain = activeClassifiers.size();
-    int nCurrentFilter = 0;
 
-    // apply filter chain to frame
-    for (list<Classifier*>::iterator i=activeClassifiers.begin(); i!=activeClassifiers.end(); i++) {
-
-		ClassifierOutputData outdata;
-
-        if ((*i)->classifierType == MOTION_FILTER) {
-            outdata = ((MotionClassifier*)(*i))->ClassifyMotion(motionHistory, nFrames);
-        } else if ((*i)->classifierType == GESTURE_FILTER) {
-			MotionTrack mt = m_flowTracker.GetCurrentTrajectory();
-            outdata = ((GestureClassifier*)(*i))->ClassifyTrack(mt);
-			if (outdata.HasVariable("IsMatch")) {
-				if (outdata.GetIntData("IsMatch") != 0) {
-					m_flowTracker.ClearCurrentTrajectory();
-				}
-			}
-        } else {
-            outdata = (*i)->ClassifyFrame(copyFrame);
-        } 
-
-		// pull the mask out of the returned data
-		if (outdata.HasVariable("Mask")) {
-			IplImage *mask = outdata.GetImageData("Mask");
-			cvResize(mask, guessMask);
-		} else {
-			cvZero(guessMask);
-		}
-
-        // Copy the masked output of this filter to accumulator frame
-        cvZero(outputAccImage);
-        cvCopy(copyFrame, outputAccImage, guessMask);
-
-        // Trace contours in accumulator frame
-		CvSeq *contours = outdata.GetSequenceData("Contours");
-        if (contours != NULL) {
-			cvZero(contourMask);
-            cvDrawContours(contourMask, contours, cvScalar(0xFF), cvScalar(0x00), 1, 1, CV_AA);
-			cvResize(contourMask, guessMask);
-			cvSet(outputAccImage, colorSwatch[nCurrentFilter%COLOR_SWATCH_SIZE], guessMask);
-        }
-        nCurrentFilter++;
-
-        // Add masked accumulator frame to output frame
-        cvAddWeighted(outputAccImage, (1.0/nFiltersInChain), outputFrame, 1.0, 0, outputFrame);
-
-        // apply output chain to filtered frame
-        for (list<OutputSink*>::iterator j=activeOutputs.begin(); j!=activeOutputs.end(); j++) {
-            (*j)->ProcessOutput(copyFrame, outdata, W2A((*i)->GetName()));
-        }
-    }
+    // Now apply filter chain to frame
+	ApplyFilterChain();
 
     // convert to bitmap
     IplToBitmap(copyFrame, bmpInput);
@@ -224,6 +337,7 @@ void CVideoRunner::StartProcessing(bool isLive) {
     outputFrame = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
     outputAccImage =  cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,3);
 	contourMask = cvCreateImage(cvSize(GUESSMASK_WIDTH, GUESSMASK_HEIGHT), IPL_DEPTH_8U, 1);
+	combineMaskOutput = cvCreateImage(cvSize(GUESSMASK_WIDTH, GUESSMASK_HEIGHT), IPL_DEPTH_8U, 1);
 
     // create image to store motion history
     motionHistory = cvCreateImage(cvSize(videoX,videoY), IPL_DEPTH_32F, 1);
@@ -237,8 +351,9 @@ void CVideoRunner::StartProcessing(bool isLive) {
     }
     last = 0;
 
-    // create a mask to store the results of the processing
+    // create a mask to store the results of the processing, and one for combining multiple filters
     guessMask = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,1);
+    combineMask = cvCreateImage(cvSize(videoX,videoY),IPL_DEPTH_8U,1);
 
     // Create bitmaps to display video input and output
     bmpInput = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
@@ -247,6 +362,9 @@ void CVideoRunner::StartProcessing(bool isLive) {
 	// Create smaller bitmaps for motion and gesture status images
     bmpMotion = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
     bmpGesture = new Bitmap(videoX, videoY, PixelFormat24bppRGB);
+
+	// Initialize some contour storage for tracing combination masks
+	contourStorage = cvCreateMemStorage(0);
 
     processingVideo = true;
 
@@ -275,11 +393,16 @@ void CVideoRunner::StopProcessing() {
         cvReleaseImage(&motionBuf[i]);
     }
     cvReleaseImage(&guessMask);
+    cvReleaseImage(&combineMask);
+	cvReleaseImage(&combineMaskOutput);
 
     delete bmpInput;
     delete bmpOutput;
 	delete bmpMotion;
 	delete bmpGesture;
+
+	cvReleaseMemStorage(&contourStorage);
+
     ReleaseMutex(m_hMutex);
 }
 
