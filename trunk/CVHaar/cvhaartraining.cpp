@@ -755,6 +755,9 @@ void icvSplitIndicesCallback( int compidx, float threshold,
     m = data->sum.rows;
     *left = cvCreateMat( 1, m, CV_32FC1 );
     *right = cvCreateMat( 1, m, CV_32FC1 );
+	cvZero(*left);
+	cvZero(*right);
+
     (*left)->cols = (*right)->cols = 0;
     if( idx == NULL )
     {

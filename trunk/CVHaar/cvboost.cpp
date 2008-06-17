@@ -1423,7 +1423,7 @@ CvClassifier* cvCreateCARTClassifier( CvMat* trainData,
         }
         else
         {
-            cvReleaseMat( &lidx );
+			if (lidx->cols > 0) cvReleaseMat( &lidx );
         }
         if( intnode[i-1].stump->rerror != 0.0F )
         {
@@ -1441,7 +1441,7 @@ CvClassifier* cvCreateCARTClassifier( CvMat* trainData,
         }
         else
         {
-            cvReleaseMat( &ridx );
+            if (ridx->cols > 0) cvReleaseMat( &ridx );
         }
         
         if( listcount == 0 ) break;
@@ -1503,13 +1503,13 @@ CvClassifier* cvCreateCARTClassifier( CvMat* trainData,
         intnode[i].stump->release( (CvClassifier**) &(intnode[i].stump) );
         if( i != 0 )
         {
-            cvReleaseMat( &(intnode[i].sampleIdx) );
+            if (intnode[i].sampleIdx->cols > 0) cvReleaseMat( &(intnode[i].sampleIdx) );
         }
     }
     for( i = 0; i < listcount; i++ )
     {
         list[i].stump->release( (CvClassifier**) &(list[i].stump) );
-        cvReleaseMat( &(list[i].sampleIdx) );
+		if (list[i].sampleIdx->cols > 0) cvReleaseMat( &(list[i].sampleIdx) );
     }
     
     cvFree( &intnode );
